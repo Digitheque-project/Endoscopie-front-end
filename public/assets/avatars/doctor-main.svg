@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Doctor avatar">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d8e7ff"/>
+      <stop offset="100%" stop-color="#9ec3ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" fill="url(#bg)"/>
+  <circle cx="80" cy="62" r="28" fill="#ffd7c2"/>
+  <path d="M38 144c8-28 22-44 42-44s34 16 42 44" fill="#ffffff"/>
+  <path d="M53 58c2-16 12-28 27-28 13 0 23 8 28 22-10-3-17-9-23-16-5 8-15 16-32 22z" fill="#4b5f82"/>
+</svg>
