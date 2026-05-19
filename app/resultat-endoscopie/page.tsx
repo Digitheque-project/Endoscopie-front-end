@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import ResultHeader from "@/components/resultat/ResultHeader";
 import MedicalReport from "@/components/resultat/MedicalReport";
@@ -10,9 +10,24 @@ import DecisionPanel from "@/components/resultat/DecisionPanel";
 import SignatureBlock from "@/components/resultat/SignatureBlock";
 import { useRouter } from "next/navigation";
 
-function ResultatContent({ searchParams }: { searchParams: Promise<any> }) {
-  const resolvedParams = use(searchParams);
+function ResultatContent({ searchParams }: { searchParams: any }) {
+  const [resolvedParams, setResolvedParams] = useState<any>({});
   const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const rp = typeof searchParams?.then === "function" ? await searchParams : searchParams;
+        if (mounted) setResolvedParams(rp || {});
+      } catch (e) {
+        console.error("Error resolving searchParams", e);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams]);
 
   // Extract from query params or use defaults for demo
   const patientName = resolvedParams?.patient ?? "LEFEBVRE, Sophie";

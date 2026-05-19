@@ -1,6 +1,7 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { API_BASE_URL } from "@/lib/api";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import StatBadge from "@/components/ui/StatBadge";
@@ -81,7 +82,7 @@ function PlanificationContent() {
     const loadMedecin = async () => {
       try {
         setIsMedecinLoading(true);
-        const response = await fetch("http://127.0.0.1:3333/api/medecins");
+        const response = await fetch(`${API_BASE_URL}/api/medecins`);
         const medecins = await response.json();
         if (medecinId) {
           const found = medecins.find((medecin: any) => medecin.id === medecinId);
@@ -101,7 +102,7 @@ function PlanificationContent() {
       if (!prescriptionId) return;
       try {
         setIsPrescriptionLoading(true);
-        const resp = await fetch(`http://127.0.0.1:3333/api/prescriptions/${prescriptionId}`);
+        const resp = await fetch(`${API_BASE_URL}/api/prescriptions/${prescriptionId}`);
         if (resp.ok) {
           const data = await resp.json();
           setPrescriptionData(data);
@@ -116,7 +117,7 @@ function PlanificationContent() {
 
     const fetchSalles = async () => {
       try {
-        const resp = await fetch("http://127.0.0.1:3333/api/salles");
+        const resp = await fetch(`${API_BASE_URL}/api/salles`);
         const data = await resp.json();
         setSalles(data);
       } catch (e) {
@@ -170,7 +171,7 @@ function PlanificationContent() {
 
   const checkConflicts = async (newStart: Date, newEnd: Date, salle: string) => {
     try {
-      const resp = await fetch("http://127.0.0.1:3333/api/rendezvous");
+      const resp = await fetch(`${API_BASE_URL}/api/rendezvous`);
       if (!resp.ok) return false;
       const appointments = await resp.json();
       
@@ -237,7 +238,7 @@ function PlanificationContent() {
       };
 
       // 1. Sauvegarde en Base de données via API
-      const response = await fetch("http://127.0.0.1:3333/api/rendezvous", {
+      const response = await fetch(`${API_BASE_URL}/api/rendezvous`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(appointmentData)

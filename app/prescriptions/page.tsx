@@ -1,6 +1,7 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { API_BASE_URL } from "@/lib/api";
 import PrescriptionTreatButton from "@/components/navigation/PrescriptionTreatButton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -84,8 +85,8 @@ export default function PrescriptionsPage() {
 
       // Fetch doctors and prescriptions in parallel
       const [respPresc, respDoctors] = await Promise.all([
-        fetch("http://127.0.0.1:3333/api/prescriptions"),
-        fetch("http://127.0.0.1:3333/api/medecins")
+        fetch(`${API_BASE_URL}/api/prescriptions`),
+        fetch(`${API_BASE_URL}/api/medecins`)
       ]);
 
       if (!respPresc.ok || !respDoctors.ok) {

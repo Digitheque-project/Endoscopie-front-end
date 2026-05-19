@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { AppShell } from "@/components/layout/AppShell";
+import { API_BASE_URL } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
 import { useState, useEffect } from "react";
 
@@ -32,7 +33,7 @@ export default function Home() {
 
   const fetchAppointments = async () => {
     try {
-      const resp = await fetch("http://127.0.0.1:3333/api/rendezvous");
+      const resp = await fetch(`${API_BASE_URL}/api/rendezvous`);
       if (resp.ok) {
         const data = await resp.json();
         const mapped = data.map((rdv: any) => {
@@ -85,7 +86,7 @@ export default function Home() {
   const fetchSalles = async (showLoading = true) => {
     if (showLoading) setIsRefreshing(true);
     try {
-      const resp = await fetch("http://127.0.0.1:3333/api/salles");
+      const resp = await fetch(`${API_BASE_URL}/api/salles`);
       if (resp.ok) {
         const data = await resp.json();
         setSalles(Array.isArray(data) ? data : []);
@@ -117,7 +118,7 @@ export default function Home() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("http://127.0.0.1:3333/api/salles", {
+      const response = await fetch(`${API_BASE_URL}/api/salles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -132,7 +133,7 @@ export default function Home() {
         setShowAddRoom(false);
 
         // Refresh salles list
-        const refreshResp = await fetch("http://127.0.0.1:3333/api/salles");
+        const refreshResp = await fetch(`${API_BASE_URL}/api/salles`);
         console.log("handleSaveSalle: refresh status", refreshResp.status);
         if (refreshResp.ok) {
           const refreshData = await refreshResp.json();

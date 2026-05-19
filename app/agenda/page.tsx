@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { AppShell } from "@/components/layout/AppShell";
+import { API_BASE_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { JCalendar } from "@/components/ui/JCalendar";
 
@@ -107,7 +108,7 @@ export default function AgendaPage() {
       // 1. Fetch from API
       let apiApps: Appointment[] = [];
       try {
-        const resp = await fetch("http://127.0.0.1:3333/api/rendezvous");
+        const resp = await fetch(`${API_BASE_URL}/api/rendezvous`);
         const data = await resp.json();
         apiApps = data.map((rdv: any) => {
           const start = new Date(rdv.dateHeureDebut);
