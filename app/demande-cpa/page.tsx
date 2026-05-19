@@ -2,8 +2,23 @@
 
 import { AppShell } from "@/components/layout/AppShell";
 import StatBadge from "@/components/ui/StatBadge";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { Suspense } from "react";
 
-export default function CPAPage() {
+function DemandeCPAContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const patientId = searchParams.get("patientId") || "#PX-8829-01";
+
+  const handleLocalAnesthesia = () => {
+    router.push(`/planification-examens?patientId=${encodeURIComponent(patientId)}`);
+  };
+
+  const handleGeneralAnesthesia = () => {
+    router.push(`/demande-cpa?patientId=${encodeURIComponent(patientId)}`);
+  };
+
   return (
     <AppShell>
       <div className="p-8 max-w-7xl mx-auto space-y-8">
@@ -80,10 +95,24 @@ export default function CPAPage() {
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant text-right">Sélection requise</p>
               <div className="flex items-center rounded-2xl border border-outline-variant/30 bg-surface-container p-1.5 shadow-inner">
-                <button className="min-w-[11rem] px-6 py-3 rounded-xl text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors">
+                <button 
+                  onClick={handleLocalAnesthesia}
+                  className={`min-w-[11rem] px-6 py-3 text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer rounded-xl ${
+                    pathname === '/planification-examens'
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm border border-gray-200'
+                  }`}
+                >
                   Anesthésie locale
                 </button>
-                <button className="min-w-[11rem] px-6 py-3 rounded-xl text-sm font-bold bg-white text-primary shadow-sm border border-outline-variant/10">
+                <button 
+                  onClick={handleGeneralAnesthesia}
+                  className={`min-w-[11rem] px-6 py-3 text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer rounded-xl ${
+                    pathname === '/demande-cpa'
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm border border-gray-200'
+                  }`}
+                >
                   Anesthésie générale
                 </button>
               </div>
@@ -153,10 +182,6 @@ export default function CPAPage() {
                   <h3 className="text-2xl font-black text-on-surface">Demande de CPA</h3>
                   <p className="text-[10px] text-on-surface-variant mt-1 uppercase tracking-[0.2em] font-bold">Consultation Pré-Anesthésique</p>
                 </div>
-                <div className="flex items-center gap-2 text-on-secondary-container bg-secondary-container/20 px-4 py-2 rounded-lg border border-secondary-container/20">
-                  <span className="material-symbols-outlined text-lg">history_edu</span>
-                  <span className="text-xs font-bold">Brouillon en cours</span>
-                </div>
               </div>
 
               <div className="space-y-3">
@@ -194,10 +219,6 @@ export default function CPAPage() {
                   <p className="text-xs leading-tight font-medium italic">La validation enverra une notification immédiate au service d'anesthésie.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <button className="px-6 py-3 rounded-xl text-sm font-bold text-on-surface bg-surface-container-high hover:bg-outline-variant/20 transition-all flex items-center gap-2">
-                    <span className="material-symbols-outlined text-lg">save</span>
-                    Brouillon
-                  </button>
                   <button className="px-8 py-3 rounded-xl text-sm font-bold text-white bg-primary shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
                     <span className="material-symbols-outlined text-lg">send</span>
                     Valider la demande
@@ -209,5 +230,13 @@ export default function CPAPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function DemandeCPAPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+      <DemandeCPAContent />
+    </Suspense>
   );
 }

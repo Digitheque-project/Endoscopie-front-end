@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CHECKLIST_LINKS, MAIN_LINKS } from "@/components/layout/navigation";
+import { MAIN_LINKS } from "@/components/layout/navigation";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -62,29 +62,6 @@ export function Sidebar() {
           </Link>
         ))}
 
-        <div className={isAgendaOrPrescription ? "" : "ml-4 mt-1 flex flex-col space-y-1"}>
-          {CHECKLIST_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={[
-                isAgendaOrPrescription
-                  ? "mx-4 flex items-center gap-3 p-2 rounded-lg transition-all text-sm font-medium"
-                  : "flex items-center gap-3 p-2 rounded-lg transition-all text-sm font-medium",
-                isActive(link.href)
-                  ? isAgendaOrPrescription
-                    ? "bg-white text-[#005EB8] shadow-sm"
-                    : "bg-white text-blue-700 shadow-sm"
-                  : isAgendaOrPrescription
-                    ? "text-[#424752] hover:bg-white/40"
-                    : "text-slate-500 hover:bg-slate-200",
-              ].join(" ")}
-            >
-              <span className={isAgendaOrPrescription ? "material-symbols-outlined text-xl" : "material-symbols-outlined"}>{link.icon}</span>
-              <span>{link.label}</span>
-            </Link>
-          ))}
-        </div>
       </nav>
 
       {isAgendaOrPrescription ? (

@@ -1,8 +1,20 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useState, useMemo } from "react";
 
 export default function PlanificationPage() {
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  const formattedCurrentDate = useMemo(() => {
+    const d = new Date(date);
+    return d.toLocaleDateString('fr-FR', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    }).replace(/^\w/, (c) => c.toUpperCase());
+  }, [date]);
   return (
     <AppShell>
       <div className="p-8 max-w-6xl mx-auto space-y-8">
@@ -141,13 +153,23 @@ export default function PlanificationPage() {
           {/* Right Column: Planning Form */}
           <div className="lg:col-span-7">
             <div className="bg-white p-8 rounded-xl border border-outline-variant/30 shadow-md space-y-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">Planification du créneau</h4>
-                  <p className="text-sm text-on-surface-variant mt-1 font-medium">Étape 2 sur 3 : Sélection des ressources</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">Planification du créneau</h4>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="material-symbols-outlined text-primary text-sm">calendar_today</span>
+                  <p className="text-sm font-bold text-primary">{formattedCurrentDate}</p>
+                  <button 
+                    onClick={() => setDate(new Date().toISOString().split('T')[0])}
+                    className="ml-2 px-2 py-0.5 rounded-md bg-primary/10 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/20 transition-all"
+                  >
+                    Aujourd'hui
+                  </button>
                 </div>
-                <span className="text-[10px] font-black bg-surface-container px-3 py-1 rounded-full uppercase tracking-widest text-on-surface-variant">PLANNING</span>
+                <p className="text-sm text-on-surface-variant mt-1.5 font-medium">Étape 2 sur 3 : Sélection des ressources</p>
               </div>
+              <span className="text-[10px] font-black bg-surface-container px-3 py-1 rounded-full uppercase tracking-widest text-on-surface-variant">PLANNING</span>
+            </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
@@ -225,7 +247,7 @@ export default function PlanificationPage() {
                 </div>
                 <div className="bg-surface-container-low p-5 rounded-xl border border-outline-variant/10">
                   <span className="material-symbols-outlined text-primary mb-3 block text-xl font-bold">priority_high</span>
-                  <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Urgence</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Urgent</p>
                   <p className="text-sm font-black text-on-surface">Standard (48h)</p>
                 </div>
                 <div className="bg-surface-container-low p-5 rounded-xl border border-outline-variant/10">

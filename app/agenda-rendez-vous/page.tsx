@@ -23,6 +23,11 @@ export default function AgendaPage() {
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("day");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const formattedDate = (date: Date) => {
     return date.toLocaleDateString('fr-FR', { 
@@ -166,7 +171,7 @@ export default function AgendaPage() {
     };
 
     loadAppointments();
-    
+
     // Polling every 30 seconds for real-time updates
     const interval = setInterval(loadAppointments, 30000);
     return () => clearInterval(interval);
@@ -181,12 +186,12 @@ export default function AgendaPage() {
             <div className="flex items-center gap-3 mt-1">
               <span className="material-symbols-outlined text-primary text-sm">calendar_today</span>
               <div className="flex flex-col">
-                <p className="text-on-surface-variant font-bold">
-                  {viewMode === 'day' ? formattedDate(currentDate) : 
+                 <p className="text-on-surface-variant font-bold">
+                  {mounted ? (viewMode === 'day' ? formattedDate(currentDate) : 
                    viewMode === 'week' ? `Semaine du ${new Date(currentDate.getTime() - currentDate.getDay() * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long'})} au ${new Date(currentDate.getTime() + (6 - currentDate.getDay()) * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'})}` : 
-                   currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase()}
+                   currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase()) : 'Chargement...'}
                 </p>
-                <span className="text-[10px] text-on-surface-variant/60 font-medium italic">Actualisé à {lastRefresh.toLocaleTimeString('fr-FR')}</span>
+                <span className="text-[10px] text-on-surface-variant/60 font-medium italic">Actualisé à {mounted ? lastRefresh.toLocaleTimeString('fr-FR') : '--:--:--'}</span>
               </div>
             </div>
           </div>
@@ -259,7 +264,6 @@ export default function AgendaPage() {
             currentDate={currentDate}
             onAppointmentClick={(app) => {
               console.log("Appointment clicked:", app);
-              // Possible to open a detail modal here
             }}
             onSlotClick={(date, time) => {
               setBookingData({

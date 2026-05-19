@@ -1,6 +1,7 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useState } from "react";
 
 const patients = [
   {
@@ -60,6 +61,20 @@ const patients = [
 ];
 
 export default function PatientsPage() {
+  const [filters, setFilters] = useState({
+    nom: "",
+    procedure: "",
+    medecin: "",
+    date: ""
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
+  const filteredPatients = patients.filter(patient => {
+    const matchesNom = patient.name.toLowerCase().includes(filters.nom.toLowerCase());
+    const matchesProc = patient.exam.toLowerCase().includes(filters.procedure.toLowerCase());
+    // Medecin not present in mock data, but we keep the filter for UI consistency
+    return matchesNom && matchesProc;
+  });
   return (
     <AppShell>
       <div className="p-8 max-w-7xl mx-auto space-y-6">
@@ -92,10 +107,80 @@ export default function PatientsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h3 className="font-headline font-bold text-blue-900">Programmation du Jour</h3>
-            <div className="flex gap-2">
-              <button className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition-all flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">filter_list</span> Filtrer
+            <div className="flex gap-2 relative">
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-2 ${
+                  showFilters 
+                    ? "bg-primary text-white border-primary" 
+                    : "border-slate-200 text-slate-600 hover:bg-white"
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">filter_list</span> 
+                Filtrer
+                {(filters.nom || filters.procedure || filters.medecin) && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 absolute -top-0.5 -right-0.5 animate-pulse" />
+                )}
               </button>
+
+              {showFilters && (
+                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-5 z-30 space-y-4 text-left">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h5 className="font-bold text-xs text-slate-700">Filtres</h5>
+                    <button 
+                      onClick={() => setFilters({ nom: "", procedure: "", medecin: "", date: "" })}
+                      className="text-[10px] font-bold text-blue-600 uppercase hover:underline"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase text-slate-400">Nom</label>
+                      <input
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        type="text"
+                        placeholder="Nom du patient..."
+                        value={filters.nom}
+                        onChange={(e) => setFilters({...filters, nom: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase text-slate-400">Procédure</label>
+                      <input
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        type="text"
+                        placeholder="Ex: Coloscopie..."
+                        value={filters.procedure}
+                        onChange={(e) => setFilters({...filters, procedure: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase text-slate-400">Médecin</label>
+                      <input
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        type="text"
+                        placeholder="Rechercher..."
+                        value={filters.medecin}
+                        onChange={(e) => setFilters({...filters, medecin: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-bold uppercase text-slate-400">Date</label>
+                      <input
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        type="date"
+                        value={filters.date}
+                        onChange={(e) => setFilters({...filters, date: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               <button className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition-all flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">download</span> Exporter
               </button>
@@ -109,13 +194,20 @@ export default function PatientsPage() {
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">ID Patient</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Type d'Examen</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Heure prévue</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Statut</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">DETAIL DE LA PRESCRIPTION</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {patients.map((patient) => (
-                  <tr
+                {filteredPatients.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-slate-500 text-sm">
+                      Aucun patient ne correspond à vos filtres.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPatients.map((patient) => (
+                    <tr
                     key={patient.id}
                     className={`hover:bg-blue-50/30 transition-colors ${patient.focused ? "bg-blue-50/10" : ""}`}
                   >
@@ -165,7 +257,7 @@ export default function PatientsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                    )))}
               </tbody>
             </table>
           </div>

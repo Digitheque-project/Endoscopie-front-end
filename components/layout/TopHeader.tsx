@@ -17,10 +17,10 @@ export function TopHeader() {
           <span className="font-manrope text-xl font-bold tracking-tight text-blue-800">Saint-Luc Clinic</span>
         </div>
         <div className="flex justify-center items-center">
-          <div className="hidden md:flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/20">
-            <span className="material-symbols-outlined text-on-surface-variant text-lg">search</span>
+          <div className="hidden md:flex items-center bg-white px-4 py-2.5 rounded-xl border-2 border-primary shadow-md transition-all hover:ring-4 hover:ring-primary/10 focus-within:ring-4 focus-within:ring-primary/20 w-full max-w-md">
+            <span className="material-symbols-outlined text-primary text-2xl mr-3 font-bold">search</span>
             <input
-              className="bg-transparent border-none focus:ring-0 text-sm w-64 placeholder:text-on-surface-variant/60"
+              className="bg-transparent border-none focus:ring-0 text-sm w-full text-on-surface placeholder:text-slate-400 font-bold"
               placeholder="Rechercher un patient ou un dossier..."
               type="text"
             />
@@ -57,10 +57,10 @@ export function TopHeader() {
           <span className="font-manrope text-xl font-bold tracking-tight text-blue-800 dark:text-blue-300">{header.title}</span>
         </div>
         <div className="flex justify-center items-center">
-          <div className="hidden md:flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/20">
-            <span className="material-symbols-outlined text-on-surface-variant text-lg">search</span>
+          <div className="hidden md:flex items-center bg-white px-3 py-2 rounded-xl border border-outline-variant/40 shadow-sm transition-all hover:border-primary/40 focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary">
+            <span className="material-symbols-outlined text-primary text-xl mr-2">search</span>
             <input
-              className="bg-transparent border-none focus:ring-0 text-sm w-64 placeholder:text-on-surface-variant/60"
+              className="bg-transparent border-none focus:ring-0 text-sm w-64 text-on-surface placeholder:text-on-surface-variant/50 font-medium"
               placeholder="Rechercher un patient ou un dossier..."
               type="text"
             />
@@ -97,20 +97,24 @@ export function TopHeader() {
           <span className="material-symbols-outlined">{header.icon}</span>
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Unite Endoscopie</p>
+          {pathname !== '/demande-cpa' && pathname !== '/' && pathname !== '/patient-dossier' && (
+            <p className="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Unite Endoscopie</p>
+          )}
           <h2 className="text-lg font-semibold text-on-surface leading-tight truncate">{header.title}</h2>
-          <p className="text-[10px] text-on-surface-variant truncate">{header.subtitle}</p>
+          {header.subtitle && (
+            <p className="text-[10px] text-on-surface-variant truncate">{header.subtitle}</p>
+          )}
         </div>
       </div>
 
       <div className="flex items-center gap-3 lg:gap-6">
-        <div className="relative hidden xl:block w-96">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
+        <div className="relative hidden xl:block w-full max-w-xl">
+          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-2xl font-bold">
             search
           </span>
           <input
-            className="w-full bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/60"
-            placeholder="Search patient, procedure, or medical ID..."
+            className="w-full bg-white border-2 border-primary rounded-2xl pl-12 pr-4 py-3 text-sm transition-all hover:ring-4 hover:ring-primary/10 focus:ring-4 focus:ring-primary/20 text-on-surface placeholder:text-slate-400 font-bold shadow-md outline-none"
+            placeholder="Rechercher un patient, une procédure ou un identifiant..."
             type="text"
           />
         </div>

@@ -36,7 +36,7 @@ const reports = [
 export default function RapportPage() {
   return (
     <AppShell>
-      <main className="ml-64 min-h-screen bg-surface">
+      <div className="min-h-screen bg-surface">
         <div className="px-8 py-6 space-y-8">
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
@@ -91,7 +91,7 @@ export default function RapportPage() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Status</label>
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">DETAIL DE LA PRESCRIPTION</label>
               <div className="flex gap-2">
                 <button className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full transition-all">Tous</button>
                 <button className="bg-surface-container-lowest text-on-surface-variant hover:text-primary text-xs font-bold px-4 py-2 rounded-full border border-outline-variant/15 transition-all">Brouillon</button>
@@ -123,7 +123,7 @@ export default function RapportPage() {
                       <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Nom du Patient</th>
                       <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Type de Procédure</th>
                       <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Chirurgien</th>
-                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Statut</th>
+                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">DETAIL DE LA PRESCRIPTION</th>
                       <th className="px-6 py-4 text-right" />
                     </tr>
                   </thead>
@@ -191,7 +191,7 @@ export default function RapportPage() {
             </span>
           </button>
         </div>
-      </main>
+      </div>
     </AppShell>
   );
 }

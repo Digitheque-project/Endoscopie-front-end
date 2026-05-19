@@ -1,15 +1,19 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useParams } from "next/navigation";
 
 export default function PatientDossierPage() {
+  const params = useParams();
+  const id = params?.id ? decodeURIComponent(params.id as string) : "#END-9821";
+
   return (
     <AppShell>
       <div className="p-8 max-w-7xl mx-auto space-y-8">
         {/* Back Button */}
-        <a href="/patients" className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-white px-5 py-3 text-sm font-bold text-on-surface-variant shadow-sm transition-all hover:border-primary hover:text-primary hover:shadow-md">
+        <a href="/prescriptions" className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-white px-5 py-3 text-sm font-bold text-on-surface-variant shadow-sm transition-all hover:border-primary hover:text-primary hover:shadow-md">
           <span className="material-symbols-outlined text-lg">arrow_back</span>
-          <span>Retour à la liste des patients</span>
+          <span>Retour à la liste des prescriptions</span>
         </a>
 
         {/* Patient Header */}
@@ -21,7 +25,7 @@ export default function PatientDossierPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Patient</p>
               <h2 className="font-headline text-3xl font-extrabold tracking-tight">Jean-Pierre Dubois</h2>
-              <p className="text-sm text-on-surface-variant mt-1">Né le 14/05/1958 • 65 ans • ID #END-9821</p>
+              <p className="text-sm text-on-surface-variant mt-1">Né le 14/05/1958 • 65 ans • ID {id}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">Coloscopie diagnostique</span>
                 <span className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider">Préparation en cours</span>
@@ -29,10 +33,10 @@ export default function PatientDossierPage() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 w-full lg:w-auto">
-            <a href="/checklists/avant" className="px-5 py-3 rounded-xl bg-primary text-white font-bold text-sm text-center hover:opacity-90 transition-opacity">
+            <a href={`/checklists/avant?patientId=${encodeURIComponent(id)}`} className="px-5 py-3 rounded-xl bg-primary text-white font-bold text-sm text-center hover:opacity-90 transition-opacity shadow-md hover:scale-105 active:scale-95 duration-200">
               Démarrer checklist
             </a>
-            <a href="/planification" className="px-5 py-3 rounded-xl border border-outline-variant/40 text-on-surface-variant font-bold text-sm text-center hover:bg-surface-container-low transition-colors">
+            <a href={`/planification-examens?patientId=${encodeURIComponent(id)}`} className="px-5 py-3 rounded-xl border border-outline-variant/40 text-on-surface-variant font-bold text-sm text-center hover:bg-surface-container-low transition-all hover:scale-105 active:scale-95 duration-200">
               Planifier l'examen
             </a>
           </div>
@@ -145,11 +149,11 @@ export default function PatientDossierPage() {
               <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Étape 1</p>
               <p className="font-bold mt-1">Agenda / Rendez-vous</p>
             </a>
-            <a href="/checklists/avant" className="rounded-xl border border-outline-variant/20 p-4 hover:bg-surface-container-low transition-colors">
+            <a href={`/checklists/avant?patientId=${encodeURIComponent(id)}`} className="rounded-xl border border-outline-variant/20 p-4 hover:bg-surface-container-low transition-colors">
               <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Étape 2</p>
               <p className="font-bold mt-1">Check-list avant</p>
             </a>
-            <a href="/checklists/apres" className="rounded-xl border border-outline-variant/20 p-4 hover:bg-surface-container-low transition-colors">
+            <a href={`/checklists/apres?patientId=${encodeURIComponent(id)}`} className="rounded-xl border border-outline-variant/20 p-4 hover:bg-surface-container-low transition-colors">
               <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Étape 3</p>
               <p className="font-bold mt-1">Check-list après</p>
             </a>

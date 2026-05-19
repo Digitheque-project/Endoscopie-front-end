@@ -2,56 +2,12 @@
 
 import { AppShell } from "@/components/layout/AppShell";
 import { useRouter } from "next/navigation";
-import { use, Suspense, useState, useEffect } from "react";
-
-const checklistItems = [
-  {
-    icon: "label",
-    title: "Confirmation & Étiquetage",
-    description: "Confirmation orale du nom de l'acte et étiquetage rigoureux des prélèvements.",
-    buttons: ["OUI", "NON", "NA"],
-  },
-  {
-    icon: "history_edu",
-    title: "Prescriptions Post-Acte",
-    description: "Saisie et vérification des prescriptions médicales pour la phase de réveil.",
-    buttons: ["OUI", "NON"],
-  },
-];
+import { use, Suspense } from "react";
 
 function ChecklistApresContent({ searchParams }: { searchParams: Promise<any> }) {
   const resolvedParams = use(searchParams);
   const router = useRouter();
   const patientId = resolvedParams?.patientId ?? "458-992-331";
-
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const STORAGE_KEY = "apres-checklist-answers";
-
-  useEffect(() => {
-    const storedAnswers = window.localStorage.getItem(STORAGE_KEY);
-    if (storedAnswers) {
-      try {
-        setAnswers(JSON.parse(storedAnswers));
-      } catch (error) {
-        console.error("Erreur lors du chargement des réponses de la checklist", error);
-      }
-    }
-  }, []);
-
-  const updateAnswer = (itemTitle: string, selected: string) => {
-    const isSameSelection = answers[itemTitle] === selected;
-    const nextAnswers = {
-      ...answers,
-      [itemTitle]: isSameSelection ? "" : selected,
-    };
-
-    if (isSameSelection) {
-      delete nextAnswers[itemTitle];
-    }
-
-    setAnswers(nextAnswers);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextAnswers));
-  };
 
   const handleValiderEtTerminer = () => {
     router.push(`/resultat-endoscopie?patientId=${encodeURIComponent(patientId)}`);
@@ -86,37 +42,52 @@ function ChecklistApresContent({ searchParams }: { searchParams: Promise<any> })
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {checklistItems.map((item, index) => (
-            <div key={item.title} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="p-2 bg-secondary-container rounded-lg">
-                  <span className="material-symbols-outlined text-on-secondary-fixed-variant">{item.icon}</span>
-                </div>
-                <div>
-                  <h4 className="font-headline text-on-surface">{item.title}</h4>
-                  <p className="text-xs text-slate-500 mt-1">{item.description}</p>
-                </div>
+          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-secondary-container rounded-lg">
+                <span className="material-symbols-outlined text-on-secondary-fixed-variant">label</span>
               </div>
-              <div className="flex gap-2">
-                {item.buttons.map((button) => {
-                  const isSelected = answers[item.title] === button;
-                  return (
-                    <button
-                      key={button}
-                      onClick={() => updateAnswer(item.title, button)}
-                      className={`flex-1 py-3 text-center rounded-lg border transition-all font-medium ${
-                        isSelected
-                          ? "bg-primary-container text-white border-primary-container shadow-sm"
-                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                      }`}
-                    >
-                      {button}
-                    </button>
-                  );
-                })}
+              <div>
+                <h4 className="font-headline text-on-surface">Confirmation & Étiquetage</h4>
+                <p className="text-xs text-slate-500 mt-1">Confirmation orale du nom de l'acte et étiquetage rigoureux des prélèvements.</p>
               </div>
             </div>
-          ))}
+            <div className="flex gap-2">
+              {[
+                ["Oui", "bg-primary-container text-white border-primary-container"],
+                ["Non", "bg-slate-50 text-slate-600 border-slate-200"],
+                ["N/A", "bg-slate-50 text-slate-600 border-slate-200"],
+              ].map(([label, cls]) => (
+                <label key={label} className="flex-1 cursor-pointer group">
+                  <input className="hidden peer" name="etiquetage" type="radio" />
+                  <div className={`py-3 text-center rounded-lg border group-hover:bg-slate-100 transition-all ${cls}`}>{label}</div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-secondary-container rounded-lg">
+                <span className="material-symbols-outlined text-on-secondary-fixed-variant">history_edu</span>
+              </div>
+              <div>
+                <h4 className="font-headline text-on-surface">Prescriptions Post-Acte</h4>
+                <p className="text-xs text-slate-500 mt-1">Saisie et vérification des prescriptions médicales pour la phase de réveil.</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {[
+                ["Oui", "bg-primary-container text-white border-primary-container"],
+                ["Non", "bg-slate-50 text-slate-600 border-slate-200"],
+              ].map(([label, cls]) => (
+                <label key={label} className="flex-1 cursor-pointer group">
+                  <input className="hidden peer" name="prescriptions" type="radio" />
+                  <div className={`py-3 text-center rounded-lg border group-hover:bg-slate-100 transition-all ${cls}`}>{label}</div>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <div className="md:col-span-2 bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
             <div className="flex items-center gap-4">

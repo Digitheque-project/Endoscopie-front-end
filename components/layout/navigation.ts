@@ -15,20 +15,14 @@ export const MAIN_LINKS: NavLink[] = [
   { href: "/", icon: "dashboard", label: "Tableau de bord" },
   { href: "/prescriptions", icon: "medication", label: "Fil de prescription" },
   { href: "/agenda", icon: "calendar_month", label: "Agenda / Rendez-vous" },
-  { href: "/checklists", icon: "checklist", label: "Check-lists", matchPrefix: true },
   { href: "/rapport", icon: "description", label: "Rapport" },
   { href: "/archives", icon: "inventory_2", label: "Archives" },
 ];
 
-export const CHECKLIST_LINKS: NavLink[] = [
-  { href: "/checklists/avant", icon: "fact_check", label: "Check-list avant" },
-  { href: "/checklists/apres", icon: "fact_check", label: "Check-list apres" },
-];
-
 export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
   "/": {
-    title: "Tableau de bord",
-    subtitle: "Vue globale du service",
+    title: "endosystems_clinical",
+    subtitle: "",
     icon: "dashboard",
   },
   "/prescriptions": {
@@ -56,11 +50,17 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     subtitle: "Phase 2 / Apres l'endoscopie",
     icon: "fact_check",
   },
+  "/prescription-workflow": {
+    title: "Opération Endoscopie",
+    subtitle: "Transcription vocale et prescriptions intermédiaires",
+    icon: "clinical_notes",
+  },
   "/rapport": {
     title: "Rapport",
     subtitle: "Validation et consultation",
     icon: "description",
   },
+
   "/archives": {
     title: "Archives",
     subtitle: "Historique et dossiers",
@@ -72,11 +72,11 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     icon: "people",
   },
   "/patient-dossier": {
-    title: "Dossier Patient",
-    subtitle: "Synthèse clinique",
+    title: "patient_dossier_interactif",
+    subtitle: "",
     icon: "person",
   },
-  "/planification": {
+  "/planification-examens": {
     title: "Planification de l'examen",
     subtitle: "Organisation du parcours",
     icon: "event",
@@ -84,6 +84,11 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
   "/cpa": {
     title: "Demande CPA / image",
     subtitle: "Documents et images associés",
+    icon: "assignment_add",
+  },
+  "/demande-cpa": {
+    title: "Demande de CPA",
+    subtitle: "",
     icon: "assignment_add",
   },
 };
