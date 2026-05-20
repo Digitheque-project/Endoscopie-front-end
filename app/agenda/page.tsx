@@ -79,7 +79,8 @@ export default function AgendaPage() {
       heureDebut: bookingData.heureDebut,
       heureFin: bookingData.heureFin,
       statut: bookingData.statut,
-      color: "primary"
+      color: "primary",
+      date: bookingData.date
     };
 
     setAppointments([...appointments, newAppointment]);
