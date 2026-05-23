@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { AppShell } from "@/components/layout/AppShell";
-import { API_BASE_URL } from "@/lib/api";
+import { apiUrl } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
 import { useState, useEffect } from "react";
 
@@ -30,10 +30,11 @@ export default function Home() {
     date: ""
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const fetchAppointments = async () => {
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/rendezvous`);
+      const resp = await fetch(apiUrl('/api/rendezvous'));
       if (resp.ok) {
         const data = await resp.json();
         const mapped = data.map((rdv: any) => {
@@ -69,9 +70,13 @@ export default function Home() {
           };
         });
         setAppointments(mapped);
+        setApiError(null);
+      } else {
+        setApiError(`API rendez-vous : erreur ${resp.status}`);
       }
     } catch (e) {
       console.error("Error fetching appointments", e);
+      setApiError("Impossible de joindre l'API. Démarrez le backend (npm run start:dev dans endoscopie-back).");
     }
   };
 
@@ -86,14 +91,18 @@ export default function Home() {
   const fetchSalles = async (showLoading = true) => {
     if (showLoading) setIsRefreshing(true);
     try {
-      const resp = await fetch(`${API_BASE_URL}/api/salles`);
+      const resp = await fetch(apiUrl('/api/salles'));
       if (resp.ok) {
         const data = await resp.json();
         setSalles(Array.isArray(data) ? data : []);
         setLastUpdated(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+        setApiError(null);
+      } else {
+        setApiError(`API salles : erreur ${resp.status}`);
       }
     } catch (e) {
       console.error("Error fetching salles", e);
+      setApiError("Impossible de joindre l'API. Démarrez le backend (npm run start:dev dans endoscopie-back).");
     } finally {
       if (showLoading) setIsRefreshing(false);
     }
@@ -118,7 +127,7 @@ export default function Home() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/salles`, {
+      const response = await fetch(apiUrl('/api/salles'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -133,7 +142,7 @@ export default function Home() {
         setShowAddRoom(false);
 
         // Refresh salles list
-        const refreshResp = await fetch(`${API_BASE_URL}/api/salles`);
+        const refreshResp = await fetch(apiUrl('/api/salles'));
         console.log("handleSaveSalle: refresh status", refreshResp.status);
         if (refreshResp.ok) {
           const refreshData = await refreshResp.json();
@@ -200,6 +209,11 @@ export default function Home() {
   return (
     <AppShell>
       <div className="pt-4 px-4 lg:px-8 max-w-7xl mx-auto space-y-8 pb-32">
+        {apiError && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <strong>Connexion API :</strong> {apiError}
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 text-primary mb-3">
