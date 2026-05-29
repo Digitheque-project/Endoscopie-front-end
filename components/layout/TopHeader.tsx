@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { DEFAULT_HEADER, HEADER_BY_PATH } from "@/components/layout/navigation";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 export function TopHeader() {
   const pathname = usePathname();
@@ -27,10 +28,7 @@ export function TopHeader() {
           </div>
         </div>
         <div className="flex items-center gap-4 justify-end">
-          <button className="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-full relative">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full" />
-          </button>
+          <NotificationBell />
           <div className="flex items-center gap-3 pl-4 border-l border-outline-variant/30">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-on-surface">Dr. Julian Reed</p>
@@ -67,10 +65,7 @@ export function TopHeader() {
           </div>
         </div>
         <div className="flex items-center gap-4 justify-end">
-          <button className="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-full relative">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full" />
-          </button>
+          <NotificationBell />
           <div className="flex items-center gap-3 pl-4 border-l border-outline-variant/30">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-on-surface">Dr. Julian Reed</p>
@@ -119,9 +114,7 @@ export function TopHeader() {
           />
         </div>
 
-        <button className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-200/50 transition-colors text-on-surface-variant">
-          <span className="material-symbols-outlined">notifications</span>
-        </button>
+        <NotificationBell />
 
         <div className="hidden sm:flex items-center gap-3">
           <div className="text-right hidden lg:block">

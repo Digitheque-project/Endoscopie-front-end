@@ -1,7 +1,7 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
-import { apiUrl } from "@/lib/api";
+import { apiFetch, apiUrl } from "@/lib/api";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import StatBadge from "@/components/ui/StatBadge";
@@ -238,7 +238,7 @@ function PlanificationContent() {
       };
 
       // 1. Sauvegarde en Base de données via API
-      const response = await fetch(apiUrl('/api/rendezvous'), {
+      const response = await apiFetch('/api/rendezvous', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(appointmentData)

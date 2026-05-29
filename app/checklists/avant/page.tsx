@@ -4,7 +4,7 @@ import { useState, useEffect, use, Suspense } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useRouter } from "next/navigation";
 import WorkflowProgressIndicator from "@/components/workflow/WorkflowProgressIndicator";
-import { apiUrl } from "@/lib/api";
+import { apiFetch, apiUrl } from "@/lib/api";
 
 const checklistItems = [
   {
@@ -140,7 +140,7 @@ function ChecklistAvantContent({ searchParams }: { searchParams: Promise<any> })
     };
 
     try {
-      const resp = await fetch(apiUrl('/api/checklists/avant'), {
+      const resp = await apiFetch('/api/checklists/avant', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

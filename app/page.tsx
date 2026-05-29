@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { AppShell } from "@/components/layout/AppShell";
-import { apiUrl } from "@/lib/api";
+import { apiFetch, apiUrl } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
 import { useState, useEffect } from "react";
 
@@ -127,7 +127,7 @@ export default function Home() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(apiUrl('/api/salles'), {
+      const response = await apiFetch('/api/salles', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
