@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { apiFetch, apiUrl } from "@/lib/api";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -292,7 +292,7 @@ function PlanificationContent() {
 
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8">
+    <div className={PAGE_CONTENT_CLASS}>
       {/* Back Button */}
       <a href="/prescriptions" className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
         <span className="material-symbols-outlined text-lg">arrow_back</span>

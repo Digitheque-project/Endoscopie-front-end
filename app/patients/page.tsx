@@ -1,6 +1,7 @@
 "use client";
 
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { PageToolbar } from "@/components/layout/PageToolbar";
 import { useState } from "react";
 
 const patients = [
@@ -77,11 +78,12 @@ export default function PatientsPage() {
   });
   return (
     <AppShell>
-      <div className="p-8 max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-headline font-extrabold tracking-tight">Liste des Patients</h1>
-          <p className="text-on-surface-variant mt-1">Programmation du jour - Endoscopie</p>
-        </div>
+      <div className={PAGE_CONTENT_CLASS}>
+        <PageToolbar>
+          <p className="text-on-surface-variant font-medium">
+            Programmation du jour — Endoscopie
+          </p>
+        </PageToolbar>
 
         {/* Quick Stats */}
         <div className="flex gap-4 overflow-x-auto pb-2">

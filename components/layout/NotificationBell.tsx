@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  loadNotifications,
+  type NotificationItem,
+} from "@/lib/notification-api";
+import {
   fetchNotificationInbox,
   markInboxNotificationRead,
   subscribeNotificationStream,
@@ -15,6 +19,16 @@ const TYPE_LABELS: Record<string, string> = {
   RENDEZ_VOUS: "Rendez-vous",
   AVIS_INTER_SERVICE: "Avis inter-service",
   RESULTAT_EXAMEN: "Résultat examen",
+};
+
+type DisplayNotification = {
+  id: string;
+  type: string;
+  motif: string;
+  emitterName?: string;
+  receivedAt: string;
+  readAt?: string | null;
+  isLocal: boolean;
 };
 
 function typeLabel(type: string): string {
@@ -34,29 +48,119 @@ function formatTime(iso: string): string {
   }
 }
 
+function fromRemote(n: NotificationItem): DisplayNotification {
+  return {
+    id: n.id ?? `remote-${n.createdAt ?? Date.now()}`,
+    type: n.type ?? "Alerte",
+    motif: n.motif ?? "—",
+    emitterName: n.emitterName,
+    receivedAt: n.createdAt ?? new Date().toISOString(),
+    readAt: n.readAt,
+    isLocal: false,
+  };
+}
+
+function fromInbox(n: InboxNotification): DisplayNotification {
+  return {
+    id: n.id,
+    type: n.type,
+    motif: n.motif,
+    emitterName: n.emitterName,
+    receivedAt: n.receivedAt,
+    readAt: n.readAt,
+    isLocal: true,
+  };
+}
+
+function mergeNotifications(
+  remote: DisplayNotification[],
+  local: DisplayNotification[],
+): DisplayNotification[] {
+  const byKey = new Map<string, DisplayNotification>();
+  for (const n of [...local, ...remote]) {
+    const key = n.id;
+    if (!byKey.has(key)) byKey.set(key, n);
+  }
+  return [...byKey.values()].sort(
+    (a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt),
+  );
+}
+
+function playNotificationSound() {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+    gain1.gain.setValueAtTime(0, ctx.currentTime);
+    gain1.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+    gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.3);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+    gain2.gain.setValueAtTime(0, ctx.currentTime + 0.1);
+    gain2.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.1);
+    osc2.stop(ctx.currentTime + 0.5);
+  } catch (e) {
+    console.error("Audio playback failed", e);
+  }
+}
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<InboxNotification[]>([]);
+  const [items, setItems] = useState<DisplayNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<InboxNotification | null>(null);
+  const [toast, setToast] = useState<DisplayNotification | null>(null);
   const seenIds = useRef(new Set<string>());
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
-  const upsert = useCallback((item: InboxNotification) => {
-    if (seenIds.current.has(item.id)) return;
-    seenIds.current.add(item.id);
-    setItems((prev) => {
-      const next = [item, ...prev.filter((n) => n.id !== item.id)];
-      return next.slice(0, 50);
-    });
+  const showToast = useCallback((item: DisplayNotification) => {
+    setToast(item);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 5000);
   }, []);
+
+  const upsert = useCallback(
+    (item: DisplayNotification) => {
+      if (seenIds.current.has(item.id)) return;
+      seenIds.current.add(item.id);
+      setItems((prev) => mergeNotifications([item], prev).slice(0, 50));
+      showToast(item);
+      playNotificationSound();
+    },
+    [showToast],
+  );
 
   const refresh = useCallback(async () => {
     try {
       setError(null);
-      const data = await fetchNotificationInbox();
-      data.forEach((n) => seenIds.current.add(n.id));
-      setItems(data);
+      const [remote, inbox] = await Promise.all([
+        loadNotifications("ENVOYE"),
+        fetchNotificationInbox(),
+      ]);
+      const merged = mergeNotifications(
+        remote.map(fromRemote),
+        inbox.map(fromInbox),
+      );
+      merged.forEach((n) => seenIds.current.add(n.id));
+      setItems(merged.slice(0, 50));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     }
@@ -64,13 +168,12 @@ export function NotificationBell() {
 
   useEffect(() => {
     refresh();
+    const poll = setInterval(refresh, 30000);
     const unsubscribe = subscribeNotificationStream((item) => {
-      upsert(item);
-      setToast(item);
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-      toastTimer.current = setTimeout(() => setToast(null), 5000);
+      upsert(fromInbox(item));
     });
     return () => {
+      clearInterval(poll);
       unsubscribe();
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
@@ -78,16 +181,43 @@ export function NotificationBell() {
 
   const unreadCount = items.filter((n) => !n.readAt).length;
 
-  const handleOpenItem = async (item: InboxNotification) => {
+  const handleOpenItem = async (item: DisplayNotification) => {
     if (!item.readAt) {
-      await markInboxNotificationRead(item.id).catch(() => undefined);
+      if (item.isLocal) {
+        await markInboxNotificationRead(item.id).catch(() => undefined);
+      }
       setItems((prev) =>
         prev.map((n) =>
           n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n,
         ),
       );
     }
+    setOpen(false);
   };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [open]);
 
   return (
     <>
@@ -123,6 +253,7 @@ export function NotificationBell() {
 
       <div className="relative">
         <button
+          ref={buttonRef}
           type="button"
           onClick={() => {
             setOpen((v) => !v);
@@ -133,16 +264,16 @@ export function NotificationBell() {
         >
           <span className="material-symbols-outlined">notifications</span>
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-error text-white text-[10px] font-bold rounded-full">
+            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold rounded-full">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl z-50">
+          <div ref={panelRef} className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl z-50">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-800">Notifications</p>
+              <p className="text-sm font-bold text-slate-800">Notifications Endoscopie</p>
               <button
                 type="button"
                 onClick={refresh}

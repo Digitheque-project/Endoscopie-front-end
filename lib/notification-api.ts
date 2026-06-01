@@ -1,4 +1,5 @@
 import { apiUrl } from './api';
+import { ENDOSCOPIE_SERVICE_ID } from './config';
 
 const NOTIFICATION_API_URL =
   process.env.NEXT_PUBLIC_NOTIFICATION_API_URL?.trim().replace(/\/$/, '') ||
@@ -15,12 +16,20 @@ export type NotificationItem = {
   emitterName?: string;
   recipientName?: string;
   readAt?: string | null;
+  serviceId?: string;
 };
 
-/** Réponse brute du service notification (snake_case). */
 type RawNotification = Record<string, unknown>;
 
+type NotificationListResponse = {
+  serviceId?: string;
+  status?: string;
+  total?: number;
+  items?: RawNotification[];
+};
+
 function normalizeNotification(raw: RawNotification): NotificationItem {
+  const payload = raw.payload as Record<string, unknown> | undefined;
   return {
     id: (raw.id as string) ?? undefined,
     type: (raw.type as string) ?? undefined,
@@ -37,65 +46,41 @@ function normalizeNotification(raw: RawNotification): NotificationItem {
       (raw.recipientName as string) ??
       undefined,
     readAt: (raw.lu_at as string | null) ?? (raw.readAt as string | null) ?? null,
+    serviceId:
+      (payload?.sourceServiceId as string) ??
+      (raw.emitter as string) ??
+      ENDOSCOPIE_SERVICE_ID,
   };
 }
 
-function parseNotificationList(data: unknown): NotificationItem[] {
-  const list = Array.isArray(data)
-    ? data
-    : (data as { items?: unknown[] })?.items ??
+function parseItems(data: unknown): RawNotification[] {
+  if (Array.isArray(data)) return data as RawNotification[];
+  const wrapped = data as NotificationListResponse;
+  if (wrapped.items && Array.isArray(wrapped.items)) return wrapped.items;
+  return (
+    ((data as { items?: unknown[] })?.items ??
       (data as { data?: unknown[] })?.data ??
-      [];
-  return (list as RawNotification[]).map(normalizeNotification);
+      []) as RawNotification[]
+  );
 }
 
-const ENDOSCOPIE_TYPES = new Set([
-  'DEMANDE_EXAMEN',
-  'ORDONNANCE',
-  'CPA_DEMANDE',
-  'RENDEZ_VOUS',
-]);
-
-/** Filtre les notifications récentes liées à l’unité endoscopie. */
-export function filterRecentEndoscopieNotifications(
-  items: NotificationItem[],
-  max = 20,
-): NotificationItem[] {
-  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-
-  return items
-    .filter((n) => {
-      if (n.createdAt) {
-        const t = Date.parse(n.createdAt);
-        if (!Number.isNaN(t) && t < cutoff) return false;
-      }
-      const motif = (n.motif ?? '').toLowerCase();
-      if (n.type && ENDOSCOPIE_TYPES.has(n.type)) return true;
-      if (motif.includes('endoscop')) return true;
-      if ((n.emitterName ?? '').toLowerCase().includes('endoscop')) return true;
-      return false;
-    })
-    .sort((a, b) => {
-      const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
-      const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
-      return tb - ta;
-    })
-    .slice(0, max);
-}
-
-/** Via le backend endoscopie (recommandé — évite CORS). */
+/** Via le backend endoscopie — filtré par ENDOSCOPIE_SERVICE_ID côté serveur. */
 export async function fetchNotificationsViaBackend(
   status = 'ENVOYE',
 ): Promise<NotificationItem[]> {
-  const resp = await fetch(apiUrl(`/api/notifications?status=${encodeURIComponent(status)}`));
+  const params = new URLSearchParams({
+    status,
+    serviceId: ENDOSCOPIE_SERVICE_ID,
+  });
+  const resp = await fetch(apiUrl(`/api/notifications?${params.toString()}`));
   if (!resp.ok) {
     throw new Error(`Notifications (${resp.status})`);
   }
   const data = await resp.json();
-  return parseNotificationList(data);
+  return parseItems(data).map(normalizeNotification);
 }
 
-/** Appel direct au service notification (si CORS autorisé). */
+/** Appel direct au service notification puis filtre local par serviceId. */
 export async function fetchNotificationsDirect(
   status = 'ENVOYE',
 ): Promise<NotificationItem[]> {
@@ -106,15 +91,16 @@ export async function fetchNotificationsDirect(
     throw new Error(`Notifications direct (${resp.status})`);
   }
   const data = await resp.json();
-  return parseNotificationList(data);
+  const sid = ENDOSCOPIE_SERVICE_ID.toLowerCase();
+  return parseItems(data)
+    .filter((raw) => JSON.stringify(raw).toLowerCase().includes(sid))
+    .map(normalizeNotification);
 }
 
 export async function loadNotifications(status = 'ENVOYE'): Promise<NotificationItem[]> {
-  let items: NotificationItem[];
   try {
-    items = await fetchNotificationsViaBackend(status);
+    return await fetchNotificationsViaBackend(status);
   } catch {
-    items = await fetchNotificationsDirect(status);
+    return fetchNotificationsDirect(status);
   }
-  return filterRecentEndoscopieNotifications(items);
 }

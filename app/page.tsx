@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { apiFetch, apiUrl } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
 import { useState, useEffect } from "react";
@@ -208,7 +208,7 @@ export default function Home() {
 
   return (
     <AppShell>
-      <div className="pt-4 px-4 lg:px-8 max-w-7xl mx-auto space-y-8 pb-32">
+      <div className={PAGE_CONTENT_CLASS}>
         {apiError && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <strong>Connexion API :</strong> {apiError}

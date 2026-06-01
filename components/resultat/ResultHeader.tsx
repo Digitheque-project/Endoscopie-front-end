@@ -12,10 +12,6 @@ interface ResultHeaderProps {
 export default function ResultHeader({ patientName, patientId, patientAge }: ResultHeaderProps) {
   const router = useRouter();
   
-  const handleRetourChecklistApres = () => {
-    router.push('/checklist-apres-endoscopie');
-  };
-  
   return (
     <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -34,14 +30,6 @@ export default function ResultHeader({ patientName, patientId, patientAge }: Res
             </div>
           </div>
         </div>
-        
-        <button 
-          onClick={handleRetourChecklistApres}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm font-semibold text-sm"
-        >
-          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-          Retour au check list après
-        </button>
       </div>
     </section>
   );

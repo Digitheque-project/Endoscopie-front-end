@@ -1,48 +1,47 @@
-import { AppShell } from "@/components/layout/AppShell";
+"use client";
 
-const reports = [
-  {
-    name: "LEFEBVRE Sophie",
-    id: "#END-2023-9942",
-    procedure: "Colonoscopy + Biopsy",
-    surgeon: "Dr. Jean Dupont",
-    status: "Brouillon",
-    statusClass: "bg-tertiary-fixed text-on-tertiary-fixed",
-    date: "12 Oct 2023",
-    time: "09:45",
-  },
-  {
-    name: "MARCHAND Thomas",
-    id: "#END-2023-9938",
-    procedure: "Upper Endoscopy",
-    surgeon: "Dr. Claire Durand",
-    status: "Validé",
-    statusClass: "bg-green-100 text-green-700",
-    date: "12 Oct 2023",
-    time: "08:15",
-  },
-  {
-    name: "PETIT Robert",
-    id: "#END-2023-9930",
-    procedure: "Sigmoidoscopy",
-    surgeon: "Dr. Marie Curie",
-    status: "Validé",
-    statusClass: "bg-green-100 text-green-700",
-    date: "11 Oct 2023",
-    time: "16:30",
-  },
-];
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { useState, useEffect } from "react";
+import { apiUrl } from "@/lib/api";
 
 export default function RapportPage() {
+  const [reports, setReports] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchReports() {
+      try {
+        const resp = await fetch(apiUrl('/api/resultats'));
+        if (resp.ok) {
+          const data = await resp.json();
+          const mapped = data.map((item: any) => {
+            const date = new Date(item.dateCreation);
+            return {
+              id: item.prescriptionId || item.id,
+              name: item.patient ? `${item.patient.nom} ${item.patient.prenom}` : "Inconnu",
+              procedure: item.prescription ? item.prescription.procedureType : "Inconnu",
+              surgeon: item.doctorName || "Non spécifié",
+              status: "Validé", // In a real app, logic based on fields
+              statusClass: "bg-green-100 text-green-700",
+              date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
+              time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            };
+          });
+          setReports(mapped);
+        }
+      } catch (err) {
+        console.error("Erreur chargement des rapports:", err);
+      }
+    }
+    fetchReports();
+  }, []);
   return (
     <AppShell>
-      <div className="min-h-screen bg-surface">
-        <div className="px-8 py-6 space-y-8">
+      <div className={PAGE_CONTENT_CLASS}>
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
               <div>
-                <p className="text-sm text-on-surface-variant font-medium mb-1">Procédures Aujourd'hui</p>
-                <h3 className="text-3xl font-headline font-bold text-on-surface">14</h3>
+                <p className="text-sm text-on-surface-variant font-medium mb-1">Procédures Récents</p>
+                <h3 className="text-3xl font-headline font-bold text-on-surface">{reports.length}</h3>
                 <p className="text-xs text-[#1e8e3e] font-bold flex items-center gap-1 mt-2"><span className="material-symbols-outlined text-sm">trending_up</span> +12% vs hier</p>
               </div>
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
@@ -106,7 +105,7 @@ export default function RapportPage() {
 
           <section className="space-y-4">
             <div className="flex justify-between items-center px-4">
-              <h4 className="font-headline font-bold text-on-surface">Rapports Cliniques (24)</h4>
+              <h4 className="font-headline font-bold text-on-surface">Rapports Cliniques ({reports.length})</h4>
               <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-tertiary" /> En attente de validation</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Finalisé</span>
@@ -178,7 +177,6 @@ export default function RapportPage() {
               </div>
             </div>
           </section>
-        </div>
 
         <div className="fixed bottom-8 right-8 flex flex-col gap-3">
           <button className="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/15 flex items-center justify-center text-on-surface-variant shadow-lg hover:scale-110 transition-transform">

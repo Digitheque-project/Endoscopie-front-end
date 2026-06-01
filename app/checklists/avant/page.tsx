@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, use, Suspense } from "react";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { useRouter } from "next/navigation";
 import WorkflowProgressIndicator from "@/components/workflow/WorkflowProgressIndicator";
 import { apiFetch, apiUrl } from "@/lib/api";
+import { usePatient } from "@/contexts/PatientContext";
 
 const checklistItems = [
   {
@@ -63,15 +64,9 @@ const checklistItems = [
   },
 ];
 
-function ChecklistAvantContent({ searchParams }: { searchParams: Promise<any> }) {
-  const resolvedParams = use(searchParams);
-  const patientName = resolvedParams?.patient ?? "DUBOIS, Jean-Pierre";
-  const patientId = resolvedParams?.patientId ?? "";
-  const prescriptionId = resolvedParams?.prescriptionId ?? "";
-  const rendezVousId = resolvedParams?.rendezVousId ?? "";
-  const procedure = resolvedParams?.procedure ?? "Coloscopie diagnostique";
-
+function ChecklistAvantContent() {
   const router = useRouter();
+  const { patientId, prescriptionId, patientName, procedure } = usePatient();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -97,14 +92,17 @@ function ChecklistAvantContent({ searchParams }: { searchParams: Promise<any> })
       try {
         const resp = await fetch(apiUrl(`/api/checklists/avant/${prescriptionId}`));
         if (resp.ok) {
-          const data = await resp.json();
-          if (data) {
-            const mappedAnswers: Record<string, string> = {};
-            Object.entries(titleToDbKey).forEach(([title, key]) => {
-              if (data[key] === true) mappedAnswers[title] = "OUI";
-              else if (data[key] === false) mappedAnswers[title] = "NON";
-            });
-            setAnswers(mappedAnswers);
+          const text = await resp.text();
+          if (text) {
+            const data = JSON.parse(text);
+            if (data) {
+              const mappedAnswers: Record<string, string> = {};
+              Object.entries(titleToDbKey).forEach(([title, key]) => {
+                if (data[key] === true) mappedAnswers[title] = "OUI";
+                else if (data[key] === false) mappedAnswers[title] = "NON";
+              });
+              setAnswers(mappedAnswers);
+            }
           }
         }
       } catch (err) {
@@ -124,7 +122,7 @@ function ChecklistAvantContent({ searchParams }: { searchParams: Promise<any> })
 
     const payload: any = {
       prescriptionId: prescriptionId,
-      rendezVousId: rendezVousId || null,
+      rendezVousId: null,
       patientId: patientId,
       identiteVerifiee: newAnswers["Identite du patient verifiee"] === "OUI",
       procedureConfirmee: newAnswers["Type d'endoscopie confirme"] === "OUI",
@@ -170,12 +168,12 @@ function ChecklistAvantContent({ searchParams }: { searchParams: Promise<any> })
   };
 
   const handleRetourWorkflow = () => {
-    router.push('/');
+    router.push('/prescriptions');
   };
 
   return (
-    <div className="min-h-[1024px] bg-surface text-on-surface">
-      <div className="pt-8 pb-24 px-4 flex justify-center">
+    <div className="bg-surface text-on-surface pb-16">
+      <div className="flex justify-center">
         <div className="max-w-[56rem] w-full space-y-4">
           <WorkflowProgressIndicator />
           <section className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
@@ -294,12 +292,14 @@ function ChecklistAvantContent({ searchParams }: { searchParams: Promise<any> })
   );
 }
 
-export default function ChecklistAvantPage(props: { searchParams: Promise<any> }) {
+export default function ChecklistAvantPage() {
   return (
     <AppShell>
-      <Suspense fallback={<div className="p-8 text-center text-slate-500 font-bold uppercase tracking-widest">Chargement des données...</div>}>
-        <ChecklistAvantContent {...props} />
-      </Suspense>
+      <div className={PAGE_CONTENT_CLASS}>
+        <Suspense fallback={<div className="py-8 text-center text-slate-500 font-bold uppercase tracking-widest">Chargement des données...</div>}>
+          <ChecklistAvantContent />
+        </Suspense>
+      </div>
     </AppShell>
   );
 }

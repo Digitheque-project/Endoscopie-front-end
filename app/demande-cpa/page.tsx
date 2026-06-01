@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import StatBadge from "@/components/ui/StatBadge";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -21,7 +21,7 @@ function DemandeCPAContent() {
 
   return (
     <AppShell>
-      <div className="p-8 max-w-7xl mx-auto space-y-8">
+      <div className={PAGE_CONTENT_CLASS}>
         {/* Back Button */}
         <a href="/prescriptions" className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
           <span className="material-symbols-outlined text-lg">arrow_back</span>

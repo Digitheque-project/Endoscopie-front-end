@@ -1,15 +1,20 @@
 "use client";
 
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiUrl } from "@/lib/api";
 import PrescriptionTreatButton from "@/components/navigation/PrescriptionTreatButton";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, type KeyboardEvent } from "react";
+import { usePatient } from "@/contexts/PatientContext";
 
 // Les constantes scheduleItems et recentActivity ont été supprimées car elles sont maintenant dynamiques
 
 export default function PrescriptionsPage() {
   const router = useRouter();
+  const { setPatientData } = usePatient();
+  const filterButtonRef = useRef<HTMLButtonElement | null>(null);
+  const filterPanelRef = useRef<HTMLDivElement | null>(null);
   const [priorityRequests, setPriorityRequests] = useState<any[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -134,7 +139,7 @@ export default function PrescriptionsPage() {
 
       const urg = filteredByStatus.filter(p => {
         const up = (p.priority || "").toUpperCase();
-        return ["STAT", "URGENT", "URGENCE", "PRIORITAIRE", "URGENCE VITALE"].includes(up);
+        return up === "STAT";
       }).length;
 
       const treated = total - filteredByStatus.length;
@@ -153,6 +158,38 @@ export default function PrescriptionsPage() {
   useEffect(() => {
     fetchPrescriptions();
   }, []);
+
+  useEffect(() => {
+    if (!showFilters) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (
+        filterPanelRef.current &&
+        !filterPanelRef.current.contains(target) &&
+        filterButtonRef.current &&
+        !filterButtonRef.current.contains(target)
+      ) {
+        setShowFilters(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showFilters]);
+
+  const handleFilterKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      setShowFilters(false);
+    }
+  };
+
+  const closeFilterPanel = () => setShowFilters(false);
 
   // Dynamic schedule items using real doctors if available
   const dynamicSchedule = [
@@ -206,15 +243,12 @@ export default function PrescriptionsPage() {
 
   return (
     <AppShell>
-      <main className="min-h-screen bg-surface px-8 pb-10 pt-20 text-on-surface">
-        <div className="mx-auto max-w-7xl space-y-8">
-          <div className="flex items-end justify-between">
-            <div>
-              <h1 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface">Fil de prescription</h1>
-              <p className="mt-1 text-on-surface-variant">Gérer les demandes d'endoscopie en attente de planification.</p>
-            </div>
+      <div className={PAGE_CONTENT_CLASS}>
+          <PageToolbar
+            actions={
             <div className="flex gap-3 relative">
               <button 
+                ref={filterButtonRef}
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 rounded-lg border px-4 py-2 font-semibold transition-all ${
                   showFilters 
@@ -230,7 +264,7 @@ export default function PrescriptionsPage() {
               </button>
 
               {showFilters && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-6 z-30 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-6 z-30 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
                   <div className="flex items-center justify-between border-b border-outline-variant/10 pb-3">
                     <h5 className="font-bold text-sm">Filtres de recherche</h5>
                     <button 
@@ -256,6 +290,7 @@ export default function PrescriptionsPage() {
                           placeholder="Rechercher un patient..."
                           value={filters.nom}
                           onChange={(e) => setFilters({...filters, nom: e.target.value})}
+                          onKeyDown={handleFilterKeyDown}
                         />
                       </div>
                     </div>
@@ -272,6 +307,7 @@ export default function PrescriptionsPage() {
                           placeholder="Type d'examen..."
                           value={filters.procedure}
                           onChange={(e) => setFilters({...filters, procedure: e.target.value})}
+                          onKeyDown={handleFilterKeyDown}
                         />
                       </div>
                     </div>
@@ -288,6 +324,7 @@ export default function PrescriptionsPage() {
                           placeholder="Rechercher un médecin..."
                           value={filters.medecin}
                           onChange={(e) => setFilters({...filters, medecin: e.target.value})}
+                          onKeyDown={handleFilterKeyDown}
                         />
                       </div>
                     </div>
@@ -302,7 +339,10 @@ export default function PrescriptionsPage() {
                           className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg pl-9 pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
                           type="date"
                           value={filters.date}
-                          onChange={(e) => setFilters({...filters, date: e.target.value})}
+                          onChange={(e) => {
+                            setFilters({...filters, date: e.target.value});
+                            setShowFilters(false);
+                          }}
                         />
                       </div>
                     </div>
@@ -310,14 +350,22 @@ export default function PrescriptionsPage() {
                 </div>
               )}
               <button
-                onClick={() => fetchPrescriptions()}
+                onClick={() => {
+                  fetchPrescriptions();
+                  closeFilterPanel();
+                }}
                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
               >
                 <span className="material-symbols-outlined text-lg">sync</span>
                 Actualiser
               </button>
             </div>
-          </div>
+            }
+          >
+            <p className="text-on-surface-variant font-medium">
+              Gérer les demandes d&apos;endoscopie en attente de planification.
+            </p>
+          </PageToolbar>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
             <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-5 shadow-sm">
@@ -440,12 +488,13 @@ export default function PrescriptionsPage() {
                               </button>
                               <button
                                 onClick={() => {
-                                  const params = new URLSearchParams();
-                                  params.set("patientId", req.patientId);
-                                  params.set("prescriptionId", req.id);
-                                  params.set("patient", req.name);
-                                  params.set("procedure", req.procedure);
-                                  router.push(`/checklists/avant?${params.toString()}`);
+                                  setPatientData({
+                                    patientId: req.patientId,
+                                    prescriptionId: req.id,
+                                    patientName: req.name,
+                                    procedure: req.procedure,
+                                  });
+                                  router.push('/checklists/avant');
                                 }}
                                 className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white transition-all duration-200 hover:opacity-90"
                               >
@@ -512,8 +561,7 @@ export default function PrescriptionsPage() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
+      </div>
     </AppShell>
   );
 }

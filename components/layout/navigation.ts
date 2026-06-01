@@ -35,6 +35,11 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     subtitle: "Planning des examens",
     icon: "calendar_month",
   },
+  "/agenda-rendez-vous": {
+    title: "Agenda / Rendez-vous",
+    subtitle: "Planning des examens",
+    icon: "calendar_month",
+  },
   "/checklists": {
     title: "Check-lists",
     subtitle: "Suivi des etapes de preparation",

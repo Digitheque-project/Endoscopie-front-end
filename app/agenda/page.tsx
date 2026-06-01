@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiUrl } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { JCalendar } from "@/components/ui/JCalendar";
@@ -176,23 +177,10 @@ export default function AgendaPage() {
 
   return (
     <AppShell>
-      <div className="p-8 max-w-7xl mx-auto">
-        <header className="mb-8 flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Agenda / Rendez-vous</h1>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="material-symbols-outlined text-primary text-sm">calendar_today</span>
-              <div className="flex flex-col">
-                <p className="text-on-surface-variant font-bold">
-                  {viewMode === 'day' ? formattedDate(currentDate) : 
-                   viewMode === 'week' ? `Semaine du ${new Date(currentDate.getTime() - currentDate.getDay() * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long'})} au ${new Date(currentDate.getTime() + (6 - currentDate.getDay()) * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'})}` : 
-                   currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase()}
-                </p>
-                <span className="text-[10px] text-on-surface-variant/60 font-medium italic">Actualisé à {lastRefresh.toLocaleTimeString('fr-FR')}</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
+      <div className={PAGE_CONTENT_CLASS}>
+        <PageToolbar
+          actions={
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl shadow-inner border border-outline-variant/10">
               <button 
                 onClick={handlePrevious}
@@ -251,7 +239,20 @@ export default function AgendaPage() {
               </button>
             </div>
           </div>
-        </header>
+          }
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary text-sm">calendar_today</span>
+            <div className="flex flex-col">
+              <p className="text-on-surface-variant font-bold">
+                {viewMode === 'day' ? formattedDate(currentDate) : 
+                 viewMode === 'week' ? `Semaine du ${new Date(currentDate.getTime() - currentDate.getDay() * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long'})} au ${new Date(currentDate.getTime() + (6 - currentDate.getDay()) * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'})}` : 
+                 currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase()}
+              </p>
+              <span className="text-[10px] text-on-surface-variant/60 font-medium italic">Actualisé à {lastRefresh.toLocaleTimeString('fr-FR')}</span>
+            </div>
+          </div>
+        </PageToolbar>
 
         {/* JCalendar Integration */}
         <div className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">

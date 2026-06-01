@@ -169,7 +169,7 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
     setStatus("paused");
     setTranscript((prev) => {
       const next = handleManualPause(prev);
-      onTranscriptChange?.({ final: next, interim: "" });
+      setTimeout(() => onTranscriptChange?.({ final: next, interim: "" }), 0);
       return next;
     });
     onManualPause?.();

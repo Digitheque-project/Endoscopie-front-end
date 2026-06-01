@@ -1,24 +1,33 @@
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { PageToolbar } from "@/components/layout/PageToolbar";
 
 export default function ChecklistsPage() {
   return (
     <AppShell>
-      <div className="p-8 max-w-7xl mx-auto space-y-8">
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Check-lists</h1>
-            <p className="text-on-surface-variant mt-1">Pilotage des etapes de preparation avant et apres l'endoscopie.</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/checklists/avant" className="px-4 py-2 rounded-lg bg-primary text-white font-semibold shadow-sm">
-              Ouvrir la phase 1
-            </Link>
-            <Link href="/checklists/apres" className="px-4 py-2 rounded-lg border border-outline-variant/20 font-semibold text-on-surface-variant hover:bg-surface-container-low">
-              Ouvrir la phase 2
-            </Link>
-          </div>
-        </div>
+      <div className={PAGE_CONTENT_CLASS}>
+        <PageToolbar
+          actions={
+            <>
+              <Link
+                href="/checklists/avant"
+                className="px-4 py-2 rounded-lg bg-primary text-white font-semibold shadow-sm"
+              >
+                Ouvrir la phase 1
+              </Link>
+              <Link
+                href="/checklists/apres"
+                className="px-4 py-2 rounded-lg border border-outline-variant/20 font-semibold text-on-surface-variant hover:bg-surface-container-low"
+              >
+                Ouvrir la phase 2
+              </Link>
+            </>
+          }
+        >
+          <p className="text-on-surface-variant font-medium">
+            Pilotage des etapes de preparation avant et apres l&apos;endoscopie.
+          </p>
+        </PageToolbar>
 
         <div className="grid md:grid-cols-2 gap-6">
           <Link href="/checklists/avant" className="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-colors">

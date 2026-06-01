@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, use, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { appendFinalSegment, handleManualPause as formatManualPause } from "@/components/voice/formatTranscript";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import TranscriptionEditor, { type SavedTranscriptionEntry } from "@/components/voice/TranscriptionEditor";
 import { truncateText } from "@/components/voice/formatTranscript";
 import HistoryModal from "@/components/ui/HistoryModal";
+import { apiFetch, apiUrl } from "@/lib/api";
+import { usePatient } from "@/contexts/PatientContext";
 
-export default function PrescriptionWorkflowPage() {
+function PrescriptionWorkflowContent() {
+  const router = useRouter();
+  const { patientId, prescriptionId, patientName, procedure } = usePatient();
   const [medicalNotes, setMedicalNotes] = useState("");
   const [transcriptText, setTranscriptText] = useState("");
   const [savedMedicalNotes, setSavedMedicalNotes] = useState<SavedTranscriptionEntry[]>([]);
@@ -16,6 +21,47 @@ export default function PrescriptionWorkflowPage() {
   const [liveTranscript, setLiveTranscript] = useState("");
   const lastSavedTranscriptionRef = useRef("");
   const controlsRef = useRef<{ start: () => void; stop: () => void; restart: () => void; pause: () => void; resume: () => void } | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      if (!prescriptionId) return;
+      try {
+        const resp = await fetch(apiUrl(`/api/operations/${prescriptionId}`));
+        if (resp.ok) {
+          const text = await resp.text();
+          if (text) {
+            const data = JSON.parse(text);
+            if (data) {
+              setMedicalNotes(data.medicalNotes || "");
+              setSavedMedicalNotes(data.voiceTranscripts || []);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erreur chargement operation:", err);
+      }
+    }
+    loadData();
+  }, [prescriptionId]);
+
+  const saveOperation = async () => {
+    if (!prescriptionId || !patientId) return;
+    const payload = {
+      prescriptionId,
+      patientId,
+      medicalNotes,
+      voiceTranscripts: savedMedicalNotes
+    };
+    try {
+      await apiFetch('/api/operations', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error("Erreur sauvegarde:", err);
+    }
+  };
 
   const handleTranscriptChange = (data: { final?: string; interim?: string }) => {
     const finalPart = data?.final ?? "";
@@ -96,8 +142,8 @@ export default function PrescriptionWorkflowPage() {
 
   return (
     <AppShell>
-      <main className="relative min-h-screen px-4 py-6 lg:px-8 lg:py-8">
-        <div className="mx-auto max-w-7xl space-y-6 pb-10">
+      <div className={PAGE_CONTENT_CLASS}>
+        <div className="space-y-6">
           <section className="overflow-hidden rounded-3xl border border-white/70 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl">
             <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-sky-700 px-6 py-8 text-white lg:px-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -107,22 +153,13 @@ export default function PrescriptionWorkflowPage() {
                     Opération Endoscopie
                   </div>
                   <div className="space-y-2">
-                    <h1 className="font-manrope text-3xl font-extrabold tracking-tight lg:text-4xl">Opération Endoscopie</h1>
                     <p className="max-w-2xl text-sm leading-6 text-blue-50/90 lg:text-base">
                       Étape intermédiaire du parcours clinique avec transcription vocale, prescriptions et suivi médical.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <a
-                    href="/checklists/avant"
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/15 active:scale-[0.98]"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-                    Retour Check-list Avant
-                  </a>
-                </div>
+
               </div>
             </div>
           </section>
@@ -205,30 +242,51 @@ export default function PrescriptionWorkflowPage() {
               value={medicalNotes}
             />
           </section>
-
-          <section className="flex flex-col-reverse gap-3 rounded-3xl border border-slate-200/70 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
-            <div className="text-sm text-slate-500">
-              Validation médicale, traçabilité des traitements et cohérence du protocole avant passage à l&apos;étape suivante.
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <a
-                href="/checklists/avant"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:border-slate-300 hover:bg-slate-50"
-              >
-                <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-                Retour Check-list Avant
-              </a>
-              <a
-                href="/checklists/apres"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-blue-700"
-              >
-                Passer Check-list Après
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-              </a>
-            </div>
-          </section>
         </div>
-      </main>
+      </div>
+
+      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
+        <div className="max-w-[896px] mx-auto flex items-center justify-between">
+          <div className="flex-1 mr-12 hidden md:block">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-bold text-blue-900 uppercase tracking-widest">Progression de la checklist</span>
+              <span className="text-xs font-bold text-blue-900">66% (PHASE 2/3)</span>
+            </div>
+            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[#00478D] to-[#005EB8] w-2/3 rounded-full" />
+            </div>
+          </div>
+
+          <button
+            onClick={async () => {
+              await saveOperation();
+              router.push('/checklists/avant');
+            }}
+            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
+          >
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            Retour Check-list Avant
+          </button>
+          <button
+            onClick={async () => {
+              await saveOperation();
+              router.push('/checklists/apres');
+            }}
+            className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90"
+          >
+            Passer Check-list Après
+            <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+          </button>
+        </div>
+      </footer>
     </AppShell>
+  );
+}
+
+export default function PrescriptionWorkflowPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <PrescriptionWorkflowContent />
+    </Suspense>
   );
 }
