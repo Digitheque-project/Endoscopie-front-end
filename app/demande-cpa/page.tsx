@@ -1,11 +1,12 @@
 "use client";
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { RequireRole } from "@/components/auth/RequireRole";
 import StatBadge from "@/components/ui/StatBadge";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
-import { apiJson, apiUrl, createDossierCpa } from "@/lib/api";
+import { apiJson, apiUrl, createDossierCpa, updateRendezVous } from "@/lib/api";
 
 function DemandeCPAContent() {
   const router = useRouter();
@@ -31,18 +32,20 @@ function DemandeCPAContent() {
     ? "Prioritaire (24h)"
     : "Standard (48h)";
 
+  const prescriptionId = searchParams.get("prescriptionId") || patientContext.prescriptionId || null;
+
   const [observations, setObservations] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleLocalAnesthesia = () => {
-    router.push(`/planification-examens?patientId=${encodeURIComponent(patientId)}`);
-  };
-
-  const handleGeneralAnesthesia = () => {
-    router.push(`/demande-cpa?patientId=${encodeURIComponent(patientId)}`);
-  };
+  const [rendezVous, setRendezVous] = useState<any>(null);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleHeure, setRescheduleHeure] = useState("");
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
+  const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
 
   const handleSubmit = async () => {
     if (!patientId || patientId.startsWith("#")) {
@@ -98,9 +101,56 @@ function DemandeCPAContent() {
     return () => { mounted = false; };
   }, [patientId, patientContext]);
 
+  useEffect(() => {
+    if (!prescriptionId) return;
+
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await apiJson<any>(`/api/prescriptions/${encodeURIComponent(prescriptionId)}`);
+        if (!mounted) return;
+        setRendezVous(data.rendezVous || null);
+      } catch (e) {
+        // ignore fetch errors
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, [prescriptionId]);
+
+  const handleOpenReschedule = () => {
+    if (rendezVous?.dateHeureDebut) {
+      const d = new Date(rendezVous.dateHeureDebut);
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      setRescheduleDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+      setRescheduleHeure(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    }
+    setRescheduleSuccess(false);
+    setRescheduleError(null);
+    setShowReschedule(true);
+  };
+
+  const handleConfirmReschedule = async () => {
+    if (!rendezVous?.id || !rescheduleDate || !rescheduleHeure) return;
+    setIsRescheduling(true);
+    setRescheduleError(null);
+    try {
+      const newDateTime = `${rescheduleDate}T${rescheduleHeure}:00`;
+      const updated = await updateRendezVous(rendezVous.id, { dateHeureDebut: newDateTime });
+      setRendezVous((prev: any) => ({ ...prev, ...updated }));
+      setRescheduleSuccess(true);
+      setShowReschedule(false);
+    } catch (err) {
+      setRescheduleError(err instanceof Error ? err.message : "Erreur lors du décalage du rendez-vous.");
+    } finally {
+      setIsRescheduling(false);
+    }
+  };
+
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
+        <RequireRole role="MAJOR">
         {/* Back Button */}
         <a href="/prescriptions" className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
           <span className="material-symbols-outlined text-lg">arrow_back</span>
@@ -115,52 +165,113 @@ function DemandeCPAContent() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-outline-variant/20 shadow-sm flex items-center gap-8 relative overflow-hidden">
+          <div className="lg:col-span-2 bg-white p-4 rounded-2xl border border-outline-variant/20 shadow-sm flex items-center gap-5 relative overflow-hidden">
             <div className="relative">
-              <div className="w-24 h-24 rounded-2xl object-cover bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-4xl text-primary">person</span>
+              <div className="w-14 h-14 rounded-2xl object-cover bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-2xl text-primary">person</span>
               </div>
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-3xl font-black text-on-surface tracking-tight">{patientName}</h2>
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="text-lg font-black text-on-surface tracking-tight">{patientName}</h2>
                 <StatBadge />
               </div>
-              <div className="flex items-center gap-4 text-sm font-semibold text-on-surface-variant">
-                <span>ID: {patientId}</span>
-                <span className="w-1 h-1 rounded-full bg-outline-variant"></span>
+              <div className="flex items-center gap-3 text-xs font-semibold text-on-surface-variant">
                 <span>Femme, 72 ans</span>
                 <span className="w-1 h-1 rounded-full bg-outline-variant"></span>
                 <span className="text-primary font-bold">Groupe A+</span>
               </div>
-              <div className="mt-6 flex gap-12">
+              <div className="mt-3 flex gap-6">
                 <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Poids</p>
-                  <p className="text-lg font-bold text-on-surface">64.5 kg</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">Poids</p>
+                  <p className="text-sm font-bold text-on-surface">64.5 kg</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Dernier Repas</p>
-                  <p className="text-lg font-bold text-error">À jeun (04:00 AM)</p>
+                  <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">Dernier Repas</p>
+                  <p className="text-sm font-bold text-error">À jeun (04:00 AM)</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-secondary-container/20 p-8 rounded-2xl border border-secondary-container/30 relative overflow-hidden">
-            <div className="relative z-10 space-y-6">
+          <div className="bg-secondary-container/20 p-4 rounded-2xl border border-secondary-container/30 relative overflow-hidden">
+            <div className="relative z-10 space-y-3">
               <div>
-                <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">Médecin Prescripteur</p>
-                <h3 className="text-xl font-bold text-on-surface">{prescriber || "Dr. Antoine Moreau"}</h3>
-                <p className="text-xs text-on-surface-variant font-medium">Service de Gastro-entérologie</p>
+                <p className="text-[9px] font-bold text-primary uppercase tracking-widest mb-1">Médecin Prescripteur</p>
+                <h3 className="text-sm font-bold text-on-surface">{prescriber || "Dr. Antoine Moreau"}</h3>
+                <p className="text-[11px] text-on-surface-variant font-medium">Service de Gastro-entérologie</p>
               </div>
-              <div className="pt-4 border-t border-secondary-container/40">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">Examen Demandé</p>
-                <p className="text-sm font-bold text-on-surface leading-snug">Fibroscopie Oeso-Gastro-Duodénale</p>
+              <div className="pt-3 border-t border-secondary-container/40">
+                <p className="text-[9px] font-bold text-primary uppercase tracking-widest mb-1">Examen Demandé</p>
+                <p className="text-xs font-bold text-on-surface leading-snug">Fibroscopie Oeso-Gastro-Duodénale</p>
               </div>
             </div>
           </div>
         </div>
 
+        {rendezVous && (
+          <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+                Rendez-vous d&apos;endoscopie planifié
+              </p>
+              <p className="text-base font-bold text-on-surface">
+                {new Date(rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
+              </p>
+              <p className="text-sm text-on-surface-variant mt-0.5">{rendezVous.salle?.nom || "Salle non renseignée"}</p>
+              {rescheduleSuccess && (
+                <p className="text-sm font-semibold text-emerald-600 mt-2">Rendez-vous décalé avec succès.</p>
+              )}
+              {rescheduleError && <p className="text-sm text-error mt-2">{rescheduleError}</p>}
+            </div>
+
+            {!showReschedule ? (
+              <button
+                type="button"
+                onClick={handleOpenReschedule}
+                className="px-5 py-3 rounded-xl border-2 border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors whitespace-nowrap"
+              >
+                Décaler le rendez-vous
+              </button>
+            ) : (
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nouvelle date</label>
+                  <input
+                    type="date"
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
+                    className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nouvelle heure</label>
+                  <input
+                    type="time"
+                    value={rescheduleHeure}
+                    onChange={(e) => setRescheduleHeure(e.target.value)}
+                    className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowReschedule(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  disabled={isRescheduling}
+                  onClick={handleConfirmReschedule}
+                  className="px-5 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
+                >
+                  {isRescheduling ? "Décalage…" : "Confirmer le décalage"}
+                </button>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -276,6 +387,7 @@ function DemandeCPAContent() {
             </section>
           </div>
         </div>
+        </RequireRole>
       </div>
     </AppShell>
   );

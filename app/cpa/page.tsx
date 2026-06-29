@@ -139,8 +139,6 @@ function CPAContent() {
                 <StatBadge />
               </div>
               <div className="flex items-center gap-4 text-sm font-semibold text-on-surface-variant">
-                <span>ID: {patientId || "—"}</span>
-                <span className="w-1 h-1 rounded-full bg-outline-variant"></span>
                 <span>
                   {gender || "—"}
                   {age != null ? `, ${age} ans` : ""}

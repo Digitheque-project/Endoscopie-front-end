@@ -94,6 +94,45 @@ export async function createDossierCpa(
   return resp.json();
 }
 
+/** Lit le rôle simulé courant (voir contexts/AuthContext.tsx) pour l'envoyer au backend. */
+function currentRoleHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const saved = window.localStorage.getItem('current_auth_context');
+    if (!saved) return {};
+    const { role, medecinId } = JSON.parse(saved) as { role?: string; medecinId?: string };
+    const headers: Record<string, string> = {};
+    if (role) headers['x-user-role'] = role;
+    if (medecinId) headers['x-medecin-id'] = medecinId;
+    return headers;
+  } catch {
+    return {};
+  }
+}
+
+/** Mettre à jour partiellement un rendez-vous (PATCH /api/rendezvous/:id). */
+export async function updateRendezVous(
+  id: string,
+  payload: {
+    typeAnesthesie?: string;
+    statut?: string;
+    notesCliniques?: string;
+    dateHeureDebut?: string;
+    dateHeureFin?: string;
+  },
+) {
+  const resp = await apiFetch(`/api/rendezvous/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) {
+    const message = await resp.text();
+    throw new Error(message || `Erreur API rendezvous (${resp.status})`);
+  }
+  return resp.json();
+}
+
 /** Appel fetch vers l'API clinique avec serviceId (query + corps JSON). */
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method ?? 'GET').toUpperCase();
@@ -114,7 +153,11 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
     }
   }
 
-  return fetch(url, { ...init, body });
+  return fetch(url, {
+    ...init,
+    body,
+    headers: { ...currentRoleHeaders(), ...init?.headers },
+  });
 }
 
 export async function apiJson<T = unknown>(path: string, init?: RequestInit): Promise<T> {

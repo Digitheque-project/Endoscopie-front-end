@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MAIN_LINKS } from "@/components/layout/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { role } = useAuth();
   const showNewPatient = pathname === "/agenda";
+  const visibleLinks = MAIN_LINKS.filter((link) => !link.roles || (role && link.roles.includes(role)));
 
   const isActive = (href: string, matchPrefix?: boolean) => {
     if (href === "/") {
@@ -32,7 +35,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1">
-        {MAIN_LINKS.map((link) => (
+        {visibleLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}

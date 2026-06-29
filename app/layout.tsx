@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { PatientProvider } from "@/contexts/PatientContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthGate } from "@/components/layout/AuthGate";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,9 +34,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <PatientProvider>
-          {children}
-        </PatientProvider>
+        <AuthProvider>
+          <PatientProvider>
+            <AuthGate>{children}</AuthGate>
+          </PatientProvider>
+        </AuthProvider>
       </body>
     </html>
   );

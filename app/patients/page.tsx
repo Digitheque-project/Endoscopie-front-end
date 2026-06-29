@@ -163,11 +163,11 @@ export default function PatientsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container-low">
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Nom du Patient</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Type d&apos;Examen</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Heure prévue</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Statut</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
+                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Nom du Patient</th>
+                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Type d&apos;Examen</th>
+                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Heure prévue</th>
+                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Statut</th>
+                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -191,7 +191,7 @@ export default function PatientsPage() {
                     const style = statusStyle(rdv.statut);
                     return (
                       <tr key={rdv.id} className="hover:bg-blue-50/30 transition-colors">
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3">
                           <button
                             type="button"
                             onClick={() => rdv.prescriptionId && router.push(`/patient-dossier/${rdv.prescriptionId}`)}
@@ -213,21 +213,21 @@ export default function PatientsPage() {
                             </div>
                           </button>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3">
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded uppercase tracking-wider">
                             {rdv.typeExamen || "Non spécifié"}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm font-bold text-slate-700 text-center">
+                        <td className="px-6 py-3 text-sm font-bold text-slate-700 text-center">
                           {new Date(rdv.dateHeureDebut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3">
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${style.dot} ${style.pulse ? "animate-pulse" : ""}`}></div>
                             <span className={`text-xs font-semibold ${style.color}`}>{rdv.statut}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-3 text-right">
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"

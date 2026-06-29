@@ -1,17 +1,29 @@
 "use client";
 
-import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DEFAULT_HEADER, HEADER_BY_PATH } from "@/components/layout/navigation";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HIDE_UNIT_LABEL_PATHS = new Set(["/", "/demande-cpa"]);
 
+const ROLE_LABELS: Record<string, string> = {
+  MAJOR: "Major",
+  MEDECIN: "Médecin",
+};
+
 export function TopHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { role, medecinName, logout } = useAuth();
   const header = HEADER_BY_PATH[pathname] ?? DEFAULT_HEADER;
   const hideUnitLabel =
     HIDE_UNIT_LABEL_PATHS.has(pathname) || pathname.startsWith("/patient-dossier");
+
+  const handleChangeRole = () => {
+    logout();
+    router.push("/connexion");
+  };
 
   return (
     <header className="sticky top-0 lg:fixed lg:left-64 right-0 z-40 h-16 px-4 lg:px-8 flex items-center justify-between border-b border-outline-variant/30 bg-background/80 backdrop-blur-xl">
@@ -52,17 +64,26 @@ export function TopHeader() {
 
         <div className="hidden sm:flex items-center gap-3 pl-3 lg:pl-4 border-l border-outline-variant/30">
           <div className="text-right hidden lg:block">
-            <p className="text-xs font-bold text-on-surface">Dr. Claire Durand</p>
-            <p className="text-[10px] text-on-surface-variant">Gastro-entérologue</p>
+            <p className="text-xs font-bold text-on-surface">
+              {role === "MEDECIN" ? `Dr. ${medecinName}` : ROLE_LABELS[role ?? ""] || "—"}
+            </p>
+            <p className="text-[10px] text-on-surface-variant">
+              {role ? ROLE_LABELS[role] : ""}
+            </p>
           </div>
-          <Image
-            src="/assets/avatars/doctor-main.svg"
-            alt="Dr. Claire Durand"
-            width={40}
-            height={40}
-            className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10"
-            priority
-          />
+          <div className="w-10 h-10 rounded-full bg-primary/10 ring-2 ring-primary/10 flex items-center justify-center text-primary">
+            <span className="material-symbols-outlined">
+              {role === "MEDECIN" ? "stethoscope" : "badge"}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleChangeRole}
+            title="Changer de rôle"
+            className="text-on-surface-variant hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined">logout</span>
+          </button>
         </div>
       </div>
     </header>

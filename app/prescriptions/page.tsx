@@ -2,17 +2,19 @@
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
-import { apiUrl, apiJson } from "@/lib/api";
+import { apiUrl, apiJson, updateRendezVous } from "@/lib/api";
 import PrescriptionTreatButton from "@/components/navigation/PrescriptionTreatButton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, type KeyboardEvent } from "react";
 import { usePatient } from "@/contexts/PatientContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Les constantes scheduleItems et recentActivity ont été supprimées car elles sont maintenant dynamiques
 
 export default function PrescriptionsPage() {
   const router = useRouter();
   const { setPatientData } = usePatient();
+  const { role } = useAuth();
   const filterButtonRef = useRef<HTMLButtonElement | null>(null);
   const filterPanelRef = useRef<HTMLDivElement | null>(null);
   const [priorityRequests, setPriorityRequests] = useState<any[]>([]);
@@ -22,6 +24,9 @@ export default function PrescriptionsPage() {
   const [totalEnAttente, setTotalEnAttente] = useState<number>(0);
   const [totalUrgents, setTotalUrgents] = useState<number>(0);
   const [tauxTraitement, setTauxTraitement] = useState<number>(0);
+  const [expandedStatusId, setExpandedStatusId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     nom: "",
     procedure: "",
@@ -122,11 +127,15 @@ export default function PrescriptionsPage() {
           priorityIndicatorIcon: indicator.icon,
           priorityIndicatorClass: indicator.className,
           status: p.statut || p.status || p.etat || "A planifier",
+          rendezVous: p.rendezVous || null,
         };
       });
 
       const total = mapped.length;
-      const filteredByStatus = mapped.filter(p => p.status !== "Planifié");
+      const EXCLUDED_RDV_STATUTS = new Set(["Annulé", "Terminé"]);
+      const filteredByStatus = role === "MEDECIN"
+        ? mapped.filter(p => p.rendezVous && !p.rendezVous.typeAnesthesie && !EXCLUDED_RDV_STATUTS.has(p.rendezVous.statut))
+        : mapped.filter(p => p.status === "A planifier" || p.status === "Décision rendue");
 
       const sortedRequests = filteredByStatus.slice().sort((a, b) => b.urgencyScore - a.urgencyScore);
       const numberedRequests = sortedRequests.map((req, index) => ({ ...req, rank: index + 1 }));
@@ -153,7 +162,7 @@ export default function PrescriptionsPage() {
 
   useEffect(() => {
     fetchPrescriptions();
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     if (!showFilters) return;
@@ -251,6 +260,30 @@ export default function PrescriptionsPage() {
     }
 
     router.push(`/planification-examens?${params.toString()}`);
+  };
+
+  const handleEnvoyerConfirmation = async (req: any) => {
+    if (!req.rendezVous?.id) return;
+    setConfirmingId(req.id);
+    setConfirmError(null);
+    try {
+      await updateRendezVous(req.rendezVous.id, { statut: "Confirmé" });
+      await fetchPrescriptions();
+    } catch (err) {
+      setConfirmError(err instanceof Error ? err.message : "Erreur lors de l'envoi de la confirmation.");
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
+  const handleDemandeCpaFromFil = (req: any) => {
+    const params = new URLSearchParams();
+    if (req.patientId) params.set("patientId", String(req.patientId));
+    if (req.id) params.set("prescriptionId", String(req.id));
+    if (req.originalName) params.set("patientName", String(req.originalName));
+    else if (req.name) params.set("patientName", String(req.name));
+    if (req.procedure) params.set("procedure", String(req.procedure));
+    router.push(`/demande-cpa?${params.toString()}`);
   };
 
   return (
@@ -375,7 +408,9 @@ export default function PrescriptionsPage() {
             }
           >
             <p className="text-on-surface-variant font-medium">
-              Gérer les demandes d&apos;endoscopie en attente de planification.
+              {role === "MEDECIN"
+                ? "Rendez-vous planifiés par le major, en attente d'une décision d'anesthésie."
+                : "Gérer les demandes d'endoscopie en attente de planification."}
             </p>
           </PageToolbar>
 
@@ -417,6 +452,12 @@ export default function PrescriptionsPage() {
                 Demandes Prioritaires
               </h3>
 
+              {confirmError && (
+                <div className="rounded-xl border border-error/20 bg-error-container/10 px-4 py-3 text-sm text-error">
+                  {confirmError}
+                </div>
+              )}
+
               {isLoading ? (
                 <div className="flex justify-center p-12">
                   <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-primary" />
@@ -436,7 +477,9 @@ export default function PrescriptionsPage() {
               ) : priorityRequests.length === 0 ? (
                 <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest p-12 text-center">
                   <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">inbox</span>
-                  <p className="text-on-surface-variant">Aucune prescription en attente.</p>
+                  <p className="text-on-surface-variant">
+                    {role === "MEDECIN" ? "Aucune décision d'anesthésie en attente." : "Aucune prescription en attente."}
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
@@ -448,6 +491,7 @@ export default function PrescriptionsPage() {
                         <th className="px-4 py-3">Procédure</th>
                         <th className="px-4 py-3">Clinique</th>
                         <th className="px-4 py-3">Priorité</th>
+                        {role !== "MEDECIN" && <th className="px-4 py-3">Statut</th>}
                         <th className="px-4 py-3">Actions</th>
                       </tr>
                     </thead>
@@ -484,34 +528,73 @@ export default function PrescriptionsPage() {
                               </span>
                             )}
                           </td>
+                          {role !== "MEDECIN" && (
+                            <td className="px-4 py-4">
+                              {req.status === "Décision rendue" ? (
+                                <div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedStatusId(expandedStatusId === req.id ? null : req.id)}
+                                    className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-800 hover:bg-amber-200 transition-colors"
+                                  >
+                                    Décision rendue
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      {expandedStatusId === req.id ? "expand_less" : "expand_more"}
+                                    </span>
+                                  </button>
+                                  {expandedStatusId === req.id && (
+                                    <p className="mt-1.5 text-xs font-semibold text-on-surface-variant">
+                                      Anesthésie : <span className="text-primary">{req.rendezVous?.typeAnesthesie || "Non renseignée"}</span>
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
+                                  {req.status}
+                                </span>
+                              )}
+                            </td>
+                          )}
                           <td className="px-4 py-4">
                             <div className="flex flex-wrap items-center gap-2 whitespace-nowrap">
-                              <button
-                                onClick={() => handlePlanifier(req)}
-                                className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                              >
-                                Planifier
-                              </button>
-                              <button
-                                onClick={() => handleDetail(req.id)}
-                                className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-                              >
-                                Détails
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setPatientData({
-                                    patientId: req.patientId,
-                                    prescriptionId: req.id,
-                                    patientName: req.name,
-                                    procedure: req.procedure,
-                                  });
-                                  router.push('/checklists/avant');
-                                }}
-                                className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                              >
-                                Commencer l'examen
-                              </button>
+                              {role === "MEDECIN" ? (
+                                <button
+                                  onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}`)}
+                                  className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                                >
+                                  Planifier
+                                </button>
+                              ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Locale" ? (
+                                <button
+                                  disabled={confirmingId === req.id}
+                                  onClick={() => handleEnvoyerConfirmation(req)}
+                                  className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                                >
+                                  {confirmingId === req.id ? "Envoi…" : "Envoyer la confirmation"}
+                                </button>
+                              ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Générale" ? (
+                                <button
+                                  onClick={() => handleDemandeCpaFromFil(req)}
+                                  className="rounded-lg bg-[#EA580C] px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                                >
+                                  Demande CPA
+                                </button>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handlePlanifier(req)}
+                                    className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                                  >
+                                    Planifier
+                                  </button>
+                                  <button
+                                    onClick={() => handleDetail(req.id)}
+                                    className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+                                  >
+                                    Détails
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>

@@ -2,13 +2,23 @@
 
 import Image from "next/image";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
-import { apiFetch, apiJson, apiUrl } from "@/lib/api";
+import { apiFetch, apiJson } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
+import ProcedureCountsCard, { type ProcedureCount } from "@/components/dashboard/ProcedureCountsCard";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useRef, Fragment, type KeyboardEvent } from "react";
 
-
+/** Date locale (YYYY-MM-DD) — cohérent avec le filtrage "aujourd'hui" côté backend. */
+function toLocalDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export default function Home() {
+  const { role, medecinName } = useAuth();
+  const greetingName = role === "MEDECIN" ? `Dr. ${medecinName}` : role === "MAJOR" ? "Major" : "";
   const [appointments, setAppointments] = useState<any[]>([]);
   const [salles, setSalles] = useState<any[]>([]);
   const [showAddRoom, setShowAddRoom] = useState(false);
@@ -16,7 +26,7 @@ export default function Home() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
-  const [procedureCounts, setProcedureCounts] = useState<{ procedure: string; count: number }[]>([]);
+  const [procedureCounts, setProcedureCounts] = useState<ProcedureCount[]>([]);
   const [isLoadingProcedureCounts, setIsLoadingProcedureCounts] = useState(true);
   const [newSalleData, setNewSalleData] = useState({
     nom: "",
@@ -33,6 +43,7 @@ export default function Home() {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [expandedDashboardStatusId, setExpandedDashboardStatusId] = useState<string | null>(null);
   const filterButtonRef = useRef<HTMLButtonElement | null>(null);
   const filterPanelRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,6 +59,8 @@ export default function Home() {
         if (status === "Terminé") statusClass = "bg-emerald-100 text-success";
         if (status === "Priorité" || status === "Urgent") statusClass = "bg-[#EA580C] text-white font-bold animate-pulse";
         if (status === "Confirmé") statusClass = "bg-primary/10 text-primary font-bold";
+        if (status === "Décision rendue") statusClass = "bg-amber-100 text-amber-800 font-bold";
+        if (status === "CPA demandée") statusClass = "bg-violet-100 text-violet-800 font-bold";
 
         const isConfirmed = ["Confirmé", "Terminé", "En cours", "Priorité", "Urgent", "Prévu"].includes(status);
 
@@ -63,12 +76,13 @@ export default function Home() {
           status: status,
           statusClass: statusClass,
           notesCliniques: rdv.notesCliniques || rdv.notes || "Dossier en cours",
-          date: start.toISOString().split('T')[0],
+          date: toLocalDateKey(start),
           rawStart: start,
           rawEnd: rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000),
           salleId: rdv.salleId || rdv.salle?.id || null,
           salleName: rdv.salle?.nom || rdv.salle || "",
           hasCPA: !!rdv.prescription?.dossierCPA && rdv.prescription.dossierCPA.statut === "Valide",
+          typeAnesthesie: rdv.typeAnesthesie || null,
         };
       });
       setAppointments(mapped);
@@ -98,8 +112,9 @@ export default function Home() {
     const matchesNom = (item.patient || "").toLowerCase().includes((filters.nom || "").toLowerCase());
     const matchesProcedure = (item.procedure || "").toLowerCase().includes((filters.procedure || "").toLowerCase());
     const matchesMedecin = (item.doctor || "").toLowerCase().includes((filters.medecin || "").toLowerCase());
-    const matchesDate = !filters.date || item.date === filters.date;
-    return matchesNom && matchesProcedure && matchesMedecin && matchesDate;
+    const matchesDate = item.date === (filters.date || toLocalDateKey(new Date()));
+    const matchesRole = role !== "MEDECIN" || item.status === "Décision rendue";
+    return matchesNom && matchesProcedure && matchesMedecin && matchesDate && matchesRole;
   });
 
   const fetchSalles = async (showLoading = true) => {
@@ -240,7 +255,6 @@ export default function Home() {
   };
 
   const validSalles = Array.isArray(salles) ? salles : [];
-  const totalProceduresToday = procedureCounts.reduce((sum, p) => sum + p.count, 0);
 
   return (
     <AppShell>
@@ -250,99 +264,58 @@ export default function Home() {
             <strong>Connexion API :</strong> {apiError}
           </div>
         )}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 text-primary mb-3">
-              <span className="material-symbols-outlined text-lg">waving_hand</span>
-              <span className="text-lg font-semibold tracking-tight">Bonjour, Dr. Claire Durand</span>
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="flex items-center gap-2 text-xl font-bold text-on-surface tracking-tight">
+                <span className="material-symbols-outlined text-primary text-xl">waving_hand</span>
+                Bonjour{greetingName ? `, ${greetingName}` : ""}
+              </h1>
+              <p className="text-sm text-on-surface-variant mt-0.5">
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(/^\w/, (c) => c.toUpperCase())} • Unite d&#39;Endoscopie CHU ANDRAINJATO
+              </p>
             </div>
-            <p className="text-on-surface-variant font-medium">
-              {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(/^\w/, (c) => c.toUpperCase())} • Unite d&#39;Endoscopie CHU ANDRAINJATO
-            </p>
-          </div>
-          <div className="flex flex-col items-start sm:items-end gap-2">
             <button
               onClick={() => {
                 fetchSalles(true);
                 fetchProcedureCounts(false);
               }}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/10 bg-white px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isRefreshing ? (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <span className="material-symbols-outlined text-base">sync</span>
               )}
-              Actualiser
+              Actualiser · {lastUpdated || "—"}
             </button>
-            <p className="text-[10px] text-on-surface-variant">
-              Dernière mise à jour : {lastUpdated || "—"}
-            </p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 md:col-span-6 bg-white p-6 rounded-xl border-none shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4">
-              <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined">clinical_notes</span>
-              </div>
-            </div>
-            <div>
-              <p className="text-on-surface-variant text-sm font-semibold mb-1">Total Procedures Aujourd&#39;hui</p>
-              {isLoadingProcedureCounts ? (
-                <div className="animate-pulse">
-                  <div className="h-9 w-14 rounded bg-surface-container" />
-                  <div className="mt-3 space-y-1.5">
-                    <div className="h-3 w-full rounded bg-surface-container" />
-                    <div className="h-3 w-full rounded bg-surface-container" />
-                    <div className="h-3 w-2/3 rounded bg-surface-container" />
-                  </div>
+          <div className="grid grid-cols-12 gap-6">
+            <ProcedureCountsCard
+              procedureCounts={procedureCounts}
+              isLoading={isLoadingProcedureCounts}
+            />
+
+            <div className="col-span-12 md:col-span-6 text-on-primary p-5 rounded-xl border-none shadow-sm flex flex-col gap-3 bg-[#EA580C]">
+              <div className="flex items-start justify-between">
+                <p className="text-orange-50 text-sm font-semibold">Urgents Actifs</p>
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-lg">emergency</span>
                 </div>
-              ) : (
-                <>
-                  <h3 className="text-4xl font-extrabold text-on-surface">{totalProceduresToday.toString().padStart(2, '0')}</h3>
-                  {procedureCounts.length > 0 ? (
-                    <div className="mt-3 max-h-32 overflow-y-auto pr-1 text-xs text-on-surface-variant grid grid-cols-2 gap-x-4 gap-y-1 scrollbar-thin scrollbar-thumb-outline-variant/30 scrollbar-track-transparent">
-                      {procedureCounts.map(({ procedure, count }) => (
-                        <Fragment key={procedure}>
-                          <div className="truncate pr-2">{procedure}</div>
-                          <div className="text-right font-bold">{count.toString().padStart(2, '0')}</div>
-                        </Fragment>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-xs text-on-surface-variant">Aucune procédure programmée aujourd&#39;hui.</p>
-                  )}
-                </>
-              )}
-            </div>
-            <div className="mt-6 flex items-center gap-2 text-emerald-600 text-xs font-bold">
-              <span className="material-symbols-outlined text-sm">trending_up</span>
-            </div>
-          </div>
-
-          <div className="col-span-12 md:col-span-6 text-on-primary p-6 rounded-xl border-none shadow-xl flex flex-col justify-between bg-[#EA580C] hover:bg-[#C2410C] transition-all active:scale-[0.98] cursor-pointer shadow-orange-500/20">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-orange-50 text-sm font-semibold mb-1">Urgents Actifs</p>
-                <h3 className="text-4xl font-extrabold text-white">
-                  {filteredSchedule.filter(a => a.status === 'Urgent' || a.status === 'Priorité').length.toString().padStart(2, '0')}
-                </h3>
               </div>
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
-                <span className="material-symbols-outlined">emergency</span>
-              </div>
+              <h3 className="text-3xl font-extrabold text-white leading-none">
+                {filteredSchedule.filter(a => a.status === 'Urgent' || a.status === 'Priorité').length.toString().padStart(2, '0')}
+              </h3>
             </div>
-            {/* Texte et schéma sous le chiffre supprimés */}
           </div>
         </div>
 
         <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-9 space-y-6">
+          <div className="col-span-12 lg:col-span-12 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 gap-4">
-              <h4 className="font-headline text-xl font-bold">Planning du Jour</h4>
+              <h4 className="font-headline text-xl font-bold">Programme du jour</h4>
               <div className="flex gap-4 items-center relative">
                 <button
                   ref={filterButtonRef}
@@ -442,27 +415,27 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm">
-              <div className="max-h-[600px] overflow-y-auto relative scrollbar-thin scrollbar-thumb-outline-variant/30 scrollbar-track-transparent">
+            <div className="bg-surface-container-lowest rounded-2xl shadow-sm overflow-visible">
+              <div className="relative overflow-visible">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 z-10 bg-surface-container-low/95 backdrop-blur-sm shadow-sm">
                   <tr className="bg-surface-container-low/50">
-                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
                       HEURE & PATIENT
                     </th>
-                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
                       PROCEDURE
                     </th>
-                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
                       MEDECIN
                     </th>
-                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
                       MOTIF
                     </th>
-                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
                       STATUT
                     </th>
-                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant text-right">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant text-right">
                       ACTION
                     </th>
                   </tr>
@@ -486,33 +459,56 @@ export default function Home() {
                   ) : (
                     filteredSchedule.map((item) => (
                       <tr key={`${item.time}-${item.id}`} className="hover:bg-surface-container-low transition-colors cursor-pointer">
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-2">
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-bold text-primary tabular-nums">{item.time}</span>
                             <div>
-                              <p className="text-sm font-bold">{item.patient}</p>
-                              <p className="text-[10px] text-on-surface-variant">ID: {item.id}</p>
+                              <p className="text-sm font-bold leading-tight">{item.patient}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-sm font-medium">{item.procedure}</td>
-                        <td className="px-6 py-5 text-sm text-on-surface-variant">{item.doctor}</td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-2 text-sm font-medium leading-tight">{item.procedure}</td>
+                        <td className="px-6 py-2 text-sm text-on-surface-variant leading-tight">{item.doctor}</td>
+                        <td className="px-6 py-2">
                           <div className="max-w-[180px]">
                             <p 
-                              className="text-xs font-semibold text-on-surface truncate cursor-help" 
+                              className="text-xs font-semibold text-on-surface truncate cursor-help leading-tight" 
                               title={item.notesCliniques}
                             >
                               {item.notesCliniques}
                             </p>
                           </div>
                         </td>
-                        <td className="px-6 py-5">
-                          <span className={`text-[9px] font-bold uppercase tracking-tighter px-2 py-0.5 rounded-full ${item.statusClass}`}>
-                            {item.status}
-                          </span>
+                        <td className="px-6 py-2">
+                          {item.status === "Décision rendue" ? (
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedDashboardStatusId(
+                                    expandedDashboardStatusId === item.realId ? null : item.realId
+                                  )
+                                }
+                                className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-tighter px-2 py-0.5 rounded-full transition-colors ${item.statusClass}`}
+                              >
+                                {item.status}
+                                <span className="material-symbols-outlined text-[12px]">
+                                  {expandedDashboardStatusId === item.realId ? "expand_less" : "expand_more"}
+                                </span>
+                              </button>
+                              {expandedDashboardStatusId === item.realId && (
+                                <p className="mt-1 text-[10px] font-semibold text-on-surface-variant whitespace-nowrap">
+                                  Anesthésie : <span className="text-primary">{item.typeAnesthesie || "Non renseignée"}</span>
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className={`text-[9px] font-bold uppercase tracking-tighter px-2 py-0.5 rounded-full ${item.statusClass}`}>
+                              {item.status}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-6 py-5 text-right">
+                        <td className="px-6 py-2 text-right">
                           <div className="flex justify-end">
                             <TreatButton 
                               patient={item.patient} 

@@ -2,7 +2,7 @@
 
 import { useState, useRef, use, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { appendFinalSegment, handleManualPause as formatManualPause } from "@/components/voice/formatTranscript";
+import { appendFinalSegment } from "@/components/voice/formatTranscript";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import TranscriptionEditor, { type SavedTranscriptionEntry } from "@/components/voice/TranscriptionEditor";
@@ -18,7 +18,6 @@ function PrescriptionWorkflowContent() {
   const [transcriptText, setTranscriptText] = useState("");
   const [savedMedicalNotes, setSavedMedicalNotes] = useState<SavedTranscriptionEntry[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [liveTranscript, setLiveTranscript] = useState("");
   const lastSavedTranscriptionRef = useRef("");
   const controlsRef = useRef<{ start: () => void; stop: () => void; restart: () => void; pause: () => void; resume: () => void } | null>(null);
 
@@ -57,33 +56,11 @@ function PrescriptionWorkflowContent() {
     }
   };
 
-  const handleTranscriptChange = (data: { final?: string; interim?: string }) => {
-    const finalPart = data?.final ?? "";
-    const interim = data?.interim ?? "";
-    // show formatted final text + interim
-    const display = (finalPart ? (finalPart + (interim ? " " + interim : "")) : interim).trim();
-    setLiveTranscript(display || "");
-  };
-
   const handleFinalTranscript = (text: string, meta?: { startsAfterPause?: boolean }) => {
     const normalized = text.trim();
     if (!normalized) return;
 
-    setTranscriptText((cur) => {
-      const out = appendFinalSegment(cur, normalized, Boolean(meta?.startsAfterPause));
-      return out;
-    });
-
-    // update live transcript to reflect formatted final with no interim
-    setLiveTranscript((prev) => {
-      // construct from latest transcriptText (state updated async) conservatively
-      return ""; // will be set via onTranscriptChange which provides formatted final
-    });
-  };
-
-  const handleManualPause = () => {
-    setTranscriptText((cur) => formatManualPause(cur));
-    setLiveTranscript((cur) => formatManualPause(cur));
+    setTranscriptText((cur) => appendFinalSegment(cur, normalized, Boolean(meta?.startsAfterPause)));
   };
 
   const handleAudioReady = (_blob: Blob) => {
@@ -120,7 +97,6 @@ function PrescriptionWorkflowContent() {
 
   const handleClearEditor = () => {
     setTranscriptText("");
-    setLiveTranscript("");
   };
 
   
@@ -171,10 +147,18 @@ function PrescriptionWorkflowContent() {
 
           <section className="space-y-6">
             <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-7">
-              <VoiceRecorder onTranscriptChange={handleTranscriptChange} onFinalTranscript={handleFinalTranscript} onManualPause={handleManualPause} onAudio={handleAudioReady} exposeControls={setControls} />
-              <div className="mt-2">
-                <div className="mt-1 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 min-h-[100px] text-sm text-slate-700 leading-5 space-y-1">{liveTranscript}</div>
+              <div className="mb-6">
+                <VoiceRecorder hideTextArea statusIdleText="Observation durant l'examen" onFinalTranscript={handleFinalTranscript} onAudio={handleAudioReady} exposeControls={setControls} />
               </div>
+
+              <textarea
+                className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                placeholder=""
+                rows={8}
+                onChange={(event) => setTranscriptText(event.target.value)}
+                value={transcriptText}
+              />
+
               <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
                 <button onClick={handleClearEditor} type="button" className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors">Effacer la transcription</button>
                 <button onClick={() => handleSaveTranscription(transcriptText)} type="button" className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">Enregistrer la transcription</button>

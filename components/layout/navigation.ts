@@ -3,6 +3,8 @@ export type NavLink = {
   icon: string;
   label: string;
   matchPrefix?: boolean;
+  /** Si défini, le lien n'est visible que pour ces rôles (voir contexts/AuthContext.tsx). Omis = visible par tous. */
+  roles?: Array<"MAJOR" | "MEDECIN">;
 };
 
 export type HeaderMeta = {
@@ -15,6 +17,8 @@ export const MAIN_LINKS: NavLink[] = [
   { href: "/", icon: "dashboard", label: "Tableau de bord" },
   { href: "/prescriptions", icon: "medication", label: "Fil de prescription" },
   { href: "/agenda", icon: "calendar_month", label: "Agenda / Rendez-vous" },
+  { href: "/decisions-anesthesie", icon: "vaccines", label: "Anesthésie à décider", roles: ["MEDECIN"] },
+  { href: "/decisions-major", icon: "fact_check", label: "Décisions à valider", roles: ["MAJOR"] },
   { href: "/rapport", icon: "description", label: "Rapport" },
   { href: "/archives", icon: "inventory_2", label: "Archives" },
 ];
@@ -95,6 +99,16 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     title: "Demande de CPA",
     subtitle: "",
     icon: "assignment_add",
+  },
+  "/decisions-anesthesie": {
+    title: "Anesthésie à décider",
+    subtitle: "Rendez-vous en attente d'une décision médicale",
+    icon: "vaccines",
+  },
+  "/decisions-major": {
+    title: "Décisions à valider",
+    subtitle: "Confirmation ou demande de CPA",
+    icon: "fact_check",
   },
 };
 

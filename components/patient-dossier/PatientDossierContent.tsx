@@ -104,9 +104,9 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
               {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
             </h2>
             <p className="text-sm text-on-surface-variant mt-1">
-              {birthDate ? `Né(e) le ${birthDate} • ` : ""}
-              {age != null ? `${age} ans • ` : ""}
-              ID {prescription.patientId}
+              {[birthDate ? `Né(e) le ${birthDate}` : null, age != null ? `${age} ans` : null]
+                .filter(Boolean)
+                .join(" • ")}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">
@@ -193,12 +193,20 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                   </span>
                 </li>
                 {prescription.rendezVous && (
-                  <li className="flex items-center justify-between">
-                    <span>Rendez-vous</span>
-                    <span className="font-semibold text-on-surface">
-                      {new Date(prescription.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                    </span>
-                  </li>
+                  <>
+                    <li className="flex items-center justify-between">
+                      <span>Rendez-vous</span>
+                      <span className="font-semibold text-on-surface">
+                        {new Date(prescription.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                      </span>
+                    </li>
+                    <li className="flex items-center justify-between">
+                      <span>Anesthésie</span>
+                      <span className={`font-semibold ${prescription.rendezVous.typeAnesthesie ? "text-emerald-600" : "text-on-surface"}`}>
+                        {prescription.rendezVous.typeAnesthesie || "En attente de décision"}
+                      </span>
+                    </li>
+                  </>
                 )}
               </ul>
             </section>
