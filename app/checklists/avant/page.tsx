@@ -4,7 +4,7 @@ import { useState, useEffect, use, Suspense } from "react";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { useRouter } from "next/navigation";
 import WorkflowProgressIndicator from "@/components/workflow/WorkflowProgressIndicator";
-import { apiFetch, apiUrl } from "@/lib/api";
+import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 
 const checklistItems = [
@@ -90,20 +90,14 @@ function ChecklistAvantContent() {
         return;
       }
       try {
-        const resp = await fetch(apiUrl(`/api/checklists/avant/${prescriptionId}`));
-        if (resp.ok) {
-          const text = await resp.text();
-          if (text) {
-            const data = JSON.parse(text);
-            if (data) {
-              const mappedAnswers: Record<string, string> = {};
-              Object.entries(titleToDbKey).forEach(([title, key]) => {
-                if (data[key] === true) mappedAnswers[title] = "OUI";
-                else if (data[key] === false) mappedAnswers[title] = "NON";
-              });
-              setAnswers(mappedAnswers);
-            }
-          }
+        const data = await apiJson<any>(`/api/checklists/avant/${prescriptionId}`);
+        if (data) {
+          const mappedAnswers: Record<string, string> = {};
+          Object.entries(titleToDbKey).forEach(([title, key]) => {
+            if (data[key] === true) mappedAnswers[title] = "OUI";
+            else if (data[key] === false) mappedAnswers[title] = "NON";
+          });
+          setAnswers(mappedAnswers);
         }
       } catch (err) {
         console.error("Erreur lors du chargement de la checklist:", err);
@@ -261,16 +255,7 @@ function ChecklistAvantContent() {
       </div>
 
       <footer className="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
-        <div className="max-w-[896px] mx-auto flex items-center justify-between">
-          <div className="flex-1 mr-12">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold text-blue-900 uppercase tracking-widest">Progression de la checklist</span>
-              <span className="text-xs font-bold text-blue-900">33% (PHASE 1/3)</span>
-            </div>
-            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-[#00478D] to-[#005EB8] w-1/3 rounded-full" />
-            </div>
-          </div>
+        <div className="max-w-[896px] mx-auto flex items-center justify-end">
 
           <button onClick={handleRetourWorkflow} className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4">
             <span className="material-symbols-outlined">arrow_back</span>

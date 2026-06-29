@@ -21,7 +21,7 @@ export const MAIN_LINKS: NavLink[] = [
 
 export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
   "/": {
-    title: "endosystems_clinical",
+    title: "Endoscopie Clinique",
     subtitle: "",
     icon: "dashboard",
   },
@@ -32,27 +32,27 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
   },
   "/agenda": {
     title: "Agenda / Rendez-vous",
-    subtitle: "Planning des examens",
+    subtitle: "Programme des examens",
     icon: "calendar_month",
   },
   "/agenda-rendez-vous": {
     title: "Agenda / Rendez-vous",
-    subtitle: "Planning des examens",
+    subtitle: "Programme des examens",
     icon: "calendar_month",
   },
   "/checklists": {
-    title: "Check-lists",
-    subtitle: "Suivi des etapes de preparation",
+    title: "Listes de contrôle",
+    subtitle: "Suivi des étapes de préparation",
     icon: "checklist",
   },
   "/checklists/avant": {
-    title: "Check-list avant",
+    title: "Liste de contrôle avant",
     subtitle: "Phase 1 / Avant l'endoscopie",
     icon: "fact_check",
   },
   "/checklists/apres": {
-    title: "Check-list apres",
-    subtitle: "Phase 2 / Apres l'endoscopie",
+    title: "Liste de contrôle après",
+    subtitle: "Phase 2 / Après l'endoscopie",
     icon: "fact_check",
   },
   "/prescription-workflow": {
@@ -77,7 +77,7 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     icon: "people",
   },
   "/patient-dossier": {
-    title: "patient_dossier_interactif",
+    title: "Dossier patient interactif",
     subtitle: "",
     icon: "person",
   },

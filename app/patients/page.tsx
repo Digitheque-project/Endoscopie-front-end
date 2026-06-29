@@ -2,123 +2,107 @@
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRendezVousSync } from "@/lib/hooks/useRendezVousSync";
+import { usePatient } from "@/contexts/PatientContext";
 
-const patients = [
-  {
-    id: "#END-2023-8902",
-    name: "MARIE-LOUISE Dupont",
-    initials: "ML",
-    age: 64,
-    gender: "Femme",
-    exam: "Coloscopie",
-    examClass: "bg-blue-100 text-blue-800",
-    time: "08:30",
-    status: "Terminé",
-    statusColor: "text-green-700",
-    dotColor: "bg-green-500",
-  },
-  {
-    id: "#END-2023-9011",
-    name: "JEAN-RENE Bernard",
-    initials: "JR",
-    age: 52,
-    gender: "Homme",
-    exam: "Gastroscopie",
-    examClass: "bg-purple-100 text-purple-800",
-    time: "09:45",
-    status: "En cours",
-    statusColor: "text-blue-700",
-    dotColor: "bg-blue-500",
-    pulse: true,
-  },
-  {
-    id: "#END-2023-9015",
-    name: "SOPHIE Morel",
-    initials: "SM",
-    age: 41,
-    gender: "Femme",
-    exam: "Coloscopie",
-    examClass: "bg-blue-100 text-blue-800",
-    time: "11:00",
-    status: "En attente",
-    statusColor: "text-orange-700",
-    dotColor: "bg-orange-400",
-    focused: true,
-  },
-  {
-    id: "#END-2023-9022",
-    name: "ALAIN Herbert",
-    initials: "AH",
-    age: 76,
-    gender: "Homme",
-    exam: "Coloscopie",
-    examClass: "bg-blue-100 text-blue-800",
-    time: "11:45",
-    status: "En attente",
-    statusColor: "text-orange-700",
-    dotColor: "bg-orange-400",
-  },
-];
+function computeAge(dateNaissance?: string | null): number | null {
+  if (!dateNaissance) return null;
+  const birth = new Date(dateNaissance);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const hasHadBirthdayThisYear =
+    now.getMonth() > birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() >= birth.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age;
+}
+
+function statusStyle(statut: string) {
+  switch (statut) {
+    case "Terminé":
+      return { color: "text-green-700", dot: "bg-green-500", pulse: false };
+    case "En cours":
+      return { color: "text-blue-700", dot: "bg-blue-500", pulse: true };
+    case "Annulé":
+      return { color: "text-red-700", dot: "bg-red-400", pulse: false };
+    case "Urgent":
+    case "Priorité":
+      return { color: "text-orange-700", dot: "bg-orange-500", pulse: true };
+    default:
+      return { color: "text-orange-700", dot: "bg-orange-400", pulse: false };
+  }
+}
 
 export default function PatientsPage() {
-  const [filters, setFilters] = useState({
-    nom: "",
-    procedure: "",
-    medecin: "",
-    date: ""
-  });
+  const router = useRouter();
+  const { setPatientData } = usePatient();
+  const { rendezVous, loading } = useRendezVousSync({ refreshInterval: 15000 });
+  const [filters, setFilters] = useState({ nom: "", procedure: "", medecin: "", date: "" });
   const [showFilters, setShowFilters] = useState(false);
 
-  const filteredPatients = patients.filter(patient => {
-    const matchesNom = patient.name.toLowerCase().includes(filters.nom.toLowerCase());
-    const matchesProc = patient.exam.toLowerCase().includes(filters.procedure.toLowerCase());
-    // Medecin not present in mock data, but we keep the filter for UI consistency
-    return matchesNom && matchesProc;
+  const filteredPatients = rendezVous.filter((rdv) => {
+    const name = rdv.patient ? `${rdv.patient.nom} ${rdv.patient.prenom}` : "";
+    const matchesNom = name.toLowerCase().includes(filters.nom.toLowerCase());
+    const matchesProc = (rdv.typeExamen || "").toLowerCase().includes(filters.procedure.toLowerCase());
+    const matchesMedecin = rdv.medecin
+      ? `${rdv.medecin.nom} ${rdv.medecin.prenom}`.toLowerCase().includes(filters.medecin.toLowerCase())
+      : !filters.medecin;
+    return matchesNom && matchesProc && matchesMedecin;
   });
+
+  const totalToday = rendezVous.length;
+  const enAttente = rendezVous.filter((r) => r.statut === "Prevu" || r.statut === "Confirmé").length;
+  const enCours = rendezVous.filter((r) => r.statut === "En cours").length;
+  const termine = rendezVous.filter((r) => r.statut === "Terminé").length;
+
+  const goToChecklist = (rdv: (typeof rendezVous)[number]) => {
+    setPatientData({
+      patientId: rdv.patient?.id || "",
+      prescriptionId: rdv.prescriptionId || "",
+      patientName: rdv.patient ? `${rdv.patient.nom} ${rdv.patient.prenom}` : "",
+      procedure: rdv.typeExamen || "",
+    });
+    router.push("/checklists/avant");
+  };
+
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
         <PageToolbar>
-          <p className="text-on-surface-variant font-medium">
-            Programmation du jour — Endoscopie
-          </p>
+          <p className="text-on-surface-variant font-medium">Programmation du jour — Endoscopie</p>
         </PageToolbar>
 
-        {/* Quick Stats */}
         <div className="flex gap-4 overflow-x-auto pb-2">
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
-            <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">TOTAL AUJOURD'HUI</p>
-            <p className="text-2xl font-headline font-extrabold text-blue-900">12</p>
+            <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">TOTAL AUJOURD&apos;HUI</p>
+            <p className="text-2xl font-headline font-extrabold text-blue-900">{totalToday}</p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
             <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">EN ATTENTE</p>
-            <p className="text-2xl font-headline font-extrabold text-orange-600">5</p>
+            <p className="text-2xl font-headline font-extrabold text-orange-600">{enAttente}</p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
             <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">EN COURS</p>
-            <p className="text-2xl font-headline font-extrabold text-blue-600">2</p>
+            <p className="text-2xl font-headline font-extrabold text-blue-600">{enCours}</p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
             <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">TERMINÉ</p>
-            <p className="text-2xl font-headline font-extrabold text-green-600">5</p>
+            <p className="text-2xl font-headline font-extrabold text-green-600">{termine}</p>
           </div>
         </div>
 
-        {/* Patients Table */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h3 className="font-headline font-bold text-blue-900">Programmation du Jour</h3>
             <div className="flex gap-2 relative">
-              <button 
+              <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-2 ${
-                  showFilters 
-                    ? "bg-primary text-white border-primary" 
-                    : "border-slate-200 text-slate-600 hover:bg-white"
+                  showFilters ? "bg-primary text-white border-primary" : "border-slate-200 text-slate-600 hover:bg-white"
                 }`}
               >
-                <span className="material-symbols-outlined text-sm">filter_list</span> 
+                <span className="material-symbols-outlined text-sm">filter_list</span>
                 Filtrer
                 {(filters.nom || filters.procedure || filters.medecin) && (
                   <span className="w-1.5 h-1.5 rounded-full bg-red-400 absolute -top-0.5 -right-0.5 animate-pulse" />
@@ -129,7 +113,7 @@ export default function PatientsPage() {
                 <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-5 z-30 space-y-4 text-left">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <h5 className="font-bold text-xs text-slate-700">Filtres</h5>
-                    <button 
+                    <button
                       onClick={() => setFilters({ nom: "", procedure: "", medecin: "", date: "" })}
                       className="text-[10px] font-bold text-blue-600 uppercase hover:underline"
                     >
@@ -145,7 +129,7 @@ export default function PatientsPage() {
                         type="text"
                         placeholder="Nom du patient..."
                         value={filters.nom}
-                        onChange={(e) => setFilters({...filters, nom: e.target.value})}
+                        onChange={(e) => setFilters({ ...filters, nom: e.target.value })}
                       />
                     </div>
 
@@ -156,7 +140,7 @@ export default function PatientsPage() {
                         type="text"
                         placeholder="Ex: Coloscopie..."
                         value={filters.procedure}
-                        onChange={(e) => setFilters({...filters, procedure: e.target.value})}
+                        onChange={(e) => setFilters({ ...filters, procedure: e.target.value })}
                       />
                     </div>
 
@@ -167,25 +151,12 @@ export default function PatientsPage() {
                         type="text"
                         placeholder="Rechercher..."
                         value={filters.medecin}
-                        onChange={(e) => setFilters({...filters, medecin: e.target.value})}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Date</label>
-                      <input
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
-                        type="date"
-                        value={filters.date}
-                        onChange={(e) => setFilters({...filters, date: e.target.value})}
+                        onChange={(e) => setFilters({ ...filters, medecin: e.target.value })}
                       />
                     </div>
                   </div>
                 </div>
               )}
-              <button className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition-all flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">download</span> Exporter
-              </button>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -193,136 +164,102 @@ export default function PatientsPage() {
               <thead>
                 <tr className="bg-surface-container-low">
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Nom du Patient</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">ID Patient</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Type d'Examen</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Type d&apos;Examen</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Heure prévue</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">DETAIL DE LA PRESCRIPTION</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Statut</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredPatients.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-slate-500 text-sm">
+                    <td colSpan={5} className="px-6 py-10 text-center text-slate-500 text-sm">
+                      Chargement…
+                    </td>
+                  </tr>
+                ) : filteredPatients.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-slate-500 text-sm">
                       Aucun patient ne correspond à vos filtres.
                     </td>
                   </tr>
                 ) : (
-                  filteredPatients.map((patient) => (
-                    <tr
-                    key={patient.id}
-                    className={`hover:bg-blue-50/30 transition-colors ${patient.focused ? "bg-blue-50/10" : ""}`}
-                  >
-                    <td className="px-6 py-4">
-                      <a href="/patient-dossier" className="flex items-center gap-3 group">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                          patient.initials === "ML" ? "bg-blue-100 text-blue-800" :
-                          patient.initials === "JR" ? "bg-orange-100 text-orange-800" :
-                          "bg-slate-200 text-slate-600"
-                        }`}>
-                          {patient.initials}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-800 text-sm group-hover:text-primary transition-colors">{patient.name}</p>
-                          <p className="text-[11px] text-slate-400">
-                            {patient.age} ans • {patient.gender}
-                          </p>
-                        </div>
-                      </a>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-mono text-slate-500">{patient.id}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 ${patient.examClass} text-[10px] font-bold rounded uppercase tracking-wider`}>
-                        {patient.exam}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-700 text-center">{patient.time}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${patient.dotColor} ${patient.pulse ? "animate-pulse" : ""}`}></div>
-                        <span className={`text-xs font-semibold ${patient.statusColor}`}>{patient.status}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        {patient.focused && (
-                          <a
-                            href="/checklists/avant"
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-[10px] px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all font-bold flex items-center gap-1.5"
+                  filteredPatients.map((rdv) => {
+                    const age = computeAge(rdv.patient?.dateNaissance);
+                    const gender = rdv.patient?.sexe === "F" ? "Femme" : rdv.patient?.sexe === "M" ? "Homme" : null;
+                    const initials = rdv.patient ? `${rdv.patient.nom[0] || ""}${rdv.patient.prenom[0] || ""}`.toUpperCase() : "?";
+                    const style = statusStyle(rdv.statut);
+                    return (
+                      <tr key={rdv.id} className="hover:bg-blue-50/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <button
+                            type="button"
+                            onClick={() => rdv.prescriptionId && router.push(`/patient-dossier/${rdv.prescriptionId}`)}
+                            disabled={!rdv.prescriptionId}
+                            className="flex items-center gap-3 group text-left disabled:cursor-default"
                           >
-                            <span className="material-symbols-outlined text-[14px]">playlist_add_check</span> Démarrer check-list
-                          </a>
-                        )}
-                        <button className="p-2 text-blue-900 hover:bg-blue-100 rounded-lg transition-all" title="Voir dossier">
-                          <span className="material-symbols-outlined">folder_shared</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                    )))}
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-slate-200 text-slate-600">
+                              {initials}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800 text-sm group-hover:text-primary transition-colors">
+                                {rdv.patient ? `${rdv.patient.nom} ${rdv.patient.prenom}` : "Patient inconnu"}
+                              </p>
+                              <p className="text-[11px] text-slate-400">
+                                {age != null ? `${age} ans` : ""}
+                                {age != null && gender ? " • " : ""}
+                                {gender || ""}
+                              </p>
+                            </div>
+                          </button>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded uppercase tracking-wider">
+                            {rdv.typeExamen || "Non spécifié"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-700 text-center">
+                          {new Date(rdv.dateHeureDebut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${style.dot} ${style.pulse ? "animate-pulse" : ""}`}></div>
+                            <span className={`text-xs font-semibold ${style.color}`}>{rdv.statut}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => goToChecklist(rdv)}
+                              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-[10px] px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all font-bold flex items-center gap-1.5"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">playlist_add_check</span> Check-list
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => rdv.prescriptionId && router.push(`/patient-dossier/${rdv.prescriptionId}`)}
+                              disabled={!rdv.prescriptionId}
+                              className="p-2 text-blue-900 hover:bg-blue-100 rounded-lg transition-all disabled:opacity-30"
+                              title="Voir dossier"
+                            >
+                              <span className="material-symbols-outlined">folder_shared</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
-          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-            <p className="text-xs text-slate-500">Affichage de 4 patients sur 12 au total</p>
-            <div className="flex items-center gap-2">
-              <button className="p-1 text-slate-400 hover:text-blue-900">
-                <span className="material-symbols-outlined">chevron_left</span>
-              </button>
-              <div className="flex gap-1">
-                <span className="w-6 h-6 flex items-center justify-center text-xs font-bold bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded">1</span>
-                <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-slate-400 rounded hover:bg-slate-100 cursor-pointer">2</span>
-                <span className="w-6 h-6 flex items-center justify-center text-xs font-medium text-slate-400 rounded hover:bg-slate-100 cursor-pointer">3</span>
-              </div>
-              <button className="p-1 text-slate-400 hover:text-blue-900">
-                <span className="material-symbols-outlined">chevron_right</span>
-              </button>
-            </div>
+          <div className="px-6 py-4 border-t border-slate-100">
+            <p className="text-xs text-slate-500">
+              Affichage de {filteredPatients.length} patient{filteredPatients.length === 1 ? "" : "s"} sur {totalToday} aujourd&apos;hui
+            </p>
           </div>
         </div>
-
-        {/* Alerts & Capacity */}
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-8 bg-white p-6 rounded-xl border border-slate-100 shadow-sm relative overflow-hidden">
-            <div className="relative z-10">
-              <h4 className="font-headline font-bold text-blue-900 mb-2 flex items-center gap-2">
-                <span className="material-symbols-outlined text-orange-500">warning</span> Alertes de préparation
-              </h4>
-              <p className="text-sm text-slate-500 mb-4 max-w-md">3 patients présentent une préparation incomplète ou des contre-indications signalées lors du pré-accueil.</p>
-              <div className="flex gap-3">
-                <div className="px-4 py-2 bg-orange-50 rounded-lg border border-orange-100">
-                  <p className="text-[10px] font-bold text-orange-800 uppercase tracking-wider mb-1">M. Alain Herbert</p>
-                  <p className="text-xs text-orange-600">Préparation hydrique insuffisante.</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute right-0 bottom-0 opacity-10">
-              <span className="material-symbols-outlined text-[120px]">clinical_notes</span>
-            </div>
-          </div>
-          <div className="col-span-4 bg-gradient-to-r from-primary to-primary-container p-6 rounded-xl shadow-xl flex flex-col justify-between text-white relative">
-            <div className="relative z-10">
-              <h4 className="font-headline font-bold">Capacité du bloc</h4>
-              <p className="text-xs text-white/80">Occupation actuelle : 75%</p>
-            </div>
-            <div className="mt-4 relative z-10">
-              <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-white h-full w-3/4 rounded-full"></div>
-              </div>
-            </div>
-            <button className="mt-6 w-full py-2 bg-white text-primary font-bold text-xs rounded-lg hover:bg-surface-bright transition-all active:scale-95">
-              Optimiser l'agenda
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* FAB */}
-      <div className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-primary to-primary-container text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-90 z-50 group cursor-pointer">
-        <span className="material-symbols-outlined">add</span>
-        <span className="absolute right-full mr-4 bg-blue-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
-          Ajouter un Patient
-        </span>
       </div>
     </AppShell>
   );

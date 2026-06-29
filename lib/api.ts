@@ -7,7 +7,11 @@ import { ENDOSCOPIE_SERVICE_ID } from './config';
  *
  * L'API CHU (services) est séparée : voir CHU_API_URL dans lib/config.ts
  */
-const rawBase = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, '') ?? '';
+const rawBase =
+  process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, '') ||
+  process.env.BACKEND_URL?.trim().replace(/\/$/, '') ||
+  process.env.API_URL?.trim().replace(/\/$/, '') ||
+  '';
 
 export const API_BASE_URL = rawBase;
 
@@ -22,7 +26,11 @@ function appendServiceId(url: string): string {
 /** Construit l'URL d'un endpoint API avec le serviceId endoscopie. */
 export function apiUrl(path: string): string {
   const route = path.startsWith('/') ? path : `/${path}`;
-  const base = rawBase ? `${rawBase}${route}` : route;
+  // In browser, prefer relative endpoints so Next.js proxy (rewrites)
+  // handles requests and avoids CORS issues. On server or when
+  // NEXT_PUBLIC_API_URL is explicitly empty, fallback to route.
+  const isBrowser = typeof window !== 'undefined';
+  const base = isBrowser ? route : (rawBase ? `${rawBase}${route}` : route);
   return appendServiceId(base);
 }
 
@@ -44,6 +52,16 @@ export type CreatePrescriptionPayload = {
   serviceId?: string;
 };
 
+export type CreateDossierCpaPayload = {
+  patientId: string;
+  prescriptionId?: string;
+  anesthesisteId?: string;
+  typeAnesthesie?: string;
+  observations?: string;
+  statut?: string;
+  serviceId?: string;
+};
+
 /** Soumettre une nouvelle prescription (POST /api/prescriptions). */
 export async function createPrescription(
   payload: Omit<CreatePrescriptionPayload, 'serviceId'>,
@@ -56,6 +74,22 @@ export async function createPrescription(
   if (!resp.ok) {
     const message = await resp.text();
     throw new Error(message || `Erreur API prescriptions (${resp.status})`);
+  }
+  return resp.json();
+}
+
+/** Soumettre une nouvelle demande CPA (POST /api/dossiers-cpa). */
+export async function createDossierCpa(
+  payload: Omit<CreateDossierCpaPayload, 'serviceId'>,
+) {
+  const resp = await apiFetch('/api/dossiers-cpa', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(withEndoscopieService(payload)),
+  });
+  if (!resp.ok) {
+    const message = await resp.text();
+    throw new Error(message || `Erreur API dossiers CPA (${resp.status})`);
   }
   return resp.json();
 }
@@ -81,4 +115,35 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
   }
 
   return fetch(url, { ...init, body });
+}
+
+export async function apiJson<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+  const resp = await apiFetch(path, init);
+  const text = await resp.text();
+
+  if (!resp.ok) {
+    const errorBody = text.trim() ? text : resp.statusText;
+    throw new Error(
+      `Erreur API ${resp.status}${errorBody ? `: ${errorBody}` : ''}`,
+    );
+  }
+
+  if (!text) {
+    return null as unknown as T;
+  }
+
+  const contentType = resp.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new Error(`Réponse API invalide JSON: ${text}`);
+    }
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`Réponse API JSON invalide (${resp.status}): ${text}`);
+  }
 }

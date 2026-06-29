@@ -11,9 +11,11 @@ type Props = {
   onAudio?: (blob: Blob) => void;
   lang?: string;
   exposeControls?: (controls: { start: () => void; stop: () => void; restart: () => void; pause: () => void; resume: () => void }) => void;
+  hideTextArea?: boolean;
+  statusIdleText?: string;
 };
 
-export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, onManualPause, onAudio, lang = "fr-FR", exposeControls }: Props) {
+export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, onManualPause, onAudio, lang = "fr-FR", exposeControls, hideTextArea = false, statusIdleText = "Observation durant l'examen" }: Props) {
   const [isSupported, setIsSupported] = useState(() => {
     if (typeof window === "undefined") return false;
     const SpeechRecognitionCtor = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
@@ -236,7 +238,7 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
           </div>
 
           <div>
-            <div className="text-sm font-semibold">{status === "recording" ? "Enregistrement…" : status === "paused" ? "En pause" : status === "stopped" ? "Terminé" : status === "permission-request" ? "Demande d'accès micro" : status === "error" ? "Erreur" : "Prêt"}</div>
+            <div className="text-sm font-semibold">{status === "recording" ? "Enregistrement…" : status === "paused" ? "En pause" : status === "stopped" ? "Terminé" : status === "permission-request" ? "Demande d'accès micro" : status === "error" ? "Erreur" : statusIdleText}</div>
             <div className="text-xs text-slate-500">Durée : {new Date(duration * 1000).toISOString().substr(14, 5)}</div>
           </div>
         </div>
@@ -248,13 +250,15 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
         </div>
       </div>
 
-      <div className="mt-4">
-        <textarea
-          className="w-full min-h-[260px] sm:min-h-[340px] md:min-h-[420px] rounded-2xl border border-slate-200 p-4 sm:p-5 md:p-5 text-sm leading-5 overflow-auto"
-          value={transcript}
-          readOnly
-        />
-      </div>
+      {!hideTextArea && (
+        <div className="mt-4">
+          <textarea
+            className="w-full min-h-[260px] sm:min-h-[340px] md:min-h-[420px] rounded-2xl border border-slate-200 p-4 sm:p-5 md:p-5 text-sm leading-5 overflow-auto"
+            value={transcript}
+            readOnly
+          />
+        </div>
+      )}
     </div>
   );
 }

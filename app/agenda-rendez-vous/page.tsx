@@ -4,8 +4,9 @@ import Image from "next/image";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiUrl } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { JCalendar } from "@/components/ui/JCalendar";
+import { useRendezVousSync } from "@/lib/hooks/useRendezVousSync";
 
 interface Appointment {
   id: string;
@@ -26,6 +27,32 @@ export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [mounted, setMounted] = useState(false);
+  const [successNotification, setSuccessNotification] = useState<string | null>(null);
+  
+  // Get date in YYYY-MM-DD format for the hook
+  const getCurrentDateISO = useCallback(() => {
+    return currentDate.toISOString().split('T')[0];
+  }, [currentDate]);
+
+  // Use the sync hook for automatic loading
+  const { 
+    rendezVous: syncedRendezVous, 
+    loading: syncLoading,
+    error: syncError,
+    lastRefresh: syncLastRefresh,
+    refresh: refreshRDV 
+  } = useRendezVousSync({
+    date: getCurrentDateISO(),
+    refreshInterval: 30000, // Auto-refresh every 30 seconds
+    onRendezVousCreated: (rdv) => {
+      // Show notification when a new RDV is created
+      setSuccessNotification(`Nouveau rendez-vous créé pour ${rdv.patient?.prenom || 'Patient'} ${rdv.patient?.nom || ''}`);
+      setTimeout(() => setSuccessNotification(null), 3000);
+    },
+    onError: (error) => {
+      console.error("Erreur de synchronisation:", error);
+    },
+  });
   
   useEffect(() => {
     setMounted(true);
@@ -39,11 +66,12 @@ export default function AgendaPage() {
       year: 'numeric' 
     }).replace(/^\w/, (c) => c.toUpperCase());
   };
+
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingData, setBookingData] = useState({
     patient: "",
-    procedure: "Coloscopie",
+    procedure: "Fibroscopie digestive haute",
     medecin: "Dr. Leclerc",
     salle: "Salle 1",
     date: "2024-05-24",
@@ -52,6 +80,58 @@ export default function AgendaPage() {
     notes: "",
     statut: "Confirmé"
   });
+
+  // Convert synced RDV to Appointment format and filter by view mode
+  useEffect(() => {
+    const convertedApps: Appointment[] = syncedRendezVous.map((rdv: any) => {
+      const start = new Date(rdv.dateHeureDebut);
+      const end = rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000);
+      return {
+        id: rdv.id,
+        patient: rdv.patient?.nom ? `${rdv.patient.prenom} ${rdv.patient.nom}` : (rdv.patientName || "Patient Inconnu"),
+        medecin: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Dr. Antoine Moreau",
+        salle: rdv.salle?.nom || "Salle 1",
+        typeExamen: rdv.prescription?.typeExamen || rdv.typeExamen || "Examen Endoscopique",
+        heureDebut: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        heureFin: end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        statut: rdv.statut || "Confirmé",
+        color: rdv.statut === 'Urgent' ? 'error' : 'primary',
+        date: start.toISOString().split('T')[0]
+      };
+    });
+
+    // Filter by active date (Day, Week, Month) and status
+    const filtered = convertedApps.filter(a => {
+      // Status filter: Hide "Terminé"
+      const s = a.statut?.toString().toUpperCase() || "";
+      if (s.includes("TERMINE") || s.includes("DONE")) return false;
+
+      // Date filter
+      if (!a.date) return true;
+      
+      const selectedDateStr = currentDate.toISOString().split('T')[0];
+      
+      if (viewMode === "day") {
+        return a.date === selectedDateStr;
+      } else if (viewMode === "week") {
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        
+        const appDate = new Date(a.date);
+        return appDate >= startOfWeek && appDate <= endOfWeek;
+      } else if (viewMode === "month") {
+        const appDate = new Date(a.date);
+        return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
+      }
+      
+      return true; 
+    });
+    
+    setAppointments(filtered);
+    setLastRefresh(syncLastRefresh);
+  }, [syncedRendezVous, currentDate, viewMode, syncLastRefresh]);
 
   const checkConflict = (newApp: any) => {
     return appointments.some(app => {
@@ -109,76 +189,6 @@ export default function AgendaPage() {
     else if (viewMode === "month") newDate.setMonth(newDate.getMonth() + 1);
     setCurrentDate(newDate);
   };
-
-  useEffect(() => {
-    const loadAppointments = async () => {
-      // 1. Fetch from API
-      let apiApps: Appointment[] = [];
-      try {
-        const resp = await fetch(apiUrl('/api/rendezvous'));
-        const data = await resp.json();
-        apiApps = data.map((rdv: any) => {
-          const start = new Date(rdv.dateHeureDebut);
-          const end = rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000);
-          return {
-            id: rdv.id,
-            patient: rdv.patient?.nom ? `${rdv.patient.prenom} ${rdv.patient.nom}` : (rdv.patientName || "Patient Inconnu"),
-            medecin: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Dr. Antoine Moreau",
-            salle: rdv.salle?.nom || "Salle 1",
-            typeExamen: rdv.procedure || rdv.typeExamen || "Examen Endoscopique",
-            heureDebut: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            heureFin: end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            statut: rdv.statut || "Confirmé",
-            color: "primary",
-            date: start.toISOString().split('T')[0]
-          };
-        });
-      } catch (e) {
-        console.error("Error fetching API appointments", e);
-      }
-
-      // Combine and filter duplicates by patient/time
-      const combined = [...apiApps];
-      
-      // Filter by active date (Day, Week, Month)
-      const filtered = combined.filter(a => {
-        // Status filter: Hide "Terminé"
-        const s = a.statut?.toString().toUpperCase() || "";
-        if (s.includes("TERMINE") || s.includes("DONE")) return false;
-
-        // Date filter
-        if (!a.date) return true; // Keep legacy/manual if no date
-        
-        const selectedDateStr = currentDate.toISOString().split('T')[0];
-        
-        if (viewMode === "day") {
-          return a.date === selectedDateStr;
-        } else if (viewMode === "week") {
-          const startOfWeek = new Date(currentDate);
-          startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6);
-          
-          const appDate = new Date(a.date);
-          return appDate >= startOfWeek && appDate <= endOfWeek;
-        } else if (viewMode === "month") {
-          const appDate = new Date(a.date);
-          return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
-        }
-        
-        return true; 
-      });
-      
-      setAppointments(filtered);
-      setLastRefresh(new Date());
-    };
-
-    loadAppointments();
-
-    // Polling every 30 seconds for real-time updates
-    const interval = setInterval(loadAppointments, 30000);
-    return () => clearInterval(interval);
-  }, [currentDate, viewMode]);
 
   return (
     <AppShell>
@@ -243,6 +253,15 @@ export default function AgendaPage() {
                 Mois
               </button>
             </div>
+
+            <button
+              onClick={() => refreshRDV()}
+              disabled={syncLoading}
+              className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Actualiser"
+            >
+              <span className={`material-symbols-outlined text-xl ${syncLoading ? 'animate-spin' : ''}`}>refresh</span>
+            </button>
           </div>
           }
         >
@@ -259,24 +278,57 @@ export default function AgendaPage() {
           </div>
         </PageToolbar>
 
+        {/* Success Notification */}
+        {successNotification && (
+          <div className="fixed top-20 right-6 z-50 animate-in slide-in-from-top duration-300">
+            <div className="bg-green-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 font-semibold">
+              <span className="material-symbols-outlined">check_circle</span>
+              {successNotification}
+            </div>
+          </div>
+        )}
+
+        {/* Loading/Error State */}
+        {syncLoading && (
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary text-sm font-semibold flex items-center gap-2">
+            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+            Chargement des rendez-vous du jour...
+          </div>
+        )}
+
+        {syncError && (
+          <div className="p-4 bg-error/10 border border-error/20 rounded-xl text-error text-sm font-semibold flex items-center gap-2">
+            <span className="material-symbols-outlined">error</span>
+            Erreur lors du chargement: {syncError.message}
+          </div>
+        )}
+
         {/* JCalendar Integration */}
         <div className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <JCalendar 
-            appointments={appointments}
-            viewMode={viewMode}
-            currentDate={currentDate}
-            onAppointmentClick={(app) => {
-              console.log("Appointment clicked:", app);
-            }}
-            onSlotClick={(date, time) => {
-              setBookingData({
-                ...bookingData,
-                date: date.toISOString().split('T')[0],
-                heureDebut: time
-              });
-              setShowBookingModal(true);
-            }}
-          />
+          {!syncLoading && appointments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[600px] text-on-surface-variant">
+              <span className="material-symbols-outlined text-5xl opacity-20 mb-4">event</span>
+              <p className="text-lg font-semibold">Aucun rendez-vous pour {formattedDate(currentDate)}</p>
+              <p className="text-sm mt-2">Les rendez-vous confirmés apparaîtront ici</p>
+            </div>
+          ) : (
+            <JCalendar 
+              appointments={appointments}
+              viewMode={viewMode}
+              currentDate={currentDate}
+              onAppointmentClick={(app) => {
+                console.log("Appointment clicked:", app);
+              }}
+              onSlotClick={(date, time) => {
+                setBookingData({
+                  ...bookingData,
+                  date: date.toISOString().split('T')[0],
+                  heureDebut: time
+                });
+                setShowBookingModal(true);
+              }}
+            />
+          )}
         </div>
         
         <div className="mt-8 p-6 bg-surface-container-low/50 rounded-2xl border-2 border-dashed border-outline-variant/20">
@@ -330,10 +382,12 @@ export default function AgendaPage() {
                       value={bookingData.procedure}
                       onChange={e => setBookingData({...bookingData, procedure: e.target.value})}
                     >
+                      <option>Fibroscopie digestive haute</option>
+                      <option>Injection de colle biologique</option>
+                      <option>Dilatation oesophagienne</option>
+                      <option>Extraction de corps étranger</option>
                       <option>Coloscopie</option>
-                      <option>Gastroscopie</option>
-                      <option>CPRE</option>
-                      <option>Echo-endoscopie</option>
+                      <option>Rectosigmoidoscopie</option>
                     </select>
                   </div>
                 </div>

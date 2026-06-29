@@ -3,7 +3,7 @@
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { useRouter } from "next/navigation";
 import { use, Suspense, useState, useEffect } from "react";
-import { apiFetch, apiUrl } from "@/lib/api";
+import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 
 const checklistItems = [
@@ -37,20 +37,14 @@ function ChecklistApresContent() {
     async function loadData() {
       if (!prescriptionId) return;
       try {
-        const resp = await fetch(apiUrl(`/api/checklists/apres/${prescriptionId}`));
-        if (resp.ok) {
-          const text = await resp.text();
-          if (text) {
-            const data = JSON.parse(text);
-            if (data) {
-              const mappedAnswers: Record<string, string> = {};
-              Object.entries(titleToDbKey).forEach(([title, key]) => {
-                if (data[key]) mappedAnswers[title] = data[key];
-              });
-              setAnswers(mappedAnswers);
-              setRemarques(data.remarques || "");
-            }
-          }
+        const data = await apiJson<any>(`/api/checklists/apres/${prescriptionId}`);
+        if (data) {
+          const mappedAnswers: Record<string, string> = {};
+          Object.entries(titleToDbKey).forEach(([title, key]) => {
+            if (data[key]) mappedAnswers[title] = data[key];
+          });
+          setAnswers(mappedAnswers);
+          setRemarques(data.remarques || "");
         }
       } catch (err) {
         console.error("Erreur chargement checklist après:", err);
@@ -193,16 +187,7 @@ function ChecklistApresContent() {
       </div>
 
       <footer className="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
-        <div className="max-w-[896px] mx-auto flex items-center justify-between">
-          <div className="flex-1 mr-12">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold text-blue-900 uppercase tracking-widest">Progression de la Checklist</span>
-              <span className="text-xs font-bold text-blue-900">100%</span>
-            </div>
-            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-[#00478D] to-[#005EB8] w-full rounded-full" />
-            </div>
-          </div>
+        <div className="max-w-[896px] mx-auto flex items-center justify-end">
 
           <button
             onClick={async () => {

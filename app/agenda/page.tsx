@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
-import { apiUrl } from "@/lib/api";
+import { apiJson, apiUrl } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { JCalendar } from "@/components/ui/JCalendar";
 
@@ -21,10 +21,14 @@ interface Appointment {
 }
 
 export default function AgendaPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("day");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [mounted, setMounted] = useState(false);
+  const [loadingAppointments, setLoadingAppointments] = useState(true);
+  const [dailyCounts, setDailyCounts] = useState<Record<string, number>>({});
+  const [selectedMonthDate, setSelectedMonthDate] = useState<Date | null>(null);
   
   const formattedDate = (date: Date) => {
     return date.toLocaleDateString('fr-FR', { 
@@ -38,7 +42,7 @@ export default function AgendaPage() {
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingData, setBookingData] = useState({
     patient: "",
-    procedure: "Coloscopie",
+    procedure: "Fibroscopie digestive haute",
     medecin: "Dr. Leclerc",
     salle: "Salle 1",
     date: "2024-05-24",
@@ -48,9 +52,45 @@ export default function AgendaPage() {
     statut: "Confirmé"
   });
 
+  const filteredAppointments = allAppointments.filter(a => {
+    const s = a.statut?.toString().toUpperCase() || "";
+    if (s.includes("TERMINE") || s.includes("DONE")) return false;
+
+    if (!a.date) return true;
+
+    const selectedDateStr = currentDate.toISOString().split('T')[0];
+    if (viewMode === "day") {
+      return a.date === selectedDateStr;
+    }
+
+    if (viewMode === "week") {
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      const appDate = new Date(a.date);
+      return appDate >= startOfWeek && appDate <= endOfWeek;
+    }
+
+    if (viewMode === "month") {
+      const isConfirmed = s.includes("CONFIRM");
+      if (!isConfirmed) return false;
+      const appDate = new Date(a.date);
+      return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
+    }
+
+    return true;
+  });
+
+  const selectedDayAppointments = selectedMonthDate
+    ? allAppointments.filter(a => {
+        const isConfirmed = a.statut?.toString().toUpperCase().includes("CONFIRM");
+        return isConfirmed && a.date === selectedMonthDate.toISOString().split('T')[0];
+      })
+    : [];
+
   const checkConflict = (newApp: any) => {
-    return appointments.some(app => {
-      // Basic room and time overlap check
+    return filteredAppointments.some(app => {
       if (app.salle === newApp.salle) {
         const start1 = app.heureDebut;
         const end1 = app.heureFin;
@@ -84,7 +124,7 @@ export default function AgendaPage() {
       date: bookingData.date
     };
 
-    setAppointments([...appointments, newAppointment]);
+    setAllAppointments([...allAppointments, newAppointment]);
     setShowBookingModal(false);
     setBookingData({ ...bookingData, patient: "", notes: "" });
   };
@@ -107,11 +147,11 @@ export default function AgendaPage() {
 
   useEffect(() => {
     const loadAppointments = async () => {
-      // 1. Fetch from API
+      setLoadingAppointments(true);
+
       let apiApps: Appointment[] = [];
       try {
-        const resp = await fetch(apiUrl('/api/rendezvous'));
-        const data = await resp.json();
+        const data = await apiJson<any[]>('/api/rendezvous');
         apiApps = data.map((rdv: any) => {
           const start = new Date(rdv.dateHeureDebut);
           const end = rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000);
@@ -132,48 +172,53 @@ export default function AgendaPage() {
         console.error("Error fetching API appointments", e);
       }
 
-      // Combine and filter duplicates by patient/time
-      const combined = [...apiApps];
-      
-      // Filter by active date (Day, Week, Month)
-      const filtered = combined.filter(a => {
-        // Status filter: Hide "Terminé"
-        const s = a.statut?.toString().toUpperCase() || "";
-        if (s.includes("TERMINE") || s.includes("DONE")) return false;
-
-        // Date filter
-        if (!a.date) return true; // Keep legacy/manual if no date
-        
-        const selectedDateStr = currentDate.toISOString().split('T')[0];
-        
-        if (viewMode === "day") {
-          return a.date === selectedDateStr;
-        } else if (viewMode === "week") {
-          const startOfWeek = new Date(currentDate);
-          startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6);
-          
-          const appDate = new Date(a.date);
-          return appDate >= startOfWeek && appDate <= endOfWeek;
-        } else if (viewMode === "month") {
-          const appDate = new Date(a.date);
-          return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
-        }
-        
-        return true; 
-      });
-      
-      setAppointments(filtered);
+      setAllAppointments(apiApps);
+      setLoadingAppointments(false);
       setLastRefresh(new Date());
     };
 
     loadAppointments();
     
-    // Polling every 30 seconds for real-time updates
     const interval = setInterval(loadAppointments, 30000);
     return () => clearInterval(interval);
-  }, [currentDate, viewMode]);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (viewMode !== "month") return;
+
+    const fetchCounts = async () => {
+      try {
+        const y = currentDate.getFullYear();
+        const m = currentDate.getMonth() + 1;
+        const data = await apiJson<any[]>(`/api/rendezvous/counts-month?year=${y}&month=${m}`);
+        const map: Record<string, number> = {};
+        data.forEach((item: any) => {
+          if (item.date && typeof item.count === "number") {
+            map[item.date] = item.count;
+          }
+        });
+        setDailyCounts(map);
+      } catch (err) {
+        console.error("Failed to fetch daily counts", err);
+      }
+    };
+
+    fetchCounts();
+  }, [viewMode, currentDate]);
+
+  useEffect(() => {
+    if (viewMode !== "month") {
+      setSelectedMonthDate(null);
+    }
+  }, [viewMode]);
+
+  useEffect(() => {
+    setSelectedMonthDate(null);
+  }, [currentDate]);
 
   return (
     <AppShell>
@@ -243,21 +288,22 @@ export default function AgendaPage() {
         >
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary text-sm">calendar_today</span>
-            <div className="flex flex-col">
+              <div className="flex flex-col">
               <p className="text-on-surface-variant font-bold">
                 {viewMode === 'day' ? formattedDate(currentDate) : 
                  viewMode === 'week' ? `Semaine du ${new Date(currentDate.getTime() - currentDate.getDay() * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long'})} au ${new Date(currentDate.getTime() + (6 - currentDate.getDay()) * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'})}` : 
                  currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase()}
               </p>
-              <span className="text-[10px] text-on-surface-variant/60 font-medium italic">Actualisé à {lastRefresh.toLocaleTimeString('fr-FR')}</span>
+              <span className="text-[10px] text-on-surface-variant/60 font-medium italic">Actualisé à {mounted ? lastRefresh.toLocaleTimeString('fr-FR') : '--:--:--'}</span>
             </div>
           </div>
         </PageToolbar>
 
         {/* JCalendar Integration */}
-        <div className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="min-h-[600px]">
           <JCalendar 
-            appointments={appointments}
+            appointments={filteredAppointments}
+            dailyCounts={dailyCounts}
             viewMode={viewMode}
             currentDate={currentDate}
             onAppointmentClick={(app) => {
@@ -265,6 +311,11 @@ export default function AgendaPage() {
               // Possible to open a detail modal here
             }}
             onSlotClick={(date, time) => {
+              if (viewMode === "month") {
+                setSelectedMonthDate(date);
+                return;
+              }
+
               setBookingData({
                 ...bookingData,
                 date: date.toISOString().split('T')[0],
@@ -274,6 +325,40 @@ export default function AgendaPage() {
             }}
           />
         </div>
+
+        {viewMode === "month" && selectedMonthDate && (
+          <div className="mt-6 p-6 bg-white rounded-3xl border border-outline-variant/10 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <div>
+                <p className="text-sm font-black text-on-surface">Détails des rendez-vous confirmés du {selectedMonthDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="text-[12px] text-on-surface-variant">Cliquez sur une date du mois pour voir les rendez-vous confirmés.</p>
+              </div>
+              <button
+                onClick={() => setSelectedMonthDate(null)}
+                className="text-xs uppercase tracking-[0.2em] text-primary font-bold"
+              >
+                Fermer
+              </button>
+            </div>
+
+            {selectedDayAppointments.length > 0 ? (
+              <div className="grid gap-4">
+                {selectedDayAppointments.map(app => (
+                  <div key={app.id} className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4">
+                    <div className="flex flex-wrap gap-3 items-center">
+                      <span className="text-[10px] uppercase tracking-[0.2em] font-black text-primary">{app.heureDebut} - {app.heureFin}</span>
+                      <span className="text-sm font-bold">{app.typeExamen}</span>
+                    </div>
+                    <p className="mt-3 text-[13px] font-semibold text-on-surface">{app.patient}</p>
+                    <p className="text-[11px] text-on-surface-variant">{app.medecin} · {app.salle}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-on-surface-variant">Aucun rendez-vous confirmé pour cette date.</p>
+            )}
+          </div>
+        )}
         
         <div className="mt-8 p-6 bg-surface-container-low/50 rounded-2xl border-2 border-dashed border-outline-variant/20">
           <button 
@@ -326,10 +411,12 @@ export default function AgendaPage() {
                       value={bookingData.procedure}
                       onChange={e => setBookingData({...bookingData, procedure: e.target.value})}
                     >
+                      <option>Fibroscopie digestive haute</option>
+                      <option>Injection de colle biologique</option>
+                      <option>Dilatation oesophagienne</option>
+                      <option>Extraction de corps étranger</option>
                       <option>Coloscopie</option>
-                      <option>Gastroscopie</option>
-                      <option>CPRE</option>
-                      <option>Echo-endoscopie</option>
+                      <option>Rectosigmoidoscopie</option>
                     </select>
                   </div>
                 </div>
@@ -430,14 +517,14 @@ export default function AgendaPage() {
             </div>
             <div className="flex items-end justify-between">
               <span className="text-4xl font-headline font-extrabold text-on-surface">
-                {appointments.length > 0 ? "45%" : "0%"}
+                {filteredAppointments.length > 0 ? "45%" : "0%"}
               </span>
               <span className="text-sm font-semibold text-on-surface-variant flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">trending_flat</span> 0%
               </span>
             </div>
             <div className="w-full bg-surface-container-highest h-2 rounded-full mt-4 overflow-hidden">
-              <div className="bg-primary h-full rounded-full" style={{ width: appointments.length > 0 ? "45%" : "0%" }} />
+              <div className="bg-primary h-full rounded-full" style={{ width: filteredAppointments.length > 0 ? "45%" : "0%" }} />
             </div>
           </div>
 
@@ -450,9 +537,9 @@ export default function AgendaPage() {
             </div>
             <div className="flex items-end justify-between">
               <span className="text-4xl font-headline font-extrabold text-on-surface">
-                {appointments.filter(a => a.statut === 'Terminé').length}
+                {filteredAppointments.filter(a => a.statut === 'Terminé').length}
               </span>
-              <span className="text-on-surface-variant text-sm font-medium">sur {appointments.length} prévus</span>
+              <span className="text-on-surface-variant text-sm font-medium">sur {filteredAppointments.length} prévus</span>
             </div>
             <p className="text-xs text-on-surface-variant mt-4 font-medium italic">Mise à jour en temps réel</p>
           </div>

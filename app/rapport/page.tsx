@@ -2,38 +2,62 @@
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { useState, useEffect } from "react";
-import { apiUrl } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
+import { getAvailableEndoscopyTypes } from "@/lib/config/endoscopyTypes";
 
 export default function RapportPage() {
   const [reports, setReports] = useState<any[]>([]);
+  const [filters, setFilters] = useState({ nom: "", procedure: "", medecin: "", date: "", status: "" });
+  const [isResetting, setIsResetting] = useState(false);
+
+  const fetchReports = async () => {
+    try {
+      const resp = await apiFetch('/api/resultats');
+      console.log('[rapport] fetch /api/resultats status', resp.status);
+      if (resp.ok) {
+        const data = await resp.json();
+        console.log('[rapport] fetched reports count', Array.isArray(data) ? data.length : typeof data);
+        const mapped = data.map((item: any) => {
+          const date = new Date(item.dateCreation);
+          const iso = date.toISOString().split('T')[0];
+          
+          // Récupérer le type de procédure correct depuis la prescription
+          let procedure = "Inconnu";
+          if (item.prescription && item.prescription.typeExamen) {
+            procedure = item.prescription.typeExamen;
+          } else if (item.examType) {
+            procedure = item.examType;
+          }
+          
+          return {
+            id: item.prescriptionId || item.id,
+            name: item.patient ? `${item.patient.nom} ${item.patient.prenom}` : "Inconnu",
+            procedure: procedure,
+            surgeon: item.doctorName || "Non spécifié",
+            status: "Validé", // In a real app, logic based on fields
+            statusClass: "bg-green-100 text-green-700",
+            date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
+            dateISO: iso,
+            time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          };
+        });
+        setReports(mapped);
+      }
+    } catch (err) {
+      console.error("Erreur chargement des rapports:", err);
+    }
+  };
 
   useEffect(() => {
-    async function fetchReports() {
-      try {
-        const resp = await fetch(apiUrl('/api/resultats'));
-        if (resp.ok) {
-          const data = await resp.json();
-          const mapped = data.map((item: any) => {
-            const date = new Date(item.dateCreation);
-            return {
-              id: item.prescriptionId || item.id,
-              name: item.patient ? `${item.patient.nom} ${item.patient.prenom}` : "Inconnu",
-              procedure: item.prescription ? item.prescription.procedureType : "Inconnu",
-              surgeon: item.doctorName || "Non spécifié",
-              status: "Validé", // In a real app, logic based on fields
-              statusClass: "bg-green-100 text-green-700",
-              date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
-              time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            };
-          });
-          setReports(mapped);
-        }
-      } catch (err) {
-        console.error("Erreur chargement des rapports:", err);
-      }
-    }
     fetchReports();
   }, []);
+
+  const handleResetFilters = async () => {
+    setIsResetting(true);
+    setFilters({ nom: "", procedure: "", medecin: "", date: "", status: "" });
+    await fetchReports();
+    setTimeout(() => setIsResetting(false), 600);
+  };
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
@@ -77,35 +101,61 @@ export default function RapportPage() {
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Date Range</label>
               <div className="flex items-center gap-2 bg-surface-container-lowest rounded-lg px-4 py-2 border border-outline-variant/15">
                 <span className="material-symbols-outlined text-on-surface-variant text-sm">calendar_today</span>
-                <input className="bg-transparent border-none text-sm font-medium focus:ring-0 p-0 w-48" type="text" defaultValue="Oct 12, 2023 - Oct 19, 2023" />
+                <input className="bg-transparent border-none text-sm font-medium focus:ring-0 p-0 w-48" type="date" value={filters.date} onChange={(e) => setFilters({...filters, date: e.target.value})} />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Surgeon</label>
-              <select className="bg-surface-container-lowest border-none rounded-lg px-4 py-2 text-sm font-medium border border-outline-variant/15 focus:ring-2 focus:ring-surface-tint/20 w-48">
-                <option>Tous les chirurgiens</option>
+              <select value={filters.medecin} onChange={(e) => setFilters({...filters, medecin: e.target.value})} className="bg-surface-container-lowest border-none rounded-lg px-4 py-2 text-sm font-medium border border-outline-variant/15 focus:ring-2 focus:ring-surface-tint/20 w-48">
+                <option value="">Tous les chirurgiens</option>
                 <option>Dr. Jean Dupont</option>
                 <option>Dr. Marie Curie</option>
                 <option>Dr. Alan Grant</option>
               </select>
             </div>
             <div className="space-y-2">
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Type de Procédure</label>
+              <select value={filters.procedure} onChange={(e) => setFilters({...filters, procedure: e.target.value})} className="bg-surface-container-lowest border-none rounded-lg px-4 py-2 text-sm font-medium border border-outline-variant/15 focus:ring-2 focus:ring-surface-tint/20 w-48">
+                <option value="">Tous les types</option>
+                <option value="Fibroscopie digestive haute">Fibroscopie digestive haute</option>
+                <option value="Injection de colle biologique">Injection de colle biologique</option>
+                <option value="Dilatation oesophagienne">Dilatation oesophagienne</option>
+                <option value="Extraction de corps étranger">Extraction de corps étranger</option>
+                <option value="Coloscopie">Coloscopie</option>
+                <option value="Rectosigmoidoscopie">Rectosigmoidoscopie</option>
+              </select>
+            </div>
+            <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">DETAIL DE LA PRESCRIPTION</label>
               <div className="flex gap-2">
-                <button className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full transition-all">Tous</button>
-                <button className="bg-surface-container-lowest text-on-surface-variant hover:text-primary text-xs font-bold px-4 py-2 rounded-full border border-outline-variant/15 transition-all">Brouillon</button>
-                <button className="bg-surface-container-lowest text-on-surface-variant hover:text-primary text-xs font-bold px-4 py-2 rounded-full border border-outline-variant/15 transition-all">Validé</button>
+                <button onClick={() => setFilters({...filters, status: ""})} className={`text-xs font-bold px-4 py-2 rounded-full transition-all ${!filters.status ? 'bg-primary text-white' : 'bg-surface-container-lowest text-on-surface-variant border border-outline-variant/15'}`}>Tous</button>
+                <button onClick={() => setFilters({...filters, status: "Validé"})} className={`text-xs font-bold px-4 py-2 rounded-full transition-all ${filters.status === 'Validé' ? 'bg-primary text-white' : 'bg-surface-container-lowest text-on-surface-variant border border-outline-variant/15'}`}>Validé</button>
               </div>
             </div>
-            <button className="ml-auto flex items-center gap-2 text-primary font-bold text-sm hover:underline decoration-2 underline-offset-4">
-              <span className="material-symbols-outlined">filter_list_off</span>
-              Réinitialiser les filtres
+            <button 
+              onClick={handleResetFilters}
+              disabled={isResetting}
+              className="ml-auto flex items-center gap-2 text-primary font-bold text-sm px-4 py-2.5 rounded-lg transition-all duration-300 hover:bg-primary/10 hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group"
+            >
+              <span className={`material-symbols-outlined transition-transform duration-500 ${isResetting ? 'animate-spin' : 'group-hover:rotate-180'}`}>
+                filter_list_off
+              </span>
+              <span className={`transition-all ${isResetting ? 'opacity-60' : ''}`}>
+                {isResetting ? 'Réinitialisation...' : 'Réinitialiser les filtres'}
+              </span>
             </button>
           </section>
 
           <section className="space-y-4">
             <div className="flex justify-between items-center px-4">
-              <h4 className="font-headline font-bold text-on-surface">Rapports Cliniques ({reports.length})</h4>
+              <h4 className="font-headline font-bold text-on-surface">Rapports Cliniques ({/*filtered*/} {reports.filter(r => {
+                const matchesNom = (r.name || "").toLowerCase().includes((filters.nom || "").toLowerCase());
+                const matchesProcedure = !filters.procedure || (r.procedure || "").toLowerCase() === filters.procedure.toLowerCase();
+                const matchesMedecin = (r.surgeon || "").toLowerCase().includes((filters.medecin || "").toLowerCase());
+                const matchesDate = !filters.date || r.dateISO === filters.date || r.date === new Date(filters.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                const matchesStatus = !filters.status || r.status === filters.status;
+                return matchesNom && matchesProcedure && matchesMedecin && matchesDate && matchesStatus;
+              }).length})</h4>
               <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-tertiary" /> En attente de validation</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Finalisé</span>
@@ -127,7 +177,14 @@ export default function RapportPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
-                    {reports.map((report) => (
+                    {reports.filter(r => {
+                      const matchesNom = (r.name || "").toLowerCase().includes((filters.nom || "").toLowerCase());
+                      const matchesProcedure = !filters.procedure || (r.procedure || "").toLowerCase() === filters.procedure.toLowerCase();
+                      const matchesMedecin = (r.surgeon || "").toLowerCase().includes((filters.medecin || "").toLowerCase());
+                      const matchesDate = !filters.date || r.date === new Date(filters.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                      const matchesStatus = !filters.status || r.status === filters.status;
+                      return matchesNom && matchesProcedure && matchesMedecin && matchesDate && matchesStatus;
+                    }).map((report) => (
                       <tr key={report.id} className="hover:bg-surface-container-high/30 transition-colors group">
                         <td className="px-6 py-4">
                           <p className="text-sm font-semibold text-on-surface">{report.date}</p>

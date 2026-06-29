@@ -7,6 +7,8 @@ interface PatientContextType {
   prescriptionId: string;
   patientName: string;
   procedure: string;
+  prescriber: string;
+  priority: string;
   age: string;
   setPatientData: (data: Partial<Omit<PatientContextType, 'setPatientData' | 'clearPatientData'>>) => void;
   clearPatientData: () => void;
@@ -20,6 +22,8 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     prescriptionId: "",
     patientName: "",
     procedure: "",
+    prescriber: "",
+    priority: "",
     age: "54",
   });
 
@@ -42,7 +46,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearPatientData = () => {
-    const empty = { patientId: "", prescriptionId: "", patientName: "", procedure: "", age: "" };
+    const empty = { patientId: "", prescriptionId: "", patientName: "", procedure: "", prescriber: "", priority: "", age: "" };
     setData(empty);
     localStorage.removeItem("current_patient_context");
   };

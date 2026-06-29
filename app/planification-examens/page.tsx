@@ -1,20 +1,24 @@
 "use client";
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
-import { apiFetch, apiUrl } from "@/lib/api";
+import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { usePatient } from "@/contexts/PatientContext";
 import StatBadge from "@/components/ui/StatBadge";
 
 function PlanificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const patientId = searchParams.get("patientId") || "#PX-8829-01";
-  const patientName = searchParams.get("patientName") || "MARIE LEFEBVRE";
-  const procedureParam = searchParams.get("procedure") || "Fibroscopie Oeso-Gastro-Duodénale";
+  const patientContext = usePatient();
+
+  const patientId = searchParams.get("patientId") || patientContext.patientId || "#PX-8829-01";
+  const patientName = searchParams.get("patientName") || patientContext.patientName || "MARIE LEFEBVRE";
+  const priorityParam = searchParams.get("priority") || patientContext.priority || "NORMAL";
+  const procedureParam = searchParams.get("procedure") || patientContext.procedure || "Fibroscopie Oeso-Gastro-Duodénale";
   const reasonParam = searchParams.get("reason") || "Hémorragie digestive haute - Suspicion d'ulcère gastrique.";
-  const prescriptionId = searchParams.get("prescriptionId") || null;
+  const prescriptionId = searchParams.get("prescriptionId") || patientContext.prescriptionId || null;
   const medecinId = searchParams.get("medecinId") || null;
 
   const [medecinInfo, setMedecinInfo] = useState<any | null>(null);
@@ -71,19 +75,56 @@ function PlanificationContent() {
   });
 
   const handleOpenCPA = () => {
-    router.push(`/demande-cpa?patientId=${encodeURIComponent(patientId)}`);
+    try {
+      patientContext.setPatientData({
+        patientId: patientId || "",
+        patientName: patientName || "",
+        prescriptionId: prescriptionId || "",
+        procedure: procedureParam || "",
+        prescriber: prescriberLabel || "",
+        priority: priorityParam || "NORMAL",
+      });
+    } catch (e) {}
+
+    const params = new URLSearchParams();
+    if (patientId) params.set("patientId", patientId);
+    if (patientName) params.set("patientName", patientName);
+    if (prescriberLabel) params.set("prescriber", prescriberLabel);
+    if (procedureParam) params.set("procedure", procedureParam);
+    if (date) params.set("date", date);
+    if (priorityParam) params.set("priority", priorityParam);
+
+    router.push(`/demande-cpa?${params.toString()}`);
   };
 
   const handleLocalAnesthesia = () => {
-    router.push(`/planification-examens?patientId=${encodeURIComponent(patientId)}`);
+    try {
+      patientContext.setPatientData({
+        patientId: patientId || "",
+        patientName: patientName || "",
+        prescriptionId: prescriptionId || "",
+        procedure: procedureParam || "",
+        prescriber: prescriberLabel || "",
+        priority: priorityParam || "NORMAL",
+      });
+    } catch (e) {}
+
+    const params = new URLSearchParams();
+    if (patientId) params.set("patientId", patientId);
+    if (patientName) params.set("patientName", patientName);
+    if (prescriberLabel) params.set("prescriber", prescriberLabel);
+    if (procedureParam) params.set("procedure", procedureParam);
+    if (date) params.set("date", date);
+    if (priorityParam) params.set("priority", priorityParam);
+
+    router.push(`/planification-examens?${params.toString()}`);
   };
 
   useEffect(() => {
     const loadMedecin = async () => {
       try {
         setIsMedecinLoading(true);
-        const response = await fetch(apiUrl('/api/medecins'));
-        const medecins = await response.json();
+        const medecins = await apiJson<any[]>('/api/medecins');
         if (medecinId) {
           const found = medecins.find((medecin: any) => medecin.id === medecinId);
           setMedecinInfo(found || null);
@@ -102,11 +143,8 @@ function PlanificationContent() {
       if (!prescriptionId) return;
       try {
         setIsPrescriptionLoading(true);
-        const resp = await fetch(apiUrl(`/api/prescriptions/${prescriptionId}`));
-        if (resp.ok) {
-          const data = await resp.json();
-          setPrescriptionData(data);
-        }
+        const data = await apiJson<any>(`/api/prescriptions/${prescriptionId}`);
+        setPrescriptionData(data);
       } catch (e) {
         console.error("Error fetching prescription details", e);
       } finally {
@@ -117,8 +155,7 @@ function PlanificationContent() {
 
     const fetchSalles = async () => {
       try {
-        const resp = await fetch(apiUrl('/api/salles'));
-        const data = await resp.json();
+        const data = await apiJson<any[]>('/api/salles');
         setSalles(data);
       } catch (e) {
         console.error("Error fetching salles", e);
@@ -128,7 +165,7 @@ function PlanificationContent() {
   }, [medecinId, prescriptionId]);
 
   const priorityIndicator = useMemo(() => {
-    const rawPriority = (prescriptionData?.priorite || searchParams.get("priority") || "NORMAL").toUpperCase();
+    const rawPriority = (prescriptionData?.priorite || searchParams.get("priority") || patientContext.priority || "NORMAL").toUpperCase();
     
     // Logic similar to prescriptions/page.tsx
     if (rawPriority === "STAT" || rawPriority === "URGENCE VITALE") {
@@ -164,17 +201,14 @@ function PlanificationContent() {
       return `Dr. ${medecinInfo.prenom} ${medecinInfo.nom}`;
     }
 
-    return searchParams.get("prescriber") || "Dr. Antoine Moreau";
-  }, [medecinInfo, searchParams]);
+    return searchParams.get("prescriber") || patientContext.prescriber || "Dr. Antoine Moreau";
+  }, [medecinInfo, searchParams, patientContext.prescriber]);
 
   const [selectedSalle, setSelectedSalle] = useState("Salle 1");
 
   const checkConflicts = async (newStart: Date, newEnd: Date, salle: string) => {
     try {
-      const resp = await fetch(apiUrl('/api/rendezvous'));
-      if (!resp.ok) return false;
-      const appointments = await resp.json();
-      
+      const appointments = await apiJson<any[]>('/api/rendezvous');
       return appointments.some((app: any) => {
         if (app.salle === salle || (app.salle && app.salle.nom === salle)) {
           const appStart = new Date(app.dateHeureDebut);
@@ -300,6 +334,11 @@ function PlanificationContent() {
       </a>
 
       {/* Patient Header */}
+      {(!patientId || patientId.startsWith("#")) && (
+        <div className="mt-4 p-4 rounded-lg border border-error/20 bg-error-container/10 text-error text-sm">
+          <strong>Attention :</strong> Aucune identité patient fiable fournie. Veuillez sélectionner une prescription depuis la file de prescription pour préremplir les informations, ou renseigner manuellement le patient.
+        </div>
+      )}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 bg-white rounded-xl border border-outline-variant/30 p-6 flex gap-6 items-start shadow-sm">
           <div className="w-20 h-20 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
@@ -354,46 +393,28 @@ function PlanificationContent() {
       </section>
 
       {/* Anesthesia Choice */}
-      <section className="rounded-3xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-white to-tertiary/10 px-6 py-5 shadow-md shadow-primary/5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-error/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-error">
-                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  priority_high
-                </span>
-                Obligatoire
-              </span>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Choix d'anesthésie</p>
-            </div>
-            <p className="text-base font-semibold text-on-surface leading-snug">Sélectionnez l'anesthésie avant de finaliser la planification du créneau.</p>
-            <p className="text-sm text-on-surface-variant font-medium mt-2">Ce choix conditionne la suite du parcours et doit rester visible à tout moment.</p>
-          </div>
-          <div className="flex flex-col gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant text-right">Sélection requise</p>
-            <div className="flex items-center rounded-2xl border border-outline-variant/30 bg-surface-container p-1.5 shadow-inner">
-              <button 
-                onClick={handleLocalAnesthesia}
-                className={`min-w-[11rem] px-6 py-3 text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer rounded-xl ${
-                  pathname === '/planification-examens'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm border border-gray-200'
-                }`}
-              >
-                Anesthésie locale
-              </button>
-              <button 
-                onClick={handleOpenCPA}
-                className={`min-w-[11rem] px-6 py-3 text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer rounded-xl ${
-                  pathname === '/demande-cpa'
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm border border-gray-200'
-                }`}
-              >
-                Anesthésie générale
-              </button>
-            </div>
-          </div>
+      <section className="rounded-3xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-white to-tertiary/10 px-6 py-5 shadow-md shadow-primary/5 flex justify-center">
+        <div className="flex items-center rounded-2xl border border-outline-variant/30 bg-surface-container p-1.5 shadow-inner">
+          <button 
+            onClick={handleLocalAnesthesia}
+            className={`min-w-[11rem] px-6 py-3 text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer rounded-xl ${
+              pathname === '/planification-examens'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm border border-gray-200'
+            }`}
+          >
+            Anesthésie locale
+          </button>
+          <button 
+            onClick={handleOpenCPA}
+            className={`min-w-[11rem] px-6 py-3 text-sm font-bold transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer rounded-xl ${
+              pathname === '/demande-cpa'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm border border-gray-200'
+            }`}
+          >
+            Anesthésie générale
+          </button>
         </div>
       </section>
 
@@ -405,7 +426,7 @@ function PlanificationContent() {
           <div className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/20 shadow-sm">
             <h4 className="font-headline font-bold text-on-surface mb-5 flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">clinical_notes</span>
-              Contexte Clinique
+              Détail de la prescription
             </h4>
             <div className="space-y-5">
               <div className="bg-white p-4 rounded-lg border border-outline-variant/10">
@@ -429,41 +450,7 @@ function PlanificationContent() {
                   </li>
                 </ul>
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.1em]">
-                  Observations cliniques &amp; détails de l'intervention
-                </label>
-                <textarea
-                  className="w-full min-h-[150px] bg-white rounded-lg p-4 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/40 resize-none leading-relaxed border border-outline-variant/20 focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Saisissez les antécédents, l'indication chirurgicale et les observations particulières..."
-                  value={observations}
-                  onChange={(e) => setObservations(e.target.value)}
-                />
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant/10">
-                    <span className="material-symbols-outlined text-primary mb-2 block text-lg">person_search</span>
-                    <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Demandeur</p>
-                    <p className="text-sm font-black text-on-surface">{isMedecinLoading ? "Chargement..." : prescriberLabel}</p>
-                    <p className="text-[10px] text-on-surface-variant font-medium mt-0.5">{medecinInfo?.specialite || "Service de Gastro-entérologie"}</p>
-                  </div>
-                  <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant/10">
-                    <span className={`material-symbols-outlined mb-2 block text-lg font-bold ${priorityIndicator.label === 'Normale' ? 'text-primary' : priorityIndicator.label === 'STAT' || priorityIndicator.label === 'Urgent Vital' ? 'text-red-600' : 'text-[#EA580C]'}`}>
-                      {priorityIndicator.icon}
-                    </span>
-                    <p className={`text-[9px] font-bold uppercase tracking-wider mb-1 ${priorityIndicator.label === 'Normale' ? 'text-on-surface-variant' : priorityIndicator.label === 'STAT' || priorityIndicator.label === 'Urgent Vital' ? 'text-red-600' : 'text-[#EA580C]'}`}>
-                      {priorityIndicator.label}
-                    </p>
-                    <p className="text-sm font-black text-on-surface">
-                      {priorityIndicator.label === 'Normale' ? 'Standard (48h)' : priorityIndicator.label === 'Prioritaire' ? 'Prioritaire (24h)' : 'Priorité Immédiate'}
-                    </p>
-                  </div>
-                  <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant/10">
-                    <span className="material-symbols-outlined text-primary mb-2 block text-lg">calendar_today</span>
-                    <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Date souhaitée</p>
-                    <p className="text-sm font-black text-on-surface">12 Oct. 2023</p>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
 
@@ -485,9 +472,7 @@ function PlanificationContent() {
                     Aujourd'hui
                   </button>
                 </div>
-                <p className="text-xs text-on-surface-variant mt-1.5 font-medium">Étape 2 sur 3 : Sélection des ressources</p>
               </div>
-              <span className="text-[10px] font-black bg-surface-container px-3 py-1 rounded-full uppercase tracking-widest text-on-surface-variant">PLANNING</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

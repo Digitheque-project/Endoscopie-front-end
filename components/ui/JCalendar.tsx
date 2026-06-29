@@ -17,6 +17,7 @@ export interface JCalendarAppointment {
 
 interface JCalendarProps {
   appointments: JCalendarAppointment[];
+  dailyCounts?: Record<string, number>;
   onSlotClick?: (date: Date, time: string) => void;
   onAppointmentClick?: (app: JCalendarAppointment) => void;
   viewMode?: "day" | "week" | "month";
@@ -27,6 +28,7 @@ export function JCalendar({
   appointments, 
   onSlotClick, 
   onAppointmentClick,
+  dailyCounts = {} as Record<string, number>,
   viewMode = "day",
   currentDate = new Date()
 }: JCalendarProps) {
@@ -96,6 +98,14 @@ export function JCalendar({
     const durationMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
     return durationMinutes * (80 / 60);
   };
+
+  const appointmentsByDate = useMemo(() => {
+    return appointments.reduce((acc, app) => {
+      if (!app.date) return acc;
+      acc[app.date] = (acc[app.date] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [appointments]);
 
   const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
@@ -222,14 +232,17 @@ export function JCalendar({
                   </div>
                   
                   <div className="space-y-2 max-h-[500px] overflow-y-auto no-scrollbar">
-                    {appointments.slice(0, 3).map(app => (
-                      <div key={app.id} 
-                           onClick={() => onAppointmentClick?.(app)}
-                           className="bg-surface-container-low/50 hover:bg-white border-l-2 border-primary p-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]">
-                        <p className="text-[10px] font-extrabold truncate text-on-surface">{app.patient}</p>
-                        <p className="text-[9px] font-bold text-primary/70 tabular-nums">{app.heureDebut}</p>
-                      </div>
-                    ))}
+                    {appointments
+                      .filter(app => app.date === date.toISOString().split('T')[0])
+                      .slice(0, 3)
+                      .map(app => (
+                        <div key={app.id} 
+                             onClick={() => onAppointmentClick?.(app)}
+                             className="bg-surface-container-low/50 hover:bg-white border-l-2 border-primary p-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]">
+                          <p className="text-[10px] font-extrabold truncate text-on-surface">{app.patient}</p>
+                          <p className="text-[9px] font-bold text-primary/70 tabular-nums">{app.heureDebut}</p>
+                        </div>
+                      ))}
                   </div>
 
                   <button className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:scale-110 active:scale-95">
@@ -257,29 +270,33 @@ export function JCalendar({
               
               const isCurrentMonth = date.getMonth() === currentDate.getMonth();
               const isToday = date.toDateString() === new Date().toDateString();
+              const iso = date.toISOString().split('T')[0];
+              const appointmentCount = appointmentsByDate[iso] ?? dailyCounts?.[iso] ?? 0;
               
               return (
                 <div key={i} 
                      onClick={() => onSlotClick?.(date, "08:00")}
-                     className={`min-h-[120px] p-3 bg-white transition-all hover:bg-primary/[0.02] cursor-pointer relative group border border-outline-variant/5 ${!isCurrentMonth ? 'opacity-30 bg-surface-container-low/20' : ''}`}>
+                     className={`min-h-[120px] p-3 bg-white transition-all hover:bg-primary/[0.02] cursor-pointer relative group border ${appointmentCount > 0 && isCurrentMonth ? 'border-primary/40 ring-1 ring-primary/10' : 'border-outline-variant/5'} ${!isCurrentMonth ? 'opacity-30 bg-surface-container-low/20' : ''}`}>
                   <div className="flex justify-between items-start mb-2">
-                    <span className={`text-xs font-black w-7 h-7 flex items-center justify-center rounded-full transition-all ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-on-surface-variant group-hover:text-primary'}`}>
+                    <span className={`text-xs font-black w-7 h-7 flex items-center justify-center rounded-full transition-all ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-on-surface-variant group-hover:text-primary'} ${isCurrentMonth && appointmentCount > 0 ? 'bg-primary/10 text-primary' : ''}`}>
                       {date.getDate()}
                     </span>
-                    {isCurrentMonth && Math.random() > 0.7 && (
-                       <div className="flex gap-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-tertiary" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                       </div>
+                    {isCurrentMonth && appointmentCount > 0 && (
+                      <div className="flex items-center gap-1 text-[10px] font-black text-primary uppercase tracking-[0.15em]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                        <span>{appointmentCount}</span>
+                      </div>
                     )}
                   </div>
                   
-                  {isCurrentMonth && (
-                    <div className="mt-4 space-y-1.5">
+                  {isCurrentMonth && appointmentCount > 0 && (
+                    <div className="mt-2 space-y-1.5">
                       <div className="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
-                        <div className="h-full bg-primary/40 w-2/3" />
+                        <div className="h-full bg-primary/40" style={{ width: `${Math.min(100, appointmentCount * 15)}%` }} />
                       </div>
-                      <p className="text-[9px] font-black text-on-surface-variant/60 uppercase tracking-tighter">8 Examens planifiés</p>
+                      <p className="text-[9px] font-black text-on-surface-variant/60 uppercase tracking-tighter">
+                        {appointmentCount} rendez-vous
+                      </p>
                     </div>
                   )}
 

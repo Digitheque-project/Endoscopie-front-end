@@ -2,7 +2,7 @@
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
-import { apiUrl } from "@/lib/api";
+import { apiUrl, apiJson } from "@/lib/api";
 import PrescriptionTreatButton from "@/components/navigation/PrescriptionTreatButton";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, type KeyboardEvent } from "react";
@@ -89,17 +89,10 @@ export default function PrescriptionsPage() {
       setError(null);
 
       // Fetch doctors and prescriptions in parallel
-      const [respPresc, respDoctors] = await Promise.all([
-        fetch(apiUrl('/api/prescriptions')),
-        fetch(apiUrl('/api/medecins'))
+      const [data, docsData] = await Promise.all([
+        apiJson<any[]>('/api/prescriptions'),
+        apiJson<any[]>('/api/medecins'),
       ]);
-
-      if (!respPresc.ok || !respDoctors.ok) {
-        throw new Error(`Backend error: prescriptions=${respPresc.status}, medecins=${respDoctors.status}`);
-      }
-
-      const data = await respPresc.json();
-      const docsData = await respDoctors.json();
       setDoctors(docsData);
 
       const mapped = (Array.isArray(data) ? data : []).map((p: any) => {
@@ -113,6 +106,9 @@ export default function PrescriptionsPage() {
           id: p.id,
           medecinId: p.medecinId,
           patientId: p.patient?.id || p.patientId,
+          // Preserve original name (case preserved) for navigation/synchronization,
+          // while `name` remains the displayed uppercase variant for consistency.
+          originalName: `${p.patient?.nom || ""} ${p.patient?.prenom || ""}`.trim() || "Patient Inconnu",
           name: `${p.patient?.nom || ""} ${p.patient?.prenom || ""}`.trim().toUpperCase() || "PATIENT INCONNU",
           priority: prioriteUpper,
           procedure: p.typeExamen || "Examen Endoscopique",
@@ -232,11 +228,27 @@ export default function PrescriptionsPage() {
     if (req.id) params.set("prescriptionId", String(req.id));
     if (req.medecinId) params.set("medecinId", String(req.medecinId));
     if (req.patientId) params.set("patientId", String(req.patientId));
-    if (req.name) params.set("patientName", String(req.name));
+    // Prefer the original (case-preserved) name when navigating to planning
+    if (req.originalName) params.set("patientName", String(req.originalName));
+    else if (req.name) params.set("patientName", String(req.name));
     if (req.procedure) params.set("procedure", String(req.procedure));
     if (req.prescriber) params.set("prescriber", String(req.prescriber));
     if (req.reason) params.set("reason", String(req.reason));
     if (req.priority) params.set("priority", String(req.priority));
+
+    // Persist selection in PatientContext to ensure downstream pages can fallback reliably
+    try {
+      setPatientData({
+        patientId: req.patientId || "",
+        prescriptionId: req.id || "",
+        patientName: req.originalName || req.name || "",
+        procedure: req.procedure || "",
+        prescriber: req.prescriber || "",
+        priority: req.priority || "NORMAL",
+      });
+    } catch (e) {
+      // ignore if context not available
+    }
 
     router.push(`/planification-examens?${params.toString()}`);
   };
@@ -399,7 +411,7 @@ export default function PrescriptionsPage() {
           </div>
 
           <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-12 space-y-4 lg:col-span-8">
+            <div className="col-span-12 space-y-4 lg:col-span-12">
               <h3 className="flex items-center gap-2 text-lg font-bold font-headline">
                 <span className="h-6 w-2 rounded-full bg-error" />
                 Demandes Prioritaires
@@ -440,7 +452,7 @@ export default function PrescriptionsPage() {
                       </tr>
                     </thead>
                   </table>
-                  <div className="max-h-[600px] overflow-y-auto">
+                  <div>
                     <table className="min-w-full border-collapse text-left text-sm">
                       <tbody>
                         {priorityRequests
@@ -473,16 +485,16 @@ export default function PrescriptionsPage() {
                             )}
                           </td>
                           <td className="px-4 py-4">
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap items-center gap-2 whitespace-nowrap">
                               <button
                                 onClick={() => handlePlanifier(req)}
-                                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white transition-all duration-200 hover:opacity-90"
+                                className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
                               >
                                 Planifier
                               </button>
                               <button
                                 onClick={() => handleDetail(req.id)}
-                                className="rounded-lg border border-outline-variant/20 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+                                className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
                               >
                                 Détails
                               </button>
@@ -496,9 +508,9 @@ export default function PrescriptionsPage() {
                                   });
                                   router.push('/checklists/avant');
                                 }}
-                                className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-bold text-white transition-all duration-200 hover:opacity-90"
+                                className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
                               >
-                                Traiter
+                                Commencer l'examen
                               </button>
                             </div>
                           </td>
@@ -511,55 +523,6 @@ export default function PrescriptionsPage() {
               )}
             </div>
 
-            <div className="col-span-12 space-y-4 lg:col-span-4">
-              <h3 className="flex items-center gap-2 text-lg font-bold font-headline">
-                <span className="material-symbols-outlined text-primary">calendar_today</span>
-                Agenda du Jour
-              </h3>
-              <div className="rounded-lg border border-outline-variant/20 bg-surface-container-low p-6">
-                <div className="space-y-4">
-                  {dynamicSchedule.map((item, idx) => (
-                    <div key={idx} className={`flex gap-3 pl-3 border-l-2 ${item.isAlert ? "border-primary p-2 rounded-r-lg bg-secondary-container/20 shadow-sm" : "border-primary-container"}`}>
-                      <span className={`min-w-[45px] text-xs font-bold ${item.isAlert ? "text-primary" : "text-on-surface-variant"}`}>{item.time}</span>
-                      <div>
-                        <p className="text-sm font-bold text-on-surface">{item.procedure}</p>
-                        <p className="text-[11px] text-on-surface-variant">{item.patient}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button 
-                  onClick={() => router.push('/agenda-rendez-vous')}
-                  className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-primary/20 py-3 text-xs font-bold uppercase text-primary transition-all duration-200 hover:bg-primary/5 hover:border-primary hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-lg">calendar_month</span>
-                  Voir l'agenda complet
-                </button>
-              </div>
-
-              <h3 className="flex items-center gap-2 text-lg font-bold font-headline mt-2">
-                <span className="material-symbols-outlined text-secondary">history</span>
-                Activité Récente
-              </h3>
-              <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-6 shadow-sm">
-                <div className="space-y-4">
-                  {dynamicActivity.map((activity, idx) => (
-                    <div key={idx} className="flex gap-3">
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${activity.bgColor}`}>
-                        <span className="material-symbols-outlined text-sm">{activity.type}</span>
-                      </div>
-                      <div>
-                        <p className="text-xs">
-                          <span className="font-bold">{activity.title} </span>
-                          {activity.detail}
-                        </p>
-                        <p className="text-[10px] text-on-surface-variant">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
       </div>
     </AppShell>

@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
-import { apiFetch, apiUrl } from "@/lib/api";
+import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Fragment, type KeyboardEvent } from "react";
 
 
 
@@ -16,6 +16,8 @@ export default function Home() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [procedureCounts, setProcedureCounts] = useState<{ procedure: string; count: number }[]>([]);
+  const [isLoadingProcedureCounts, setIsLoadingProcedureCounts] = useState(true);
   const [newSalleData, setNewSalleData] = useState({
     nom: "",
     numero: "",
@@ -31,52 +33,64 @@ export default function Home() {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const filterButtonRef = useRef<HTMLButtonElement | null>(null);
+  const filterPanelRef = useRef<HTMLDivElement | null>(null);
 
   const fetchAppointments = async () => {
     try {
-      const resp = await fetch(apiUrl('/api/rendezvous'));
-      if (resp.ok) {
-        const data = await resp.json();
-        const mapped = data.map((rdv: any) => {
-          const start = new Date(rdv.dateHeureDebut);
-          const status = rdv.statut || "En attente";
+      const data = await apiJson<any[]>('/api/rendezvous');
+      const mapped = data.map((rdv: any) => {
+        const start = new Date(rdv.dateHeureDebut);
+        const status = rdv.statut || "En attente";
 
-          let statusClass = "bg-surface-container text-on-surface-variant";
-          if (status === "En cours") statusClass = "bg-blue-100 text-blue-800";
-          if (status === "Terminé") statusClass = "bg-emerald-100 text-success";
-          if (status === "Priorité" || status === "Urgent") statusClass = "bg-[#EA580C] text-white font-bold animate-pulse";
-          if (status === "Confirmé") statusClass = "bg-primary/10 text-primary font-bold";
+        let statusClass = "bg-surface-container text-on-surface-variant";
+        if (status === "En cours") statusClass = "bg-blue-100 text-blue-800";
+        if (status === "Terminé") statusClass = "bg-emerald-100 text-success";
+        if (status === "Priorité" || status === "Urgent") statusClass = "bg-[#EA580C] text-white font-bold animate-pulse";
+        if (status === "Confirmé") statusClass = "bg-primary/10 text-primary font-bold";
 
-          const isConfirmed = ["Confirmé", "Terminé", "En cours", "Priorité", "Urgent", "Prévu"].includes(status);
+        const isConfirmed = ["Confirmé", "Terminé", "En cours", "Priorité", "Urgent", "Prévu"].includes(status);
 
-          return {
-            time: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-            patient: rdv.patient?.nom ? `${rdv.patient.prenom} ${rdv.patient.nom}` : (rdv.patientName || "Patient Inconnu"),
-            id: `#END-${rdv.id.toString().slice(-4).toUpperCase()}`,
-            realId: rdv.id,
-            prescriptionId: rdv.prescriptionId || rdv.prescription?.id,
-            patientRealId: rdv.patient?.id || rdv.patientId,
-            procedure: isConfirmed ? (rdv.prescription?.typeExamen || rdv.procedure || rdv.typeExamen || "Examen Endoscopique") : "En attente de confirmation",
-            doctor: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Dr. Antoine Moreau",
-            status: status,
-            statusClass: statusClass,
-            notesCliniques: rdv.notesCliniques || rdv.notes || "Dossier en cours",
-            date: start.toISOString().split('T')[0],
-            rawStart: start,
-            rawEnd: rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000), // Default 45 mins if no end
-            salleId: rdv.salleId || rdv.salle?.id || null,
-            salleName: rdv.salle?.nom || rdv.salle || "",
-            hasCPA: !!rdv.prescription?.dossierCPA && rdv.prescription.dossierCPA.statut === "Valide",
-          };
-        });
-        setAppointments(mapped);
-        setApiError(null);
-      } else {
-        setApiError(`API rendez-vous : erreur ${resp.status}`);
-      }
+        return {
+          time: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+          patient: rdv.patient?.nom ? `${rdv.patient.prenom} ${rdv.patient.nom}` : (rdv.patientName || "Patient Inconnu"),
+          id: `#END-${rdv.id.toString().slice(-4).toUpperCase()}`,
+          realId: rdv.id,
+          prescriptionId: rdv.prescriptionId || rdv.prescription?.id,
+          patientRealId: rdv.patient?.id || rdv.patientId,
+          procedure: isConfirmed ? (rdv.prescription?.typeExamen || rdv.procedure || rdv.typeExamen || "Examen Endoscopique") : "En attente de confirmation",
+          doctor: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Dr. Antoine Moreau",
+          status: status,
+          statusClass: statusClass,
+          notesCliniques: rdv.notesCliniques || rdv.notes || "Dossier en cours",
+          date: start.toISOString().split('T')[0],
+          rawStart: start,
+          rawEnd: rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000),
+          salleId: rdv.salleId || rdv.salle?.id || null,
+          salleName: rdv.salle?.nom || rdv.salle || "",
+          hasCPA: !!rdv.prescription?.dossierCPA && rdv.prescription.dossierCPA.statut === "Valide",
+        };
+      });
+      setAppointments(mapped);
+      setApiError(null);
     } catch (e) {
       console.error("Error fetching appointments", e);
       setApiError("Impossible de joindre l'API. Démarrez le backend (npm run start:dev dans endoscopie-back).");
+    }
+  };
+
+  const fetchProcedureCounts = async (showLoading = false) => {
+    if (showLoading) setIsLoadingProcedureCounts(true);
+    try {
+      const data = await apiJson<{ procedure: string; count: number }[]>('/api/rendezvous/procedure-counts-today');
+      const sorted = Array.isArray(data)
+        ? [...data].sort((a, b) => b.count - a.count || a.procedure.localeCompare(b.procedure))
+        : [];
+      setProcedureCounts(sorted);
+    } catch (e) {
+      console.error("Error fetching procedure counts", e);
+    } finally {
+      if (showLoading) setIsLoadingProcedureCounts(false);
     }
   };
 
@@ -91,15 +105,10 @@ export default function Home() {
   const fetchSalles = async (showLoading = true) => {
     if (showLoading) setIsRefreshing(true);
     try {
-      const resp = await fetch(apiUrl('/api/salles'));
-      if (resp.ok) {
-        const data = await resp.json();
-        setSalles(Array.isArray(data) ? data : []);
-        setLastUpdated(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-        setApiError(null);
-      } else {
-        setApiError(`API salles : erreur ${resp.status}`);
-      }
+      const data = await apiJson<any[]>('/api/salles');
+      setSalles(Array.isArray(data) ? data : []);
+      setLastUpdated(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      setApiError(null);
     } catch (e) {
       console.error("Error fetching salles", e);
       setApiError("Impossible de joindre l'API. Démarrez le backend (npm run start:dev dans endoscopie-back).");
@@ -111,12 +120,38 @@ export default function Home() {
   useEffect(() => {
     fetchSalles(true);
     fetchAppointments();
+    fetchProcedureCounts(true);
     const intervalId = setInterval(() => {
       fetchSalles(false);
       fetchAppointments();
+      fetchProcedureCounts(false);
     }, 15000);
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (!showFilters) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (
+        filterPanelRef.current &&
+        !filterPanelRef.current.contains(target) &&
+        filterButtonRef.current &&
+        !filterButtonRef.current.contains(target)
+      ) {
+        setShowFilters(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showFilters]);
 
   const handleSaveSalle = async () => {
     console.log("handleSaveSalle: newSalleData", newSalleData);
@@ -142,12 +177,12 @@ export default function Home() {
         setShowAddRoom(false);
 
         // Refresh salles list
-        const refreshResp = await fetch(apiUrl('/api/salles'));
-        console.log("handleSaveSalle: refresh status", refreshResp.status);
-        if (refreshResp.ok) {
-          const refreshData = await refreshResp.json();
-          console.log("handleSaveSalle: refresh data", JSON.stringify(refreshData, null, 2));
+        try {
+          const refreshData = await apiJson<any[]>('/api/salles');
           setSalles(Array.isArray(refreshData) ? refreshData : []);
+          console.log("handleSaveSalle: refresh data", JSON.stringify(refreshData, null, 2));
+        } catch (refreshError) {
+          console.error("handleSaveSalle refresh error", refreshError);
         }
 
         setTimeout(() => setIsSuccess(false), 3000);
@@ -205,6 +240,7 @@ export default function Home() {
   };
 
   const validSalles = Array.isArray(salles) ? salles : [];
+  const totalProceduresToday = procedureCounts.reduce((sum, p) => sum + p.count, 0);
 
   return (
     <AppShell>
@@ -226,7 +262,10 @@ export default function Home() {
           </div>
           <div className="flex flex-col items-start sm:items-end gap-2">
             <button
-              onClick={() => fetchSalles(true)}
+              onClick={() => {
+                fetchSalles(true);
+                fetchProcedureCounts(false);
+              }}
               disabled={isRefreshing}
               className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/10 bg-white px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -252,7 +291,32 @@ export default function Home() {
             </div>
             <div>
               <p className="text-on-surface-variant text-sm font-semibold mb-1">Total Procedures Aujourd&#39;hui</p>
-              <h3 className="text-4xl font-extrabold text-on-surface">{filteredSchedule.length.toString().padStart(2, '0')}</h3>
+              {isLoadingProcedureCounts ? (
+                <div className="animate-pulse">
+                  <div className="h-9 w-14 rounded bg-surface-container" />
+                  <div className="mt-3 space-y-1.5">
+                    <div className="h-3 w-full rounded bg-surface-container" />
+                    <div className="h-3 w-full rounded bg-surface-container" />
+                    <div className="h-3 w-2/3 rounded bg-surface-container" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-4xl font-extrabold text-on-surface">{totalProceduresToday.toString().padStart(2, '0')}</h3>
+                  {procedureCounts.length > 0 ? (
+                    <div className="mt-3 max-h-32 overflow-y-auto pr-1 text-xs text-on-surface-variant grid grid-cols-2 gap-x-4 gap-y-1 scrollbar-thin scrollbar-thumb-outline-variant/30 scrollbar-track-transparent">
+                      {procedureCounts.map(({ procedure, count }) => (
+                        <Fragment key={procedure}>
+                          <div className="truncate pr-2">{procedure}</div>
+                          <div className="text-right font-bold">{count.toString().padStart(2, '0')}</div>
+                        </Fragment>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs text-on-surface-variant">Aucune procédure programmée aujourd&#39;hui.</p>
+                  )}
+                </>
+              )}
             </div>
             <div className="mt-6 flex items-center gap-2 text-emerald-600 text-xs font-bold">
               <span className="material-symbols-outlined text-sm">trending_up</span>
@@ -271,34 +335,17 @@ export default function Home() {
                 <span className="material-symbols-outlined">emergency</span>
               </div>
             </div>
-            <div className="mt-6 flex items-center gap-3">
-              <div className="flex -space-x-2">
-                <Image
-                  src="/assets/avatars/doctor-1.svg"
-                  alt="Doctor 1"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 rounded-full border-2 object-cover border-[#EA580C]"
-                />
-                <Image
-                  src="/assets/avatars/doctor-2.svg"
-                  alt="Doctor 2"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 rounded-full border-2 object-cover border-[#EA580C]"
-                />
-              </div>
-              <p className="text-xs font-medium">Equipe d&#39;intervention depechee</p>
-            </div>
+            {/* Texte et schéma sous le chiffre supprimés */}
           </div>
         </div>
 
         <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-8 space-y-6">
+          <div className="col-span-12 lg:col-span-9 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 gap-4">
               <h4 className="font-headline text-xl font-bold">Planning du Jour</h4>
               <div className="flex gap-4 items-center relative">
                 <button
+                  ref={filterButtonRef}
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all font-semibold text-sm ${showFilters
                     ? "bg-primary text-white border-primary shadow-md"
@@ -313,7 +360,7 @@ export default function Home() {
                 </button>
 
                 {showFilters && (
-                  <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-6 z-30 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-6 z-30 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center justify-between border-b border-outline-variant/10 pb-3">
                       <h5 className="font-bold text-sm">Filtres de recherche</h5>
                       <button
@@ -352,7 +399,7 @@ export default function Home() {
                           <input
                             className="w-full bg-white border-2 border-primary rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold transition-all hover:ring-4 hover:ring-primary/10 focus:ring-4 focus:ring-primary/20 text-on-surface placeholder:text-slate-400 shadow-md outline-none"
                             type="text"
-                            placeholder="Gastroscopie, Coloscopie..."
+                          placeholder="Fibroscopie digestive haute, Coloscopie..."
                             value={filters.procedure}
                             onChange={(e) => setFilters({ ...filters, procedure: e.target.value })}
                           />
@@ -485,11 +532,10 @@ export default function Home() {
           </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-4 space-y-6">
+          <div className="col-span-12 lg:col-span-12 lg:mt-4 space-y-6">
             <div className="flex items-center justify-between px-2">
               <div>
                 <h4 className="font-headline text-xl font-bold">Salle d&#39;endoscopie</h4>
-                <p className="text-xs text-on-surface-variant">Statut en temps reel des salles d&#39;examen</p>
               </div>
               <button
                 onClick={() => setShowAddRoom(true)}
@@ -537,13 +583,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 z-50 group">
-        <span className="material-symbols-outlined">add</span>
-        <span className="absolute right-full mr-4 bg-on-surface text-white px-3 py-1.5 rounded-lg text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-          Nouvelle Admission
-        </span>
-      </button>
 
       {/* Modal d'ajout de salle */}
       {showAddRoom && (
