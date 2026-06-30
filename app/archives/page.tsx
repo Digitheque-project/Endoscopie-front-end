@@ -90,9 +90,7 @@ export default function ArchivesPage() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-        <PageToolbar>
-          <p className="text-on-surface-variant font-medium">Historique et dossiers patients.</p>
-        </PageToolbar>
+        <PageToolbar />
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/10">
           <div className="flex items-center justify-between mb-4">

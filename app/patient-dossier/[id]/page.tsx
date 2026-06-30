@@ -22,7 +22,7 @@ export default function PatientDossierPage() {
         {prescriptionId ? (
           <PatientDossierContent prescriptionId={prescriptionId} />
         ) : (
-          <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-8 text-center text-on-surface-variant">
+          <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 text-center text-on-surface-variant">
             Identifiant de prescription manquant.
           </section>
         )}

@@ -4,6 +4,7 @@ import { useState, useRef, use, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { appendFinalSegment } from "@/components/voice/formatTranscript";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { RequireRole } from "@/components/auth/RequireRole";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import TranscriptionEditor, { type SavedTranscriptionEntry } from "@/components/voice/TranscriptionEditor";
 import { truncateText } from "@/components/voice/formatTranscript";
@@ -123,10 +124,11 @@ function PrescriptionWorkflowContent() {
 
   return (
     <AppShell>
+      <RequireRole role="MEDECIN">
       <div className={PAGE_CONTENT_CLASS}>
-        <div className="space-y-6">
+        <div className="space-y-5">
           <section className="overflow-hidden rounded-3xl border border-white/70 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-            <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-sky-700 px-6 py-8 text-white lg:px-8">
+            <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-sky-700 px-6 py-6 text-white lg:px-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-3xl space-y-4">
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white/90">
@@ -145,8 +147,8 @@ function PrescriptionWorkflowContent() {
             </div>
           </section>
 
-          <section className="space-y-6">
-            <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-7">
+          <section className="space-y-5">
+            <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
               <div className="mb-6">
                 <VoiceRecorder hideTextArea statusIdleText="Observation durant l'examen" onFinalTranscript={handleFinalTranscript} onAudio={handleAudioReady} exposeControls={setControls} />
               </div>
@@ -167,7 +169,7 @@ function PrescriptionWorkflowContent() {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-7">
+          <section className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
             <div className="mb-6">
               <VoiceRecorder hideTextArea statusIdleText="Notes complémentaires" onFinalTranscript={handleNotesFinalTranscript} />
             </div>
@@ -208,6 +210,7 @@ function PrescriptionWorkflowContent() {
           </button>
         </div>
       </footer>
+      </RequireRole>
     </AppShell>
   );
 }

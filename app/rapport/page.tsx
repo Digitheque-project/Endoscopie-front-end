@@ -61,11 +61,11 @@ export default function RapportPage() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
               <div>
                 <p className="text-sm text-on-surface-variant font-medium mb-1">Procédures Récents</p>
-                <h3 className="text-3xl font-headline font-bold text-on-surface">{reports.length}</h3>
+                <h3 className="text-2xl font-headline font-bold text-on-surface">{reports.length}</h3>
                 <p className="text-xs text-[#1e8e3e] font-bold flex items-center gap-1 mt-2"><span className="material-symbols-outlined text-sm">trending_up</span> +12% vs hier</p>
               </div>
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
@@ -73,10 +73,10 @@ export default function RapportPage() {
               </div>
             </div>
 
-            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
+            <div className="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
               <div>
                 <p className="text-sm text-on-surface-variant font-medium mb-1">Taux de réussite</p>
-                <h3 className="text-3xl font-headline font-bold text-on-surface">99.2%</h3>
+                <h3 className="text-2xl font-headline font-bold text-on-surface">99.2%</h3>
                 <p className="text-xs text-on-surface-variant font-medium mt-2">Moyenne historique: 98.4%</p>
               </div>
               <div className="w-12 h-12 bg-secondary-container/30 rounded-full flex items-center justify-center text-secondary">
@@ -84,10 +84,10 @@ export default function RapportPage() {
               </div>
             </div>
 
-            <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
+            <div className="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-outline-variant/5 flex items-center justify-between">
               <div>
                 <p className="text-sm text-on-surface-variant font-medium mb-1">Durée Moyenne</p>
-                <h3 className="text-3xl font-headline font-bold text-on-surface">24m 15s</h3>
+                <h3 className="text-2xl font-headline font-bold text-on-surface">24m 15s</h3>
                 <p className="text-xs text-tertiary font-bold flex items-center gap-1 mt-2"><span className="material-symbols-outlined text-sm">schedule</span> -2 min depuis la semaine dernière</p>
               </div>
               <div className="w-12 h-12 bg-tertiary-fixed/30 rounded-full flex items-center justify-center text-tertiary">
@@ -96,7 +96,7 @@ export default function RapportPage() {
             </div>
           </section>
 
-          <section className="flex flex-wrap items-end gap-6 bg-surface-container-low p-6 rounded-xl">
+          <section className="flex flex-wrap items-end gap-4 bg-surface-container-low p-5 rounded-xl">
             <div className="space-y-2">
               <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest ml-1">Date Range</label>
               <div className="flex items-center gap-2 bg-surface-container-lowest rounded-lg px-4 py-2 border border-outline-variant/15">
@@ -167,13 +167,13 @@ export default function RapportPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-surface-container-low/50">
-                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Date</th>
-                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">ID Patient</th>
-                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Nom du Patient</th>
-                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Type de Procédure</th>
-                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Chirurgien</th>
-                      <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">DETAIL DE LA PRESCRIPTION</th>
-                      <th className="px-6 py-4 text-right" />
+                      <th className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Date</th>
+                      <th className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">ID Patient</th>
+                      <th className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Nom du Patient</th>
+                      <th className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Type de Procédure</th>
+                      <th className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Chirurgien</th>
+                      <th className="px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">DETAIL DE LA PRESCRIPTION</th>
+                      <th className="px-6 py-2.5 text-right" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
@@ -186,12 +186,12 @@ export default function RapportPage() {
                       return matchesNom && matchesProcedure && matchesMedecin && matchesDate && matchesStatus;
                     }).map((report) => (
                       <tr key={report.id} className="hover:bg-surface-container-high/30 transition-colors group">
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-2.5">
                           <p className="text-sm font-semibold text-on-surface">{report.date}</p>
                           <p className="text-[10px] text-on-surface-variant">{report.time}</p>
                         </td>
-                        <td className="px-6 py-4 text-sm font-mono text-on-surface-variant">{report.id}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-2.5 text-sm font-mono text-on-surface-variant">{report.id}</td>
+                        <td className="px-6 py-2.5">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-xs font-bold">
                               {report.name.split(" ")[0][0]}{report.name.split(" ")[1][0]}
@@ -199,17 +199,17 @@ export default function RapportPage() {
                             <span className="text-sm font-medium text-on-surface">{report.name}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-2.5">
                           <span className="px-3 py-1 bg-surface-container-highest rounded-full text-[11px] font-bold text-on-surface-variant">{report.procedure}</span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-on-surface">{report.surgeon}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-2.5 text-sm text-on-surface">{report.surgeon}</td>
+                        <td className="px-6 py-2.5">
                           <span className={`flex items-center gap-1.5 text-[11px] font-bold ${report.status === "Validé" ? "text-[#1e8e3e]" : "text-tertiary"}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${report.status === "Validé" ? "bg-[#1e8e3e]" : "bg-tertiary"}`} />
                             {report.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-2.5 text-right">
                           <button className="text-primary hover:text-primary-container font-bold text-xs uppercase tracking-wider flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                             Voir détails
                             <span className="material-symbols-outlined text-lg">chevron_right</span>
@@ -221,7 +221,7 @@ export default function RapportPage() {
                 </table>
               </div>
 
-              <div className="px-6 py-4 bg-surface-container-low/30 border-t border-outline-variant/10 flex justify-between items-center">
+              <div className="px-6 py-2.5 bg-surface-container-low/30 border-t border-outline-variant/10 flex justify-between items-center">
                 <p className="text-xs text-on-surface-variant font-medium">Affichage de 1-10 sur 1,284 dossiers</p>
                 <div className="flex gap-2">
                   <button className="p-1 text-on-surface-variant hover:bg-surface-container-high rounded transition-colors disabled:opacity-30" disabled>

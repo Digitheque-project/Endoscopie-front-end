@@ -69,9 +69,7 @@ export default function PatientsPage() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-        <PageToolbar>
-          <p className="text-on-surface-variant font-medium">Programmation du jour — Endoscopie</p>
-        </PageToolbar>
+        <PageToolbar />
 
         <div className="flex gap-4 overflow-x-auto pb-2">
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
@@ -93,7 +91,7 @@ export default function PatientsPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div className="px-6 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h3 className="font-headline font-bold text-blue-900">Programmation du Jour</h3>
             <div className="flex gap-2 relative">
               <button
@@ -163,23 +161,23 @@ export default function PatientsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container-low">
-                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Nom du Patient</th>
-                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Type d&apos;Examen</th>
-                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Heure prévue</th>
-                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">Statut</th>
-                  <th className="px-6 py-3 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500">Nom du Patient</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500">Type d&apos;Examen</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Heure prévue</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500">Statut</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-slate-500 text-sm">
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 text-sm">
                       Chargement…
                     </td>
                   </tr>
                 ) : filteredPatients.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-slate-500 text-sm">
+                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 text-sm">
                       Aucun patient ne correspond à vos filtres.
                     </td>
                   </tr>
@@ -191,7 +189,7 @@ export default function PatientsPage() {
                     const style = statusStyle(rdv.statut);
                     return (
                       <tr key={rdv.id} className="hover:bg-blue-50/30 transition-colors">
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-2.5">
                           <button
                             type="button"
                             onClick={() => rdv.prescriptionId && router.push(`/patient-dossier/${rdv.prescriptionId}`)}
@@ -213,21 +211,21 @@ export default function PatientsPage() {
                             </div>
                           </button>
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-2.5">
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded uppercase tracking-wider">
                             {rdv.typeExamen || "Non spécifié"}
                           </span>
                         </td>
-                        <td className="px-6 py-3 text-sm font-bold text-slate-700 text-center">
+                        <td className="px-6 py-2.5 text-sm font-bold text-slate-700 text-center">
                           {new Date(rdv.dateHeureDebut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-6 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${style.dot} ${style.pulse ? "animate-pulse" : ""}`}></div>
                             <span className={`text-xs font-semibold ${style.color}`}>{rdv.statut}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-3 text-right">
+                        <td className="px-6 py-2.5 text-right">
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
@@ -254,7 +252,7 @@ export default function PatientsPage() {
               </tbody>
             </table>
           </div>
-          <div className="px-6 py-4 border-t border-slate-100">
+          <div className="px-6 py-2.5 border-t border-slate-100">
             <p className="text-xs text-slate-500">
               Affichage de {filteredPatients.length} patient{filteredPatients.length === 1 ? "" : "s"} sur {totalToday} aujourd&apos;hui
             </p>

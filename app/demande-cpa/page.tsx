@@ -13,7 +13,7 @@ function DemandeCPAContent() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const patientContext = usePatient();
-  const patientId = searchParams.get("patientId") || patientContext.patientId || "#PX-8829-01";
+  const patientId = searchParams.get("patientId") || patientContext.patientId || "";
   const paramPatientName = searchParams.get("patientName");
   const [fetchedPatientName, setFetchedPatientName] = useState<string | null>(null);
   const paramsDate = searchParams.get("date");
@@ -48,7 +48,7 @@ function DemandeCPAContent() {
   const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
 
   const handleSubmit = async () => {
-    if (!patientId || patientId.startsWith("#")) {
+    if (!patientId) {
       setSubmitError("Patient non valide. Sélectionnez d'abord une prescription ou un dossier patient valide.");
       return;
     }
@@ -66,7 +66,7 @@ function DemandeCPAContent() {
       });
       setIsSuccess(true);
       setTimeout(() => {
-        router.push(`/cpa?patientId=${encodeURIComponent(patientId)}`);
+        router.push("/prescriptions");
       }, 800);
     } catch (error) {
       console.error("Erreur lors de l'envoi de la demande CPA", error);
@@ -81,7 +81,7 @@ function DemandeCPAContent() {
   };
 
   useEffect(() => {
-    if (!patientId || patientId.startsWith("#")) return;
+    if (!patientId) return;
 
     let mounted = true;
     (async () => {
@@ -158,13 +158,13 @@ function DemandeCPAContent() {
         </a>
 
         {/* Patient Profile Summary */}
-        {(!patientId || patientId.startsWith("#")) && (
+        {(!patientId) && (
           <div className="mt-4 p-4 rounded-lg border border-error/20 bg-error-container/10 text-error text-sm">
             <strong>Attention :</strong> Aucune identité patient fiable fournie. Veuillez sélectionner une prescription depuis la file de prescription pour préremplir les informations, ou renseigner manuellement le patient.
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-white p-4 rounded-2xl border border-outline-variant/20 shadow-sm flex items-center gap-5 relative overflow-hidden">
             <div className="relative">
               <div className="w-14 h-14 rounded-2xl object-cover bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center flex-shrink-0">
@@ -240,6 +240,7 @@ function DemandeCPAContent() {
                   <input
                     type="date"
                     value={rescheduleDate}
+                    min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setRescheduleDate(e.target.value)}
                     className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
                   />
@@ -274,10 +275,10 @@ function DemandeCPAContent() {
         )}
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           {/* Left Column: Clinical Context */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-surface-container p-8 rounded-2xl border border-outline-variant/10">
+          <div className="lg:col-span-2 space-y-5">
+            <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
               <h4 className="font-bold text-on-surface mb-6 flex items-center gap-3">
                 <span className="material-symbols-outlined text-primary">clinical_notes</span>
                 Détail de la prescription
@@ -309,7 +310,7 @@ function DemandeCPAContent() {
               </div>
             </div>
 
-            <div className="bg-tertiary-fixed p-8 rounded-2xl border-l-[6px] border-tertiary shadow-sm">
+            <div className="bg-tertiary-fixed p-6 rounded-2xl border-l-[6px] border-tertiary shadow-sm">
               <h4 className="font-bold text-on-tertiary-fixed mb-4 flex items-center gap-3">
                 <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
                   warning
@@ -329,7 +330,7 @@ function DemandeCPAContent() {
 
           {/* Right Column: CPA Form */}
           <div className="lg:col-span-3">
-            <section className="bg-white p-10 rounded-2xl border border-outline-variant/20 shadow-sm space-y-10">
+            <section className="bg-white p-6 rounded-2xl border border-outline-variant/20 shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-black text-on-surface">Demande de CPA</h3>
@@ -395,7 +396,7 @@ function DemandeCPAContent() {
 
 export default function DemandeCPAPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+    <Suspense fallback={<div className="p-6 text-center text-slate-500">Chargement...</div>}>
       <DemandeCPAContent />
     </Suspense>
   );

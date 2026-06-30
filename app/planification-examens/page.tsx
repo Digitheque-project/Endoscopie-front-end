@@ -1,6 +1,7 @@
 "use client";
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { RequireRole } from "@/components/auth/RequireRole";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -12,7 +13,9 @@ function PlanificationContent() {
   const searchParams = useSearchParams();
   const patientContext = usePatient();
 
-  const patientId = searchParams.get("patientId") || patientContext.patientId || "#PX-8829-01";
+  const patientId = searchParams.get("patientId") || patientContext.patientId || "";
+  const from = searchParams.get("from") === "agenda" ? "agenda" : "prescriptions";
+  const returnUrl = from === "agenda" ? "/agenda-rendez-vous" : "/prescriptions";
   const patientName = searchParams.get("patientName") || patientContext.patientName || "MARIE LEFEBVRE";
   const priorityParam = searchParams.get("priority") || patientContext.priority || "NORMAL";
   const procedureParam = searchParams.get("procedure") || patientContext.procedure || "Fibroscopie Oeso-Gastro-Duodénale";
@@ -49,6 +52,8 @@ function PlanificationContent() {
 
     if (end <= start) {
       setDateError("L'heure de fin doit être postérieure à l'heure de début.");
+    } else if (start.getTime() < Date.now()) {
+      setDateError("Ce créneau est déjà passé.");
     } else {
       setDateError(null);
     }
@@ -188,6 +193,12 @@ function PlanificationContent() {
         return;
       }
 
+      if (dateTimeDebut.getTime() < Date.now()) {
+        alert("Erreur : impossible de planifier un rendez-vous dans le passé.");
+        setIsSubmitting(false);
+        return;
+      }
+
       // Check for conflicts
       const hasConflict = await checkConflicts(dateTimeDebut, dateTimeFin, selectedSalle);
       if (hasConflict) {
@@ -207,7 +218,7 @@ function PlanificationContent() {
       };
 
       const appointmentData = {
-        patientId: patientId.startsWith("#") ? null : patientId,
+        patientId: patientId || null,
         patientName: patientName,
         prescriptionId: prescriptionId || null,
         medecinId: medecinId || null,
@@ -230,16 +241,23 @@ function PlanificationContent() {
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(`Erreur lors de la sauvegarde: ${response.status} - ${text}`);
+        let message = text;
+        try {
+          const parsed = JSON.parse(text);
+          message = parsed.message || text;
+        } catch {
+          // texte brut, on le garde tel quel
+        }
+        throw new Error(message || `Erreur ${response.status} lors de la sauvegarde.`);
       }
 
       setIsSuccess(true);
       setTimeout(() => {
-        router.push(`/agenda-rendez-vous?patientId=${encodeURIComponent(patientId)}`);
+        router.push(returnUrl);
       }, 1000);
     } catch (error) {
       console.error("Erreur lors de la synchronisation du rendez-vous:", error);
-      alert("Une erreur est survenue lors de l'enregistrement. Veuillez réessayer.");
+      alert(error instanceof Error ? error.message : "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer.");
     } finally {
       setIsSubmitting(false);
     }
@@ -261,13 +279,13 @@ function PlanificationContent() {
   return (
     <div className={PAGE_CONTENT_CLASS}>
       {/* Back Button */}
-      <a href="/prescriptions" className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
+      <a href={returnUrl} className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
         <span className="material-symbols-outlined text-lg">arrow_back</span>
-        <span className="font-semibold">Retour au fil de prescription</span>
+        <span className="font-semibold">{from === "agenda" ? "Retour à l'agenda" : "Retour au fil de prescription"}</span>
       </a>
 
       {/* Patient Header */}
-      {(!patientId || patientId.startsWith("#")) && (
+      {!patientId && (
         <div className="mt-4 p-4 rounded-lg border border-error/20 bg-error-container/10 text-error text-sm">
           <strong>Attention :</strong> Aucune identité patient fiable fournie. Veuillez sélectionner une prescription depuis la file de prescription pour préremplir les informations, ou renseigner manuellement le patient.
         </div>
@@ -380,6 +398,7 @@ function PlanificationContent() {
                       <input
                         type="date"
                         value={date}
+                        min={getTodayLocal()}
                         onChange={(e) => setDate(e.target.value)}
                         className="w-full appearance-none bg-white border border-outline-variant/50 px-4 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
@@ -443,9 +462,9 @@ function PlanificationContent() {
                 >
                   Annuler
                 </button>
-                <button 
+                <button
                   onClick={handleConfirmRDV}
-                  disabled={isSubmitting || isSuccess}
+                  disabled={isSubmitting || isSuccess || !!dateError}
                   className={`flex-[2] md:flex-none px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-center flex items-center justify-center gap-2 ${
                     isSuccess 
                       ? 'bg-green-500 text-white shadow-lg' 
@@ -479,9 +498,11 @@ function PlanificationContent() {
 export default function PlanificationPage() {
   return (
     <AppShell>
-      <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
-        <PlanificationContent />
-      </Suspense>
+      <RequireRole role="MAJOR">
+        <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+          <PlanificationContent />
+        </Suspense>
+      </RequireRole>
     </AppShell>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePatient } from "@/contexts/PatientContext";
 
 type Props = {
   patient: string;
@@ -14,13 +16,24 @@ type Props = {
 
 export default function TreatButton({ patient, id, rendezVousId, prescriptionId, patientId, procedure }: Props) {
   const router = useRouter();
+  const { role } = useAuth();
+  const { setPatientData } = usePatient();
   const [loading, setLoading] = useState(false);
+
+  if (role !== "MEDECIN") return null;
 
   const handleTreat = async () => {
     if (loading) return;
     setLoading(true);
     try {
-      // preserve patient info and workflow step across navigation
+      // Les pages checklists/prescription-workflow lisent uniquement PatientContext
+      // (pas les query params) : on le met à jour avant de naviguer.
+      setPatientData({
+        patientId: patientId || id,
+        prescriptionId: prescriptionId || "",
+        patientName: patient,
+        procedure: procedure || "",
+      });
       if (typeof window !== "undefined") {
         sessionStorage.setItem("currentPatientId", patientId || id);
         sessionStorage.setItem("currentPatientName", patient);
@@ -33,7 +46,7 @@ export default function TreatButton({ patient, id, rendezVousId, prescriptionId,
       if (rendezVousId) params.set("rendezVousId", rendezVousId);
       if (prescriptionId) params.set("prescriptionId", prescriptionId);
       if (procedure) params.set("procedure", procedure);
-      
+
       await router.push(`/checklists/avant?${params.toString()}`);
     } finally {
       setLoading(false);

@@ -77,12 +77,12 @@ function PlanificationExamenContent() {
           </h1>
 
           {isLoading ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-8 animate-pulse space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 animate-pulse space-y-4">
               <div className="h-6 w-48 bg-surface-container rounded" />
               <div className="h-4 w-72 bg-surface-container rounded" />
             </div>
           ) : error || !prescription ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-8 text-center text-on-surface-variant">
+            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 text-center text-on-surface-variant">
               {error || "Dossier introuvable."}
             </div>
           ) : (
@@ -103,8 +103,8 @@ function PlanificationExamenContent() {
                 </span>
               </section>
 
-              <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-5">
+              <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 space-y-5">
                   <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Détail de la prescription</p>
                   <div>
                     <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Motif de la demande</h4>
@@ -128,7 +128,7 @@ function PlanificationExamenContent() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-5">
+                <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 space-y-5">
                   <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Rendez-vous planifié par le major</p>
                   {prescription.rendezVous ? (
                     <div className="space-y-3">
@@ -150,7 +150,7 @@ function PlanificationExamenContent() {
               </section>
 
               {prescription.rendezVous && (
-                <section className="bg-white rounded-2xl shadow-md border-2 border-primary/20 p-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <section className="bg-white rounded-2xl shadow-md border-2 border-primary/20 p-6 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <p className="text-base font-bold uppercase tracking-widest text-on-surface mb-3">Décision d&apos;anesthésie</p>
                     {prescription.rendezVous.typeAnesthesie ? (

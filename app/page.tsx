@@ -5,6 +5,8 @@ import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { apiFetch, apiJson } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
 import ProcedureCountsCard, { type ProcedureCount } from "@/components/dashboard/ProcedureCountsCard";
+import SelectFilter from "@/components/ui/SelectFilter";
+import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useRef, Fragment, type KeyboardEvent } from "react";
 
@@ -42,6 +44,8 @@ export default function Home() {
     date: ""
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [examTypes, setExamTypes] = useState<{ id: string; name: string }[]>([]);
+  const [doctorNames, setDoctorNames] = useState<string[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
   const [expandedDashboardStatusId, setExpandedDashboardStatusId] = useState<string | null>(null);
   const filterButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -136,6 +140,13 @@ export default function Home() {
     fetchSalles(true);
     fetchAppointments();
     fetchProcedureCounts(true);
+    Promise.all([
+      apiJson<any[]>('/api/medecins').catch(() => []),
+      apiJson<{ id: string; name: string }[]>('/api/exam-types').catch(() => []),
+    ]).then(([docs, types]) => {
+      setDoctorNames((Array.isArray(docs) ? docs : []).map((d: any) => `Dr. ${d.prenom} ${d.nom}`.trim()));
+      setExamTypes(Array.isArray(types) ? types : []);
+    });
     const intervalId = setInterval(() => {
       fetchSalles(false);
       fetchAppointments();
@@ -275,45 +286,30 @@ export default function Home() {
                 {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(/^\w/, (c) => c.toUpperCase())} • Unite d&#39;Endoscopie CHU ANDRAINJATO
               </p>
             </div>
-            <button
-              onClick={() => {
-                fetchSalles(true);
-                fetchProcedureCounts(false);
-              }}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isRefreshing ? (
-                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <span className="material-symbols-outlined text-base">sync</span>
-              )}
-              Actualiser · {lastUpdated || "—"}
-            </button>
           </div>
 
-          <div className="grid grid-cols-12 gap-6">
+          <div className="grid grid-cols-12 gap-4">
             <ProcedureCountsCard
               procedureCounts={procedureCounts}
               isLoading={isLoadingProcedureCounts}
             />
 
-            <div className="col-span-12 md:col-span-6 text-on-primary p-5 rounded-xl border-none shadow-sm flex flex-col gap-3 bg-[#EA580C]">
+            <div className="col-span-12 md:col-span-6 text-on-primary p-4 rounded-xl border-none shadow-sm flex flex-col gap-3 bg-[#EA580C]">
               <div className="flex items-start justify-between">
                 <p className="text-orange-50 text-sm font-semibold">Urgents Actifs</p>
                 <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-lg">emergency</span>
                 </div>
               </div>
-              <h3 className="text-3xl font-extrabold text-white leading-none">
+              <h3 className="text-2xl font-extrabold text-white leading-none">
                 {filteredSchedule.filter(a => a.status === 'Urgent' || a.status === 'Priorité').length.toString().padStart(2, '0')}
               </h3>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-12 space-y-6">
+        <div className="grid grid-cols-12 gap-5">
+          <div className="col-span-12 lg:col-span-12 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 gap-4">
               <h4 className="font-headline text-xl font-bold">Programme du jour</h4>
               <div className="flex gap-4 items-center relative">
@@ -333,7 +329,7 @@ export default function Home() {
                 </button>
 
                 {showFilters && (
-                  <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-6 z-30 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-5 z-30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center justify-between border-b border-outline-variant/10 pb-3">
                       <h5 className="font-bold text-sm">Filtres de recherche</h5>
                       <button
@@ -363,37 +359,22 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-headline">
-                          Procédure
-                        </label>
-                        <div className="relative">
-                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">medical_services</span>
-                          <input
-                            className="w-full bg-white border-2 border-primary rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold transition-all hover:ring-4 hover:ring-primary/10 focus:ring-4 focus:ring-primary/20 text-on-surface placeholder:text-slate-400 shadow-md outline-none"
-                            type="text"
-                          placeholder="Fibroscopie digestive haute, Coloscopie..."
-                            value={filters.procedure}
-                            onChange={(e) => setFilters({ ...filters, procedure: e.target.value })}
-                          />
-                        </div>
-                      </div>
+                      <SelectFilter
+                        label="Procédure"
+                        icon="medical_services"
+                        value={filters.procedure}
+                        onChange={(v) => setFilters({ ...filters, procedure: v })}
+                        options={examTypes.map((t) => ({ value: t.name, label: t.name }))}
+                      />
 
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-headline">
-                          Médecin
-                        </label>
-                        <div className="relative">
-                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">stethoscope</span>
-                          <input
-                            className="w-full bg-white border-2 border-primary rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold transition-all hover:ring-4 hover:ring-primary/10 focus:ring-4 focus:ring-primary/20 text-on-surface placeholder:text-slate-400 shadow-md outline-none"
-                            type="text"
-                            placeholder="Dr. Durand, Dr. Morel..."
-                            value={filters.medecin}
-                            onChange={(e) => setFilters({ ...filters, medecin: e.target.value })}
-                          />
-                        </div>
-                      </div>
+                      <ComboboxFilter
+                        label="Médecin"
+                        icon="stethoscope"
+                        value={filters.medecin}
+                        onChange={(v) => setFilters({ ...filters, medecin: v })}
+                        options={doctorNames}
+                        placeholder="Rechercher un médecin..."
+                      />
 
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-headline">
@@ -443,7 +424,7 @@ export default function Home() {
                 <tbody className="divide-y divide-outline-variant/10">
                   {filteredSchedule.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center">
+                      <td colSpan={4} className="px-6 py-8 text-center">
                         <div className="flex flex-col items-center gap-2">
                           <span className="material-symbols-outlined text-4xl text-on-surface-variant/30">event_busy</span>
                           <p className="text-sm font-medium text-on-surface-variant">Il n'y a pas de rendez-vous aujourd'hui</p>
@@ -528,7 +509,7 @@ export default function Home() {
           </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-12 lg:mt-4 space-y-6">
+          <div className="col-span-12 lg:col-span-12 lg:mt-4 space-y-5">
             <div className="flex items-center justify-between px-2">
               <div>
                 <h4 className="font-headline text-xl font-bold">Salle d&#39;endoscopie</h4>
@@ -544,7 +525,7 @@ export default function Home() {
 
             <div className="space-y-4">
               {validSalles.length === 0 ? (
-                <div className="p-8 text-center bg-surface-container-low rounded-2xl">
+                <div className="p-6 text-center bg-surface-container-low rounded-2xl">
                   <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">meeting_room</span>
                   <p className="text-sm font-medium text-on-surface-variant">Aucune salle configurée</p>
                   <p className="text-xs text-on-surface-variant mt-1">Cliquez sur + pour ajouter une salle</p>
@@ -584,8 +565,8 @@ export default function Home() {
       {showAddRoom && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-5">
                 <h3 className="text-lg font-bold text-on-surface">Ajouter une salle</h3>
                 <button
                   onClick={() => setShowAddRoom(false)}
@@ -643,7 +624,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 mt-8">
+              <div className="flex items-center justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowAddRoom(false)}
                   className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all"

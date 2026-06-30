@@ -127,7 +127,13 @@ export async function updateRendezVous(
     body: JSON.stringify(payload),
   });
   if (!resp.ok) {
-    const message = await resp.text();
+    const text = await resp.text();
+    let message = text;
+    try {
+      message = (JSON.parse(text) as { message?: string }).message || text;
+    } catch {
+      // texte brut, on le garde tel quel
+    }
     throw new Error(message || `Erreur API rendezvous (${resp.status})`);
   }
   return resp.json();

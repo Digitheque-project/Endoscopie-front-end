@@ -60,7 +60,6 @@ export default function DoctorCard({ id, nom, prenom, specialite, service, statu
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-lg font-extrabold text-on-surface">{displayName}</p>
-              <p className="mt-0.5 text-xs font-mono text-on-surface-variant">ID: {id}</p>
             </div>
             <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${statusClasses}`}>
               {getStatusLabel(statut)}

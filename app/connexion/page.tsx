@@ -51,7 +51,7 @@ export default function ConnexionPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl border border-outline-variant/20 shadow-sm p-10 space-y-8">
+      <div className="w-full max-w-lg bg-white rounded-2xl border border-outline-variant/20 shadow-sm p-6 space-y-5">
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-black text-on-surface">Unité Endoscopie</h1>
           <p className="text-sm text-on-surface-variant">
@@ -64,24 +64,24 @@ export default function ConnexionPage() {
             <button
               type="button"
               onClick={() => setChoice("MAJOR")}
-              className="flex flex-col items-center gap-3 p-8 rounded-xl border-2 border-outline-variant/20 hover:border-primary hover:bg-primary/5 transition-all"
+              className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-outline-variant/20 hover:border-primary hover:bg-primary/5 transition-all"
             >
-              <span className="material-symbols-outlined text-4xl text-primary">badge</span>
+              <span className="material-symbols-outlined text-3xl text-primary">badge</span>
               <span className="font-bold text-on-surface">Major</span>
             </button>
             <button
               type="button"
               onClick={() => setChoice("MEDECIN")}
-              className="flex flex-col items-center gap-3 p-8 rounded-xl border-2 border-outline-variant/20 hover:border-primary hover:bg-primary/5 transition-all"
+              className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-outline-variant/20 hover:border-primary hover:bg-primary/5 transition-all"
             >
-              <span className="material-symbols-outlined text-4xl text-primary">stethoscope</span>
+              <span className="material-symbols-outlined text-3xl text-primary">stethoscope</span>
               <span className="font-bold text-on-surface">Médecin</span>
             </button>
           </div>
         )}
 
         {choice === "MAJOR" && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <p className="text-sm text-on-surface-variant text-center">
               Vous vous connectez en tant que <strong>Major</strong>.
             </p>
@@ -105,7 +105,7 @@ export default function ConnexionPage() {
         )}
 
         {choice === "MEDECIN" && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <label className="block space-y-2">
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.1em]">
                 Votre nom

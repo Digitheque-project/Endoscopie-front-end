@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { RequireRole } from "@/components/auth/RequireRole";
 import { useRouter } from "next/navigation";
 import { apiFetch, apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
@@ -491,7 +492,6 @@ function ResultatEndoscopieContent() {
               </div>
               <div className="text-right text-sm text-slate-600">
                 <p>Patient : <span className="font-semibold">{patientName || '—'}</span></p>
-                <p>ID : <span className="font-semibold">{patientId || '—'}</span></p>
                 <p>Âge : <span className="font-semibold">{age || '—'}</span></p>
               </div>
             </div>
@@ -995,7 +995,9 @@ export default function ResultatEndoscopiePage() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-        <ResultatEndoscopieContent />
+        <RequireRole role="MEDECIN">
+          <ResultatEndoscopieContent />
+        </RequireRole>
       </div>
     </AppShell>
   );

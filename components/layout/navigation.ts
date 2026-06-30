@@ -16,9 +16,8 @@ export type HeaderMeta = {
 export const MAIN_LINKS: NavLink[] = [
   { href: "/", icon: "dashboard", label: "Tableau de bord" },
   { href: "/prescriptions", icon: "medication", label: "Fil de prescription" },
-  { href: "/agenda", icon: "calendar_month", label: "Agenda / Rendez-vous" },
-  { href: "/decisions-anesthesie", icon: "vaccines", label: "Anesthésie à décider", roles: ["MEDECIN"] },
-  { href: "/decisions-major", icon: "fact_check", label: "Décisions à valider", roles: ["MAJOR"] },
+  { href: "/agenda-rendez-vous", icon: "calendar_month", label: "Agenda / Rendez-vous" },
+  { href: "/comptes-rendus-en-attente", icon: "edit_note", label: "Comptes rendus", roles: ["MEDECIN"] },
   { href: "/rapport", icon: "description", label: "Rapport" },
   { href: "/archives", icon: "inventory_2", label: "Archives" },
 ];
@@ -33,11 +32,6 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     title: "Fil de prescription",
     subtitle: "Demandes et planification",
     icon: "medication",
-  },
-  "/agenda": {
-    title: "Agenda / Rendez-vous",
-    subtitle: "Programme des examens",
-    icon: "calendar_month",
   },
   "/agenda-rendez-vous": {
     title: "Agenda / Rendez-vous",
@@ -90,11 +84,6 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     subtitle: "Organisation du parcours",
     icon: "event",
   },
-  "/cpa": {
-    title: "Demande CPA / image",
-    subtitle: "Documents et images associés",
-    icon: "assignment_add",
-  },
   "/demande-cpa": {
     title: "Demande de CPA",
     subtitle: "",
@@ -105,10 +94,10 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     subtitle: "Rendez-vous en attente d'une décision médicale",
     icon: "vaccines",
   },
-  "/decisions-major": {
-    title: "Décisions à valider",
-    subtitle: "Confirmation ou demande de CPA",
-    icon: "fact_check",
+  "/comptes-rendus-en-attente": {
+    title: "Comptes rendus en attente",
+    subtitle: "Examens terminés, en attente de rédaction",
+    icon: "edit_note",
   },
 };
 

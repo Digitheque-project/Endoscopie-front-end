@@ -1,51 +1,75 @@
 "use client";
 
-import Image from "next/image";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
-import { apiUrl } from "@/lib/api";
+import { apiJson } from "@/lib/api";
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { JCalendar } from "@/components/ui/JCalendar";
 import { useRendezVousSync } from "@/lib/hooks/useRendezVousSync";
+import { useAuth } from "@/contexts/AuthContext";
+import TreatButton from "@/components/navigation/TreatButton";
+import SelectFilter from "@/components/ui/SelectFilter";
+import ComboboxFilter from "@/components/ui/ComboboxFilter";
 
 interface Appointment {
-  id: string;
+  id: string; // rendezVousId
+  prescriptionId?: string;
+  patientId?: string;
+  medecinId?: string;
+  salleId?: string;
   patient: string;
   medecin: string;
   salle: string;
   typeExamen: string;
+  typeAnesthesie?: string | null;
   heureDebut: string; // "08:00"
   heureFin: string; // "08:45"
   statut: string; // "Terminé", "En cours", "Prévu", "Confirmé"
-  color: string; // "emerald", "primary", "outline", "tertiary"
+  color: string;
   date: string;  // "YYYY-MM-DD"
 }
 
+const EXCLUDED_RDV_STATUTS = new Set(["Annulé", "Terminé"]);
+
 export default function AgendaPage() {
+  const router = useRouter();
+  const { role } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("day");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [mounted, setMounted] = useState(false);
   const [successNotification, setSuccessNotification] = useState<string | null>(null);
-  
-  // Get date in YYYY-MM-DD format for the hook
+  const [selected, setSelected] = useState<Appointment | null>(null);
+  const [doctorNames, setDoctorNames] = useState<string[]>([]);
+  const [examTypes, setExamTypes] = useState<{ id: string; name: string }[]>([]);
+  const [filters, setFilters] = useState({ nom: "", procedure: "", medecin: "" });
+
+  useEffect(() => {
+    Promise.all([
+      apiJson<any[]>('/api/medecins').catch(() => []),
+      apiJson<{ id: string; name: string }[]>('/api/exam-types').catch(() => []),
+    ]).then(([docs, types]) => {
+      setDoctorNames((Array.isArray(docs) ? docs : []).map((d: any) => `Dr. ${d.prenom} ${d.nom}`.trim()));
+      setExamTypes(Array.isArray(types) ? types : []);
+    });
+  }, []);
+
   const getCurrentDateISO = useCallback(() => {
     return currentDate.toISOString().split('T')[0];
   }, [currentDate]);
 
-  // Use the sync hook for automatic loading
-  const { 
-    rendezVous: syncedRendezVous, 
+  const {
+    rendezVous: syncedRendezVous,
     loading: syncLoading,
     error: syncError,
     lastRefresh: syncLastRefresh,
-    refresh: refreshRDV 
+    refresh: refreshRDV
   } = useRendezVousSync({
     date: getCurrentDateISO(),
-    refreshInterval: 30000, // Auto-refresh every 30 seconds
+    refreshInterval: 30000,
     onRendezVousCreated: (rdv) => {
-      // Show notification when a new RDV is created
       setSuccessNotification(`Nouveau rendez-vous créé pour ${rdv.patient?.prenom || 'Patient'} ${rdv.patient?.nom || ''}`);
       setTimeout(() => setSuccessNotification(null), 3000);
     },
@@ -53,45 +77,35 @@ export default function AgendaPage() {
       console.error("Erreur de synchronisation:", error);
     },
   });
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   const formattedDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
+    return date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
     }).replace(/^\w/, (c) => c.toUpperCase());
   };
 
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const [bookingError, setBookingError] = useState<string | null>(null);
-  const [bookingData, setBookingData] = useState({
-    patient: "",
-    procedure: "Fibroscopie digestive haute",
-    medecin: "Dr. Leclerc",
-    salle: "Salle 1",
-    date: "2024-05-24",
-    heureDebut: "14:00",
-    heureFin: "15:00",
-    notes: "",
-    statut: "Confirmé"
-  });
-
-  // Convert synced RDV to Appointment format and filter by view mode
   useEffect(() => {
     const convertedApps: Appointment[] = syncedRendezVous.map((rdv: any) => {
       const start = new Date(rdv.dateHeureDebut);
       const end = rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000);
       return {
         id: rdv.id,
+        prescriptionId: rdv.prescriptionId || rdv.prescription?.id,
+        patientId: rdv.patient?.id,
+        medecinId: rdv.medecinId,
+        salleId: rdv.salleId,
         patient: rdv.patient?.nom ? `${rdv.patient.prenom} ${rdv.patient.nom}` : (rdv.patientName || "Patient Inconnu"),
-        medecin: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Dr. Antoine Moreau",
-        salle: rdv.salle?.nom || "Salle 1",
+        medecin: rdv.medecin ? `Dr. ${rdv.medecin.prenom || ""} ${rdv.medecin.nom}`.trim() : "Médecin non assigné",
+        salle: rdv.salle?.nom || "Salle non assignée",
         typeExamen: rdv.prescription?.typeExamen || rdv.typeExamen || "Examen Endoscopique",
+        typeAnesthesie: rdv.typeAnesthesie || null,
         heureDebut: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         heureFin: end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         statut: rdv.statut || "Confirmé",
@@ -100,17 +114,13 @@ export default function AgendaPage() {
       };
     });
 
-    // Filter by active date (Day, Week, Month) and status
     const filtered = convertedApps.filter(a => {
-      // Status filter: Hide "Terminé"
       const s = a.statut?.toString().toUpperCase() || "";
       if (s.includes("TERMINE") || s.includes("DONE")) return false;
 
-      // Date filter
       if (!a.date) return true;
-      
       const selectedDateStr = currentDate.toISOString().split('T')[0];
-      
+
       if (viewMode === "day") {
         return a.date === selectedDateStr;
       } else if (viewMode === "week") {
@@ -118,61 +128,27 @@ export default function AgendaPage() {
         startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
-        
+
         const appDate = new Date(a.date);
         return appDate >= startOfWeek && appDate <= endOfWeek;
       } else if (viewMode === "month") {
         const appDate = new Date(a.date);
         return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
       }
-      
-      return true; 
+
+      return true;
     });
-    
+
     setAppointments(filtered);
     setLastRefresh(syncLastRefresh);
   }, [syncedRendezVous, currentDate, viewMode, syncLastRefresh]);
 
-  const checkConflict = (newApp: any) => {
-    return appointments.some(app => {
-      // Basic room and time overlap check
-      if (app.salle === newApp.salle) {
-        const start1 = app.heureDebut;
-        const end1 = app.heureFin;
-        const start2 = newApp.heureDebut;
-        const end2 = newApp.heureFin;
-        return (start2 < end1 && end2 > start1);
-      }
-      return false;
-    });
-  };
-
-  const handleBookingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setBookingError(null);
-
-    if (checkConflict(bookingData)) {
-      setBookingError("Conflit d'horaire : Cette salle est déjà réservée pour ce créneau.");
-      return;
-    }
-
-    const newAppointment: Appointment = {
-      id: Date.now().toString(),
-      patient: bookingData.patient,
-      medecin: bookingData.medecin,
-      salle: bookingData.salle,
-      typeExamen: bookingData.procedure,
-      heureDebut: bookingData.heureDebut,
-      heureFin: bookingData.heureFin,
-      statut: bookingData.statut,
-      color: "primary",
-      date: bookingData.date
-    };
-
-    setAppointments([...appointments, newAppointment]);
-    setShowBookingModal(false);
-    setBookingData({ ...bookingData, patient: "", notes: "" });
-  };
+  const visibleAppointments = appointments.filter((a) => {
+    const matchesNom = a.patient.toLowerCase().includes(filters.nom.toLowerCase());
+    const matchesProc = a.typeExamen.toLowerCase().includes(filters.procedure.toLowerCase());
+    const matchesMed = a.medecin.toLowerCase().includes(filters.medecin.toLowerCase());
+    return matchesNom && matchesProc && matchesMed;
+  });
 
   const handlePrevious = () => {
     const newDate = new Date(currentDate);
@@ -190,29 +166,43 @@ export default function AgendaPage() {
     setCurrentDate(newDate);
   };
 
+  const handleReplanifier = (app: Appointment) => {
+    const params = new URLSearchParams();
+    if (app.prescriptionId) params.set("prescriptionId", app.prescriptionId);
+    if (app.patientId) params.set("patientId", app.patientId);
+    if (app.patient) params.set("patientName", app.patient);
+    if (app.typeExamen) params.set("procedure", app.typeExamen);
+    if (app.medecinId) params.set("medecinId", app.medecinId);
+    params.set("from", "agenda");
+    router.push(`/planification-examens?${params.toString()}`);
+  };
+
+  const isReady = (app: Appointment) =>
+    !!app.typeAnesthesie && !EXCLUDED_RDV_STATUTS.has(app.statut);
+
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
         <PageToolbar
           actions={
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl shadow-inner border border-outline-variant/10">
-              <button 
+              <button
                 onClick={handlePrevious}
                 className="p-2 rounded-lg text-on-surface-variant hover:bg-white hover:text-primary transition-all active:scale-95"
                 title="Précédent"
               >
                 <span className="material-symbols-outlined text-xl">chevron_left</span>
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => setCurrentDate(new Date())}
                 className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-white transition-all active:scale-95"
               >
                 Aujourd'hui
               </button>
 
-              <button 
+              <button
                 onClick={handleNext}
                 className="p-2 rounded-lg text-on-surface-variant hover:bg-white hover:text-primary transition-all active:scale-95"
                 title="Suivant"
@@ -222,31 +212,31 @@ export default function AgendaPage() {
             </div>
 
             <div className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl shadow-inner border border-outline-variant/10">
-              <button 
+              <button
                 onClick={() => setViewMode("day")}
-                className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
-                  viewMode === 'day' 
-                  ? "bg-white shadow-md text-primary scale-105" 
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                  viewMode === 'day'
+                  ? "bg-white shadow-md text-primary"
                   : "text-on-surface-variant hover:bg-white/50"
                 }`}
               >
                 Journée
               </button>
-              <button 
+              <button
                 onClick={() => setViewMode("week")}
-                className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
-                  viewMode === 'week' 
-                  ? "bg-white shadow-md text-primary scale-105" 
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                  viewMode === 'week'
+                  ? "bg-white shadow-md text-primary"
                   : "text-on-surface-variant hover:bg-white/50"
                 }`}
               >
                 Semaine
               </button>
-              <button 
+              <button
                 onClick={() => setViewMode("month")}
-                className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ${
-                  viewMode === 'month' 
-                  ? "bg-white shadow-md text-primary scale-105" 
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                  viewMode === 'month'
+                  ? "bg-white shadow-md text-primary"
                   : "text-on-surface-variant hover:bg-white/50"
                 }`}
               >
@@ -269,8 +259,8 @@ export default function AgendaPage() {
             <span className="material-symbols-outlined text-primary text-sm">calendar_today</span>
             <div className="flex flex-col">
               <p className="text-on-surface-variant font-bold">
-                {mounted ? (viewMode === 'day' ? formattedDate(currentDate) : 
-                 viewMode === 'week' ? `Semaine du ${new Date(currentDate.getTime() - currentDate.getDay() * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long'})} au ${new Date(currentDate.getTime() + (6 - currentDate.getDay()) * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'})}` : 
+                {mounted ? (viewMode === 'day' ? formattedDate(currentDate) :
+                 viewMode === 'week' ? `Semaine du ${new Date(currentDate.getTime() - currentDate.getDay() * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long'})} au ${new Date(currentDate.getTime() + (6 - currentDate.getDay()) * 86400000).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric'})}` :
                  currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase()) : 'Chargement...'}
               </p>
               <span className="text-[10px] text-on-surface-variant/60 font-medium italic">Actualisé à {mounted ? lastRefresh.toLocaleTimeString('fr-FR') : '--:--:--'}</span>
@@ -278,7 +268,38 @@ export default function AgendaPage() {
           </div>
         </PageToolbar>
 
-        {/* Success Notification */}
+        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4">
+          <div className="flex flex-col gap-1.5 min-w-[180px]">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+              Nom du Patient
+            </label>
+            <input
+              className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
+              type="text"
+              placeholder="Rechercher un patient..."
+              value={filters.nom}
+              onChange={(e) => setFilters({ ...filters, nom: e.target.value })}
+            />
+          </div>
+          <div className="min-w-[200px]">
+            <SelectFilter
+              label="Procédure"
+              value={filters.procedure}
+              onChange={(v) => setFilters({ ...filters, procedure: v })}
+              options={examTypes.map((t) => ({ value: t.name, label: t.name }))}
+            />
+          </div>
+          <div className="min-w-[220px]">
+            <ComboboxFilter
+              label="Médecin"
+              value={filters.medecin}
+              onChange={(v) => setFilters({ ...filters, medecin: v })}
+              options={doctorNames}
+              placeholder="Rechercher un médecin..."
+            />
+          </div>
+        </div>
+
         {successNotification && (
           <div className="fixed top-20 right-6 z-50 animate-in slide-in-from-top duration-300">
             <div className="bg-green-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 font-semibold">
@@ -288,265 +309,135 @@ export default function AgendaPage() {
           </div>
         )}
 
-        {/* Loading/Error State */}
         {syncLoading && (
-          <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-primary text-sm font-semibold flex items-center gap-2">
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl text-primary text-sm font-semibold flex items-center gap-2">
             <span className="material-symbols-outlined animate-spin">progress_activity</span>
-            Chargement des rendez-vous du jour...
+            Chargement des rendez-vous...
           </div>
         )}
 
         {syncError && (
-          <div className="p-4 bg-error/10 border border-error/20 rounded-xl text-error text-sm font-semibold flex items-center gap-2">
+          <div className="p-3 bg-error/10 border border-error/20 rounded-xl text-error text-sm font-semibold flex items-center gap-2">
             <span className="material-symbols-outlined">error</span>
             Erreur lors du chargement: {syncError.message}
           </div>
         )}
 
-        {/* JCalendar Integration */}
         <div className="min-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-700">
-          {!syncLoading && appointments.length === 0 ? (
+          {!syncLoading && visibleAppointments.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[600px] text-on-surface-variant">
               <span className="material-symbols-outlined text-5xl opacity-20 mb-4">event</span>
               <p className="text-lg font-semibold">Aucun rendez-vous pour {formattedDate(currentDate)}</p>
               <p className="text-sm mt-2">Les rendez-vous confirmés apparaîtront ici</p>
             </div>
           ) : (
-            <JCalendar 
-              appointments={appointments}
+            <JCalendar
+              appointments={visibleAppointments}
               viewMode={viewMode}
               currentDate={currentDate}
               onAppointmentClick={(app) => {
-                console.log("Appointment clicked:", app);
-              }}
-              onSlotClick={(date, time) => {
-                setBookingData({
-                  ...bookingData,
-                  date: date.toISOString().split('T')[0],
-                  heureDebut: time
-                });
-                setShowBookingModal(true);
+                const full = visibleAppointments.find((a) => a.id === app.id) || null;
+                setSelected(full);
               }}
             />
           )}
         </div>
-        
-        <div className="mt-8 p-6 bg-surface-container-low/50 rounded-2xl border-2 border-dashed border-outline-variant/20">
-          <button 
-            onClick={() => setShowBookingModal(true)}
-            className="w-full py-4 flex flex-col items-center justify-center gap-2 text-on-surface-variant/40 hover:text-primary transition-all group"
-          >
-            <span className="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">add_circle</span>
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Réserver un nouveau créneau d'endoscopie</span>
-          </button>
-        </div>
 
-        {/* Booking Modal */}
-        {showBookingModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-outline-variant/20 animate-in fade-in zoom-in duration-200">
-              <header className="bg-primary p-6 text-white flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-headline font-bold">Réserver un créneau</h2>
-                  <p className="text-xs text-white/70 uppercase tracking-widest mt-1">Nouvel examen endoscopique</p>
-                </div>
-                <button onClick={() => setShowBookingModal(false)} className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
-                  <span className="material-symbols-outlined">close</span>
+        {/* Detail panel */}
+        {selected && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/40 backdrop-blur-sm p-4" onClick={() => setSelected(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-outline-variant/20" onClick={(e) => e.stopPropagation()}>
+              <header className="bg-primary p-5 text-white flex justify-between items-center">
+                <h2 className="text-lg font-headline font-bold">{selected.patient}</h2>
+                <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                  <span className="material-symbols-outlined text-lg">close</span>
                 </button>
               </header>
-
-              <form onSubmit={handleBookingSubmit} className="p-8 space-y-6">
-                {bookingError && (
-                  <div className="bg-error/10 border border-error/20 p-4 rounded-xl flex items-center gap-3 text-error text-sm font-bold animate-shake">
-                    <span className="material-symbols-outlined">warning</span>
-                    {bookingError}
-                  </div>
+              <div className="p-5 space-y-3 text-sm">
+                <div className="flex justify-between"><span className="text-on-surface-variant">Procédure</span><span className="font-semibold">{selected.typeExamen}</span></div>
+                <div className="flex justify-between"><span className="text-on-surface-variant">Médecin</span><span className="font-semibold">{selected.medecin}</span></div>
+                <div className="flex justify-between"><span className="text-on-surface-variant">Salle</span><span className="font-semibold">{selected.salle}</span></div>
+                <div className="flex justify-between"><span className="text-on-surface-variant">Horaire</span><span className="font-semibold">{selected.heureDebut} – {selected.heureFin}</span></div>
+                <div className="flex justify-between"><span className="text-on-surface-variant">Statut</span><span className="font-semibold">{selected.statut}{selected.typeAnesthesie ? ` — ${selected.typeAnesthesie}` : ""}</span></div>
+              </div>
+              <footer className="flex flex-wrap justify-end gap-2 p-5 pt-0">
+                {role === "MAJOR" && selected.prescriptionId && (
+                  <button
+                    onClick={() => handleReplanifier(selected)}
+                    className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-colors"
+                  >
+                    Replanifier
+                  </button>
                 )}
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Patient</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="Nom complet du patient"
-                      className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none transition-all"
-                      value={bookingData.patient}
-                      onChange={e => setBookingData({...bookingData, patient: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Procédure</label>
-                    <select 
-                      className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none"
-                      value={bookingData.procedure}
-                      onChange={e => setBookingData({...bookingData, procedure: e.target.value})}
-                    >
-                      <option>Fibroscopie digestive haute</option>
-                      <option>Injection de colle biologique</option>
-                      <option>Dilatation oesophagienne</option>
-                      <option>Extraction de corps étranger</option>
-                      <option>Coloscopie</option>
-                      <option>Rectosigmoidoscopie</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Médecin</label>
-                    <select 
-                      className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none"
-                      value={bookingData.medecin}
-                      onChange={e => setBookingData({...bookingData, medecin: e.target.value})}
-                    >
-                      <option>Dr. Leclerc</option>
-                      <option>Dr. Morel</option>
-                      <option>Dr. Girard</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Salle</label>
-                    <select 
-                      className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none"
-                      value={bookingData.salle}
-                      onChange={e => setBookingData({...bookingData, salle: e.target.value})}
-                    >
-                      <option>Salle 1</option>
-                      <option>Salle 2</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Date</label>
-                    <input 
-                      type="date" 
-                      className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none"
-                      value={bookingData.date}
-                      onChange={e => setBookingData({...bookingData, date: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Début</label>
-                    <input 
-                      type="time" 
-                      className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none"
-                      value={bookingData.heureDebut}
-                      onChange={e => setBookingData({...bookingData, heureDebut: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Fin</label>
-                    <input 
-                      type="time" 
-                      className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none"
-                      value={bookingData.heureFin}
-                      onChange={e => setBookingData({...bookingData, heureFin: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Notes / Commentaires</label>
-                  <textarea 
-                    placeholder="Précisions cliniques..."
-                    className="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3 rounded-t-lg text-sm font-bold text-on-surface outline-none h-24 resize-none"
-                    value={bookingData.notes}
-                    onChange={e => setBookingData({...bookingData, notes: e.target.value})}
+                {selected.prescriptionId && (
+                  <button
+                    onClick={() => router.push(`/patient-dossier/${encodeURIComponent(selected.prescriptionId!)}`)}
+                    className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-colors"
+                  >
+                    Détails
+                  </button>
+                )}
+                {isReady(selected) && (
+                  <TreatButton
+                    patient={selected.patient}
+                    id={selected.id}
+                    rendezVousId={selected.id}
+                    prescriptionId={selected.prescriptionId}
+                    patientId={selected.patientId}
+                    procedure={selected.typeExamen}
                   />
-                </div>
-
-                <footer className="flex justify-end gap-4 pt-4">
-                  <button 
-                    type="button"
-                    onClick={() => setShowBookingModal(false)}
-                    className="px-6 py-3 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors"
-                  >
-                    Annuler
-                  </button>
-                  <button 
-                    type="submit"
-                    className="px-8 py-3 rounded-xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                  >
-                    Confirmer la réservation
-                  </button>
-                </footer>
-              </form>
+                )}
+              </footer>
             </div>
           </div>
         )}
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 <span className="material-symbols-outlined">query_stats</span>
               </div>
-              <h3 className="font-headline font-bold text-on-surface">Taux d'occupation</h3>
+              <h3 className="font-headline font-bold text-on-surface text-sm">Taux d'occupation</h3>
             </div>
             <div className="flex items-end justify-between">
-              <span className="text-4xl font-headline font-extrabold text-on-surface">
+              <span className="text-2xl font-headline font-extrabold text-on-surface">
                 {appointments.length > 0 ? "45%" : "0%"}
               </span>
-              <span className="text-sm font-semibold text-on-surface-variant flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">trending_flat</span> 0%
-              </span>
             </div>
-            <div className="w-full bg-surface-container-highest h-2 rounded-full mt-4 overflow-hidden">
+            <div className="w-full bg-surface-container-highest h-2 rounded-full mt-3 overflow-hidden">
               <div className="bg-primary h-full rounded-full" style={{ width: appointments.length > 0 ? "45%" : "0%" }} />
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-success-container text-success flex items-center justify-center">
+          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-success-container text-success flex items-center justify-center">
                 <span className="material-symbols-outlined">check_circle</span>
               </div>
-              <h3 className="font-headline font-bold text-on-surface">Actes Terminés</h3>
+              <h3 className="font-headline font-bold text-on-surface text-sm">Actes Terminés</h3>
             </div>
             <div className="flex items-end justify-between">
-              <span className="text-4xl font-headline font-extrabold text-on-surface">
+              <span className="text-2xl font-headline font-extrabold text-on-surface">
                 {appointments.filter(a => a.statut === 'Terminé').length}
               </span>
-              <span className="text-on-surface-variant text-sm font-medium">sur {appointments.length} prévus</span>
+              <span className="text-on-surface-variant text-xs font-medium">sur {appointments.length} prévus</span>
             </div>
-            <p className="text-xs text-on-surface-variant mt-4 font-medium italic">Mise à jour en temps réel</p>
           </div>
 
-          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center">
-                <span className="material-symbols-outlined">warning</span>
+          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center">
+                <span className="material-symbols-outlined">groups</span>
               </div>
-              <h3 className="font-headline font-bold text-on-surface">Alertes Labo</h3>
+              <h3 className="font-headline font-bold text-on-surface text-sm">Rendez-vous affichés</h3>
             </div>
             <div className="flex items-end justify-between">
-              <span className="text-4xl font-headline font-extrabold text-on-surface">03</span>
-              <button className="text-primary text-xs font-bold uppercase tracking-tighter hover:underline">Voir tout</button>
-            </div>
-            <div className="flex -space-x-2 mt-4">
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-surface-container-highest flex items-center justify-center text-[10px] font-bold">
-                JB
-              </div>
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-surface-container-highest flex items-center justify-center text-[10px] font-bold">
-                TM
-              </div>
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-on-surface-variant">
-                +1
-              </div>
+              <span className="text-2xl font-headline font-extrabold text-on-surface">{visibleAppointments.length}</span>
             </div>
           </div>
         </div>
       </div>
-
-      <a
-        className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-primary to-primary-container text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform z-50 group"
-        href="/prescriptions"
-      >
-        <span className="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
-      </a>
     </AppShell>
   );
 }

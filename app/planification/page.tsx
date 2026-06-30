@@ -175,9 +175,6 @@ function PlanificationContent() {
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">{patientName}</h3>
-                <p className="text-on-surface-variant font-medium flex items-center gap-2 text-sm mt-0.5">
-                  <span className="text-primary font-bold">ID: {patientId || "—"}</span>
-                </p>
               </div>
               <span className="bg-error-container text-on-error-container px-3 py-1 rounded-full text-[10px] font-black tracking-widest flex items-center gap-1 uppercase shadow-sm">
                 <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>

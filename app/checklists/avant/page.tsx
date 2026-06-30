@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use, Suspense } from "react";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { RequireRole } from "@/components/auth/RequireRole";
 import { useRouter } from "next/navigation";
 import WorkflowProgressIndicator from "@/components/workflow/WorkflowProgressIndicator";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
@@ -166,6 +167,7 @@ function ChecklistAvantContent() {
   };
 
   return (
+    <RequireRole role="MEDECIN">
     <div className="bg-surface text-on-surface pb-16">
       <div className="flex justify-center">
         <div className="max-w-[56rem] w-full space-y-4">
@@ -179,7 +181,6 @@ function ChecklistAvantContent() {
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Patient</p>
                   <h2 className="font-headline text-xl text-blue-900">{patientName}</h2>
-                  <p className="text-sm text-slate-600">ID: {patientId}</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -274,6 +275,7 @@ function ChecklistAvantContent() {
         </div>
       </footer>
     </div>
+    </RequireRole>
   );
 }
 

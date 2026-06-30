@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 export function Sidebar() {
   const pathname = usePathname();
   const { role } = useAuth();
-  const showNewPatient = pathname === "/agenda";
   const visibleLinks = MAIN_LINKS.filter((link) => !link.roles || (role && link.roles.includes(role)));
 
   const isActive = (href: string, matchPrefix?: boolean) => {
@@ -51,18 +50,6 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-
-      {showNewPatient ? (
-        <div className="mt-auto pt-4">
-          <Link
-            href="/agenda"
-            className="w-full bg-gradient-to-r from-primary to-primary-container text-white rounded-xl py-3.5 flex items-center justify-center gap-2 font-semibold shadow-md hover:opacity-90 active:scale-95 transition-all"
-          >
-            <span className="material-symbols-outlined">add</span>
-            <span>Nouveau patient</span>
-          </Link>
-        </div>
-      ) : null}
     </aside>
   );
 }

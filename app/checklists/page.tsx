@@ -53,15 +53,12 @@ export default function ChecklistsPage() {
             </>
           }
         >
-          <p className="text-on-surface-variant font-medium">
-            Pilotage des etapes de preparation avant et apres l&apos;endoscopie.
-          </p>
         </PageToolbar>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-4">
           <Link
             href="/checklists/avant"
-            className="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+            className="bg-white rounded-xl p-5 shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-colors"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
@@ -80,7 +77,7 @@ export default function ChecklistsPage() {
 
           <Link
             href="/checklists/apres"
-            className="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+            className="bg-white rounded-xl p-5 shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-colors"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-secondary-container/30 text-on-secondary-container flex items-center justify-center">

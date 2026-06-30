@@ -24,10 +24,6 @@ export default function ResultHeader({ patientName, patientId, patientAge }: Res
             </div>
             <span className="text-slate-300">|</span>
             <div>{patientAge} ans</div>
-            <span className="text-slate-300">|</span>
-            <div className="text-slate-500 font-mono text-xs bg-slate-100 px-2 py-0.5 rounded-md">
-              {patientId}
-            </div>
           </div>
         </div>
       </div>

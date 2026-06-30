@@ -1,6 +1,7 @@
 "use client";
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
+import { RequireRole } from "@/components/auth/RequireRole";
 import { useRouter } from "next/navigation";
 import { use, Suspense, useState, useEffect } from "react";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
@@ -27,6 +28,7 @@ function ChecklistApresContent() {
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [remarques, setRemarques] = useState("");
+  const [showChoice, setShowChoice] = useState(false);
 
   const titleToDbKey: Record<string, string> = {
     "Confirmation & Étiquetage": "confirmationEtiquetage",
@@ -101,24 +103,51 @@ function ChecklistApresContent() {
 
   const handleValiderEtTerminer = async () => {
     await saveChecklist(answers, remarques);
-    router.push('/resultat-endoscopie');
+    setShowChoice(true);
   };
 
+  if (showChoice) {
+    return (
+      <RequireRole role="MEDECIN">
+        <div className="bg-surface text-on-surface min-h-[60vh] flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center space-y-5">
+            <span className="material-symbols-outlined text-5xl text-emerald-600">task_alt</span>
+            <div>
+              <h2 className="font-headline text-xl text-on-surface">Check-list après-endoscopie enregistrée</h2>
+              <p className="text-sm text-on-surface-variant mt-1">Que souhaitez-vous faire maintenant ?</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => router.push('/resultat-endoscopie')}
+                className="px-6 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold transition-all duration-200 hover:scale-105 hover:opacity-90"
+              >
+                Écrire le compte-rendu maintenant
+              </button>
+              <button
+                onClick={() => router.push('/prescriptions?tab=pret')}
+                className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold transition-all duration-200 hover:bg-slate-50"
+              >
+                Traiter un autre patient
+              </button>
+            </div>
+          </div>
+        </div>
+      </RequireRole>
+    );
+  }
+
   return (
+    <RequireRole role="MEDECIN">
     <div className="bg-surface text-on-surface pb-24">
       <div className="flex justify-center pt-8 px-4">
-        <div className="max-w-[56rem] w-full space-y-8">
-          <section className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="max-w-[56rem] w-full space-y-5">
+          <section className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 bg-primary-fixed rounded-xl flex items-center justify-center text-blue-900">
                 <span className="material-symbols-outlined text-3xl">person</span>
               </div>
               <div>
                 <h3 className="font-headline text-xl text-blue-900">{patientName}</h3>
-                <p className="text-slate-500 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">fingerprint</span>
-                  ID: {patientId}
-                </p>
               </div>
             </div>
             <div className="text-right px-4 py-2 bg-surface-container-low rounded-lg border-l-4 border-blue-700">
@@ -133,9 +162,9 @@ function ChecklistApresContent() {
             <div className="h-px flex-1 bg-slate-200" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {checklistItems.map((item, index) => (
-              <div key={item.title} className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-6">
+              <div key={item.title} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-5">
                 <div className="flex items-start gap-4">
                   <div className="p-2 bg-secondary-container rounded-lg">
                     <span className="material-symbols-outlined text-on-secondary-fixed-variant">{item.icon}</span>
@@ -152,7 +181,7 @@ function ChecklistApresContent() {
                       <button
                         key={button}
                         onClick={() => updateAnswer(item.title, button)}
-                        className={`flex-1 py-3 text-center rounded-lg border transition-all font-medium ${
+                        className={`flex-1 py-2.5 text-center rounded-lg border transition-all font-medium ${
                           isSelected
                             ? "bg-primary-container text-white border-primary-container shadow-sm"
                             : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
@@ -166,7 +195,7 @@ function ChecklistApresContent() {
               </div>
             ))}
 
-            <div className="md:col-span-2 bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div className="md:col-span-2 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center gap-4">
                 <div className="p-2 bg-surface-container-low rounded-lg">
                   <span className="material-symbols-outlined text-slate-600">rate_review</span>
@@ -206,6 +235,7 @@ function ChecklistApresContent() {
         </div>
       </footer>
     </div>
+    </RequireRole>
   );
 }
 

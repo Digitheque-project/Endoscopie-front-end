@@ -1,9 +1,35 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { DEFAULT_HEADER, HEADER_BY_PATH } from "@/components/layout/navigation";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/contexts/AuthContext";
+
+function LiveClock() {
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    const tick = () =>
+      setTime(
+        new Date().toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+      );
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!time) return null;
+  return (
+    <span className="hidden lg:block text-xs font-mono font-semibold text-on-surface tabular-nums">
+      {time}
+    </span>
+  );
+}
 
 const HIDE_UNIT_LABEL_PATHS = new Set(["/", "/demande-cpa"]);
 
@@ -61,6 +87,8 @@ export function TopHeader() {
         </div>
 
         <NotificationBell />
+
+        <LiveClock />
 
         <div className="hidden sm:flex items-center gap-3 pl-3 lg:pl-4 border-l border-outline-variant/30">
           <div className="text-right hidden lg:block">
