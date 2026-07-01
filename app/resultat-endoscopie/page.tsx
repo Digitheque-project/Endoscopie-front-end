@@ -238,17 +238,13 @@ function ResultatEndoscopieContent() {
   const [formData, setFormData] = useState<CompteRenduEndoscopie>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [isExamTypeOpen, setIsExamTypeOpen] = useState(false);
-  const examTypeRef = useRef<HTMLDivElement | null>(null);
   const [images, setImages] = useState<{ id: string; url: string; name: string; file: File }[]>([]);
 
   const mappedProcedureType = mapProcedureToExamType(procedure);
 
   const dynamicTitle = useMemo(() => {
     const selectedExam = examTypes.find((exam) => exam.value === formData.typeExamen);
-    if (selectedExam && selectedExam.value !== 'fibroscopie') {
-      return `Compte rendu — ${selectedExam.label}`;
-    }
+    if (selectedExam) return `Compte rendu ${selectedExam.label}`;
     return 'Compte rendu';
   }, [formData.typeExamen]);
 
@@ -283,16 +279,6 @@ function ResultatEndoscopieContent() {
     ? ENDOSCOPES_COLOSCOPIE
     : ENDOSCOPES_FIBROSCOPIE;
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (examTypeRef.current && !examTypeRef.current.contains(event.target as Node)) {
-        setIsExamTypeOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -512,56 +498,19 @@ function ResultatEndoscopieContent() {
                 </div>
               </div>
 
-              <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-                <div className="space-y-4">
-                  <div className="relative" ref={examTypeRef}>
-                    <label className="block text-sm font-semibold text-slate-700">Sélectionner le type d'examen</label>
-                    <button
-                      type="button"
-                      onClick={() => setIsExamTypeOpen((prev) => !prev)}
-                      className="inline-flex w-full items-center justify-between rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-left text-slate-900 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
-                      aria-haspopup="listbox"
-                      aria-expanded={isExamTypeOpen}
-                    >
-                      <span>{examTypes.find((exam) => exam.value === formData.typeExamen)?.label || "Sélectionner"}</span>
-                      <span className="text-slate-500">▾</span>
-                    </button>
-                    {isExamTypeOpen && (
-                      <ul className="absolute left-0 right-0 z-20 mt-2 max-h-64 overflow-auto rounded-3xl border border-slate-200 bg-white shadow-lg">
-                        {examTypes.map((exam) => (
-                          <li key={exam.value}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateField("typeExamen", exam.value as TypeExamen);
-                                setIsExamTypeOpen(false);
-                              }}
-                              className="w-full px-4 py-3 text-left text-sm text-slate-900 hover:bg-slate-50"
-                            >
-                              {exam.label}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              {examTypes.find((e) => e.value === formData.typeExamen) && (
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 max-w-xs">
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">Téléphone</p>
-                  <div className="mt-4 space-y-3">
-                    {examTypes.map((exam) => (
-                      <div
-                        key={exam.value}
-                        className={`rounded-2xl border px-4 py-3 ${formData.typeExamen === exam.value ? 'border-primary bg-white' : 'border-transparent bg-slate-100'}`}
-                      >
-                        <p className="font-semibold text-slate-900">{exam.label}</p>
-                        <p className="text-sm text-slate-600">{exam.phone}</p>
-                      </div>
-                    ))}
+                  <div className="mt-3">
+                    <p className="font-semibold text-slate-900">
+                      {examTypes.find((e) => e.value === formData.typeExamen)?.label}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {examTypes.find((e) => e.value === formData.typeExamen)?.phone}
+                    </p>
                   </div>
                 </div>
-              </div>
+              )}
             </section>
 
             <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
