@@ -243,10 +243,13 @@ function ResultatEndoscopieContent() {
   const mappedProcedureType = mapProcedureToExamType(procedure);
 
   const dynamicTitle = useMemo(() => {
+    // La procédure de la prescription est la source de vérité principale
+    if (procedure && procedure.trim()) return `Compte rendu ${procedure.trim()}`;
+    // Repli : nom issu du type d'examen interne (si procédure non disponible)
     const selectedExam = examTypes.find((exam) => exam.value === formData.typeExamen);
     if (selectedExam) return `Compte rendu ${selectedExam.label}`;
     return 'Compte rendu';
-  }, [formData.typeExamen]);
+  }, [procedure, formData.typeExamen]);
 
   useEffect(() => {
     if (!mappedProcedureType) return;
