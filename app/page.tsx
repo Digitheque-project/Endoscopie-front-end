@@ -66,8 +66,6 @@ export default function Home() {
         if (status === "Décision rendue") statusClass = "bg-amber-100 text-amber-800 font-bold";
         if (status === "CPA demandée") statusClass = "bg-violet-100 text-violet-800 font-bold";
 
-        const isConfirmed = ["Confirmé", "Terminé", "En cours", "Priorité", "Urgent", "Prévu"].includes(status);
-
         return {
           time: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           patient: rdv.patient?.nom ? `${rdv.patient.prenom} ${rdv.patient.nom}` : (rdv.patientName || "Patient Inconnu"),
@@ -75,7 +73,7 @@ export default function Home() {
           realId: rdv.id,
           prescriptionId: rdv.prescriptionId || rdv.prescription?.id,
           patientRealId: rdv.patient?.id || rdv.patientId,
-          procedure: isConfirmed ? (rdv.prescription?.typeExamen || rdv.procedure || rdv.typeExamen || "Examen Endoscopique") : "En attente de confirmation",
+          procedure: rdv.prescription?.typeExamen || rdv.procedure || rdv.typeExamen || "Examen Endoscopique",
           doctor: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Dr. Antoine Moreau",
           status: status,
           statusClass: statusClass,
