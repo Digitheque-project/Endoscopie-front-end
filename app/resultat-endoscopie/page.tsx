@@ -493,26 +493,12 @@ function ResultatEndoscopieContent() {
           )}
 
           <div className="space-y-8">
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">1. Type d'examen</p>
-                  <h2 className="mt-2 text-xl font-semibold text-slate-900">Examen</h2>
-                </div>
-              </div>
-
+            <section className="rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold mb-2">1. Type d'examen</p>
               {examTypes.find((e) => e.value === formData.typeExamen) && (
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 max-w-xs">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">Téléphone</p>
-                  <div className="mt-3">
-                    <p className="font-semibold text-slate-900">
-                      {examTypes.find((e) => e.value === formData.typeExamen)?.label}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      {examTypes.find((e) => e.value === formData.typeExamen)?.phone}
-                    </p>
-                  </div>
-                </div>
+                <span className="inline-block rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-900">
+                  {examTypes.find((e) => e.value === formData.typeExamen)?.label}
+                </span>
               )}
             </section>
 
