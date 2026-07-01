@@ -207,7 +207,7 @@ function PlanificationExamenContent() {
           )}
 
           <a
-            href="/decisions-anesthesie"
+            href="/prescriptions"
             className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
