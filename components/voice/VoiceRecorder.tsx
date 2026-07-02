@@ -15,7 +15,7 @@ type Props = {
   statusIdleText?: string;
 };
 
-export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, onManualPause, onAudio, lang = "fr-FR", exposeControls, hideTextArea = false, statusIdleText = "Observation durant l'examen" }: Props) {
+export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, onManualPause, onAudio, lang = "fr-FR", exposeControls, hideTextArea = false, statusIdleText = "Prêt" }: Props) {
   const [isSupported, setIsSupported] = useState(() => {
     if (typeof window === "undefined") return false;
     const SpeechRecognitionCtor = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
