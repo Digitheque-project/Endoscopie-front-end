@@ -6,14 +6,13 @@ import { RequireRole } from "@/components/auth/RequireRole";
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { apiJson } from "@/lib/api";
-import { usePatient } from "@/contexts/PatientContext";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 function PendingReportsContent() {
   const router = useRouter();
-  const { setPatientData } = usePatient();
-  const [rows, setRows] = useState<any[]>([]);
+const [rows, setRows] = useState<any[]>([]);
   const [examTypes, setExamTypes] = useState<{ id: string; name: string }[]>([]);
   const [doctorNames, setDoctorNames] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,17 +46,7 @@ function PendingReportsContent() {
   }, []);
 
   const handleRediger = (row: any) => {
-    const patientName = `${row.patient?.nom || ""} ${row.patient?.prenom || ""}`.trim();
-    const prescriberName = `Dr. ${row.medecinPrescripteur?.prenom || ""} ${row.medecinPrescripteur?.nom || ""}`.trim();
-    setPatientData({
-      patientId: row.patient?.id || row.patientId || "",
-      prescriptionId: row.id || "",
-      patientName,
-      procedure: row.typeExamen || "",
-      prescriber: prescriberName,
-      priority: row.priorite || "NORMAL",
-    });
-    router.push("/resultat-endoscopie");
+    router.push(`/dossier-seance/${encodeURIComponent(row.id)}`);
   };
 
   const filtered = rows.filter((row) => {

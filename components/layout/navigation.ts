@@ -99,6 +99,11 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     subtitle: "Examens terminés, en attente de rédaction",
     icon: "edit_note",
   },
+  "/dossier-seance": {
+    title: "Dossier de séance",
+    subtitle: "Checklist avant · Notes d'opération · Checklist après",
+    icon: "folder_open",
+  },
 };
 
 export const DEFAULT_HEADER: HeaderMeta = HEADER_BY_PATH["/"];

@@ -57,6 +57,17 @@ function PrescriptionWorkflowContent() {
     }
   };
 
+  // Auto-save : enregistre les notes si l'utilisateur quitte la page sans cliquer
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!prescriptionId || !patientId) return;
+      const payload = JSON.stringify({ prescriptionId, patientId, medicalNotes, voiceTranscripts: savedMedicalNotes });
+      navigator.sendBeacon('/api/operations', new Blob([payload], { type: 'application/json' }));
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [prescriptionId, patientId, medicalNotes, savedMedicalNotes]);
+
   const handleFinalTranscript = (text: string, meta?: { startsAfterPause?: boolean }) => {
     const normalized = text.trim();
     if (!normalized) return;
