@@ -115,8 +115,7 @@ export default function Home() {
     const matchesProcedure = (item.procedure || "").toLowerCase().includes((filters.procedure || "").toLowerCase());
     const matchesMedecin = (item.doctor || "").toLowerCase().includes((filters.medecin || "").toLowerCase());
     const matchesDate = item.date === (filters.date || toLocalDateKey(new Date()));
-    const matchesRole = role !== "MEDECIN" || item.status === "Décision rendue";
-    return matchesNom && matchesProcedure && matchesMedecin && matchesDate && matchesRole;
+    return matchesNom && matchesProcedure && matchesMedecin && matchesDate;
   });
 
   const fetchSalles = async (showLoading = true) => {
