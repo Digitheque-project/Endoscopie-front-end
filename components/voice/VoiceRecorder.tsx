@@ -84,7 +84,14 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
       recognition.continuous = true;
 
       // final segments tracker to avoid duplicates
-      if (!continuePrevious) finalSegmentsRef.current = [];
+      if (!continuePrevious) {
+        finalSegmentsRef.current = [];
+        finalBreaksRef.current = [];
+        forceBreakBeforeNextFinalRef.current = false;
+      } else if (finalSegmentsRef.current.length > 0) {
+        // Reprise après pause ou arrêt avec du texte déjà présent : saut de ligne
+        forceBreakBeforeNextFinalRef.current = true;
+      }
 
       recognition.onresult = (event: any) => {
         let interim = "";
