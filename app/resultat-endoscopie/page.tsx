@@ -374,7 +374,7 @@ function ResultatEndoscopieContent() {
 
     async function autofillResponsable() {
       try {
-        const data = await apiJson<any>(`/api/confirmations-planification/${prescriptionId}`);
+        const data = await apiJson<any>(`/api/confirmations-planification/${prescriptionId}`).catch(() => null);
         const details = data?.detailsPrescription;
         if (cancelled) return;
 
