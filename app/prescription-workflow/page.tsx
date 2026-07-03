@@ -12,14 +12,6 @@ import HistoryModal from "@/components/ui/HistoryModal";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 
-function computeAge(dateNaissance?: string | null): number | null {
-  if (!dateNaissance) return null;
-  const birth = new Date(dateNaissance);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) age--;
-  return age;
-}
 
 function PrescriptionWorkflowContent() {
   const router = useRouter();
@@ -28,26 +20,18 @@ function PrescriptionWorkflowContent() {
   const [transcriptText, setTranscriptText] = useState("");
   const [savedMedicalNotes, setSavedMedicalNotes] = useState<SavedTranscriptionEntry[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [prescriptionData, setPrescriptionData] = useState<any>(null);
-  const [contextOpen, setContextOpen] = useState(true);
-  const lastSavedTranscriptionRef = useRef("");
+const lastSavedTranscriptionRef = useRef("");
   const controlsRef = useRef<{ start: () => void; stop: () => void; restart: () => void; pause: () => void; resume: () => void } | null>(null);
 
   useEffect(() => {
     async function loadData() {
       if (!prescriptionId) return;
       try {
-        const [opData, presData] = await Promise.all([
-          apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null),
-          apiJson<any>(`/api/prescriptions/${prescriptionId}`).catch(() => null),
-        ]);
+        const opData = await apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null);
         if (opData) {
           if (opData.observationNotes) setTranscriptText(opData.observationNotes);
           setMedicalNotes(opData.medicalNotes || "");
           setSavedMedicalNotes(opData.voiceTranscripts || []);
-        }
-        if (presData) {
-          setPrescriptionData(presData);
         }
       } catch (err) {
         console.error("Erreur chargement operation:", err);
@@ -177,118 +161,7 @@ function PrescriptionWorkflowContent() {
             </div>
           </section>
 
-          {/* Contexte opératoire — affiché automatiquement depuis la prescription */}
-          {prescriptionData && (() => {
-            const pt = prescriptionData.patient;
-            const ca = prescriptionData.checklistAvant;
-            const rdv = prescriptionData.rendezVous;
-            const age = computeAge(pt?.dateNaissance);
-            return (
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 shadow-sm overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setContextOpen((v) => !v)}
-                  className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-blue-100/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-lg">info</span>
-                    <span className="font-bold text-sm text-primary">Contexte de l'opération</span>
-                    {pt && <span className="text-xs text-blue-600 font-semibold">— {pt.nom} {pt.prenom}{age != null ? `, ${age} ans` : ""}</span>}
-                    {rdv?.typeAnesthesie && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase">
-                        Anesthésie {rdv.typeAnesthesie}
-                      </span>
-                    )}
-                  </div>
-                  <span className="material-symbols-outlined text-blue-400">{contextOpen ? "expand_less" : "expand_more"}</span>
-                </button>
 
-                {contextOpen && (
-                  <div className="px-5 pb-5 grid grid-cols-1 lg:grid-cols-3 gap-4 border-t border-blue-100">
-                    {/* Colonne 1 : Patient */}
-                    <div className="pt-4 space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Patient</p>
-                      {pt ? (
-                        <div className="space-y-1 text-sm text-slate-700">
-                          <p className="font-semibold text-slate-900">{pt.nom} {pt.prenom}</p>
-                          {age != null && <p>{age} ans · {pt.sexe === "M" ? "Homme" : pt.sexe === "F" ? "Femme" : "—"}</p>}
-                          {pt.groupeSanguin && <p>Groupe : <span className="font-semibold">{pt.groupeSanguin}</span></p>}
-                          {pt.poids && <p>Poids : <span className="font-semibold">{pt.poids} kg</span></p>}
-                          {pt.antecedentsMedicaux && (
-                            <div className="mt-1 rounded-lg bg-white border border-blue-100 px-3 py-2 text-xs text-slate-600">
-                              <span className="font-semibold text-slate-700">Antécédents : </span>{pt.antecedentsMedicaux}
-                            </div>
-                          )}
-                        </div>
-                      ) : <p className="text-sm text-slate-400">—</p>}
-                    </div>
-
-                    {/* Colonne 2 : Examen & RDV */}
-                    <div className="pt-4 space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Examen & Rendez-vous</p>
-                      <div className="space-y-1 text-sm text-slate-700">
-                        <p className="font-semibold text-slate-900">{prescriptionData.typeExamen}</p>
-                        {prescriptionData.motif && <p className="text-xs text-slate-500">{prescriptionData.motif}</p>}
-                        {rdv?.dateHeureDebut && (
-                          <p className="mt-1">
-                            <span className="material-symbols-outlined text-[14px] align-middle text-blue-400 mr-1">schedule</span>
-                            {new Date(rdv.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
-                          </p>
-                        )}
-                        {rdv?.salle && <p><span className="font-semibold">Salle :</span> {rdv.salle.nom}</p>}
-                        {rdv?.typeAnesthesie && (
-                          <p className="mt-1"><span className="font-semibold">Anesthésie :</span> {rdv.typeAnesthesie}</p>
-                        )}
-                        {prescriptionData.medecinPrescripteur && (
-                          <p className="text-xs text-slate-500 mt-1">
-                            Prescrit par Dr. {prescriptionData.medecinPrescripteur.prenom} {prescriptionData.medecinPrescripteur.nom}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Colonne 3 : Checklist avant */}
-                    <div className="pt-4 space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Checklist avant</p>
-                      {ca ? (
-                        <div className="space-y-1 text-xs text-slate-700">
-                          {[
-                            { k: "identiteVerifiee", l: "Identité vérifiée" },
-                            { k: "jeuneRespecte", l: "Jeûne respecté" },
-                            { k: "anticoagulantsArretes", l: "Anticoagulants arrêtés" },
-                            { k: "antibioprophylaxie", l: "Antibioprophylaxie" },
-                            { k: "risquesVerifies", l: "Risques vérifiés" },
-                          ].map(({ k, l }) => (
-                            <div key={k} className="flex items-center gap-1.5">
-                              <span className={`material-symbols-outlined text-[14px] ${(ca as any)[k] ? "text-emerald-500" : "text-slate-300"}`}>
-                                {(ca as any)[k] ? "check_circle" : "cancel"}
-                              </span>
-                              <span className={(ca as any)[k] ? "text-slate-700" : "text-slate-400"}>{l}</span>
-                            </div>
-                          ))}
-                          {(ca.constantes_pouls || ca.constantes_saturation || ca.constantes_tension) && (
-                            <div className="mt-2 rounded-lg bg-white border border-blue-100 px-3 py-2 space-y-0.5">
-                              {ca.constantes_pouls && <p>Pouls : <span className="font-semibold">{ca.constantes_pouls}</span></p>}
-                              {ca.constantes_saturation && <p>SpO2 : <span className="font-semibold">{ca.constantes_saturation}</span></p>}
-                              {ca.constantes_tension && <p>Tension : <span className="font-semibold">{ca.constantes_tension}</span></p>}
-                            </div>
-                          )}
-                          {ca.observations && (
-                            <p className="mt-1 italic text-slate-500">{ca.observations}</p>
-                          )}
-                          <div className="mt-2">
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${ca.estValide ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
-                              {ca.estValide ? "✓ Validée" : "En cours"}
-                            </span>
-                          </div>
-                        </div>
-                      ) : <p className="text-sm text-slate-400">Checklist non renseignée</p>}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
 
           <section className="space-y-5">
             <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
