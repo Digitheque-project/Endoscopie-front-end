@@ -197,6 +197,23 @@ const lastSavedTranscriptionRef = useRef("");
               onChange={(event) => setMedicalNotes(event.target.value)}
               value={medicalNotes}
             />
+
+            <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setMedicalNotes("")}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
+              >
+                Effacer la note
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveTranscription(medicalNotes)}
+                className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
+              >
+                Enregistrer la note
+              </button>
+            </div>
           </section>
         </div>
       </div>
