@@ -672,7 +672,7 @@ function ResultatEndoscopieContent() {
                 </label>
               </div>
 
-              {(isFibroscopie || isColoscopie || isLigature) && (
+              {(isFibroscopie || isColoscopieLike || isLigature) && (
                 <div className="mt-6">
                   <div className="mb-4 flex items-center justify-between gap-4">
                     <p className="text-sm font-semibold text-slate-900">Sélectionner un endoscope</p>
