@@ -42,6 +42,7 @@ function PrescriptionWorkflowContent() {
           apiJson<any>(`/api/prescriptions/${prescriptionId}`).catch(() => null),
         ]);
         if (opData) {
+          if (opData.observationNotes) setTranscriptText(opData.observationNotes);
           setMedicalNotes(opData.medicalNotes || "");
           setSavedMedicalNotes(opData.voiceTranscripts || []);
         }
@@ -60,6 +61,7 @@ function PrescriptionWorkflowContent() {
     const payload = {
       prescriptionId,
       patientId,
+      observationNotes: transcriptText || null,
       medicalNotes,
       voiceTranscripts: savedMedicalNotes
     };
@@ -78,7 +80,7 @@ function PrescriptionWorkflowContent() {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (!prescriptionId || !patientId) return;
-      const payload = JSON.stringify({ prescriptionId, patientId, medicalNotes, voiceTranscripts: savedMedicalNotes });
+      const payload = JSON.stringify({ prescriptionId, patientId, observationNotes: transcriptText || null, medicalNotes, voiceTranscripts: savedMedicalNotes });
       navigator.sendBeacon('/api/operations', new Blob([payload], { type: 'application/json' }));
     };
     window.addEventListener('beforeunload', handleBeforeUnload);

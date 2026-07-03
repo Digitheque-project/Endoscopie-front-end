@@ -287,10 +287,27 @@ function ResultatEndoscopieContent() {
     async function loadData() {
       if (!prescriptionId) return;
       try {
-        const data = await apiJson<any>(`/api/resultats/${prescriptionId}`);
+        // Charge le compte rendu existant ET les notes d'opération en parallèle
+        const [data, opData] = await Promise.all([
+          apiJson<any>(`/api/resultats/${prescriptionId}`).catch(() => null),
+          apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null),
+        ]);
+
+        // Auto-remplit depuis les notes d'opération si les champs sont vides
+        if (opData && !data) {
+          setFormData((prev) => ({
+            ...prev,
+            conclusion: opData.observationNotes || prev.conclusion,
+            recommandations: opData.medicalNotes || prev.recommandations,
+          }));
+        }
+
         if (data) {
           setFormData((prev) => ({
             ...prev,
+            // Si compte rendu vide, pré-remplit depuis les notes d'opération
+            conclusion: data.conclusion || (opData?.observationNotes ?? prev.conclusion),
+            recommandations: data.recommandations || (opData?.medicalNotes ?? prev.recommandations),
             typeExamen: data.typeExamen || prev.typeExamen,
             responsable: {
               nom: data.responsable?.nom || prev.responsable.nom,
@@ -339,7 +356,6 @@ function ResultatEndoscopieContent() {
               pylore: data.constatations?.pylore || prev.constatations.pylore,
               duodenum: data.constatations?.duodenum || prev.constatations.duodenum,
             },
-            conclusion: data.conclusion || prev.conclusion,
           }));
         }
       } catch (err) {
