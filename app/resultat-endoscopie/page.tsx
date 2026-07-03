@@ -836,17 +836,6 @@ function ResultatEndoscopieContent() {
                 </label>
               </div>
               <p className="mt-4 text-xs text-slate-500">Formats acceptés : JPG, PNG. Les images sont jointes au compte rendu de l'examen.</p>
-
-              <div className="mt-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold mb-3">Observations de l&apos;examen</p>
-                <textarea
-                  value={formData.observations}
-                  onChange={(e) => updateField("observations", e.target.value)}
-                  placeholder="[Observations vocales enregistrées durant l'opération — remplissage automatique]"
-                  rows={6}
-                  className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
-                />
-              </div>
             </section>
 
             {isColoscopie && (
