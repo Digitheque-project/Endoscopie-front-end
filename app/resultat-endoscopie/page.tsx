@@ -181,6 +181,7 @@ interface CompteRenduEndoscopie {
   infirmieres: Infirmieres;
   rendezVous: RendezVous;
   constatations: Constatations;
+  observations: string;
   conclusion: string;
   recommandations: string;
 }
@@ -228,6 +229,7 @@ const initialData: CompteRenduEndoscopie = {
     pylore: "",
     duodenum: "",
   },
+  observations: "",
   conclusion: "",
   recommandations: "",
 };
@@ -297,7 +299,7 @@ function ResultatEndoscopieContent() {
         if (opData && !data) {
           setFormData((prev) => ({
             ...prev,
-            conclusion: opData.observationNotes || prev.conclusion,
+            observations: opData.observationNotes || prev.observations,
             recommandations: opData.medicalNotes || prev.recommandations,
           }));
         }
@@ -305,8 +307,8 @@ function ResultatEndoscopieContent() {
         if (data) {
           setFormData((prev) => ({
             ...prev,
-            // Si compte rendu vide, pré-remplit depuis les notes d'opération
-            conclusion: data.conclusion || (opData?.observationNotes ?? prev.conclusion),
+            // Si compte rendu vide, pré-remplit observations depuis les notes d'opération
+            observations: data.observations || (opData?.observationNotes ?? prev.observations),
             recommandations: data.recommandations || (opData?.medicalNotes ?? prev.recommandations),
             typeExamen: data.typeExamen || prev.typeExamen,
             responsable: {
@@ -834,6 +836,17 @@ function ResultatEndoscopieContent() {
                 </label>
               </div>
               <p className="mt-4 text-xs text-slate-500">Formats acceptés : JPG, PNG. Les images sont jointes au compte rendu de l'examen.</p>
+
+              <div className="mt-6">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold mb-3">Observations de l&apos;examen</p>
+                <textarea
+                  value={formData.observations}
+                  onChange={(e) => updateField("observations", e.target.value)}
+                  placeholder="[Observations vocales enregistrées durant l'opération — remplissage automatique]"
+                  rows={6}
+                  className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                />
+              </div>
             </section>
 
             {isColoscopie && (
