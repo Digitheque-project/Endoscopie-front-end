@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 interface PatientContextType {
   patientId: string;
@@ -16,39 +16,41 @@ interface PatientContextType {
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
-export function PatientProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState({
-    patientId: "",
-    prescriptionId: "",
-    patientName: "",
-    procedure: "",
-    prescriber: "",
-    priority: "",
-    age: "54",
-  });
+const STORAGE_KEY = "current_patient_context";
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("current_patient_context");
-    if (saved) {
-      try {
-        setData(JSON.parse(saved));
-      } catch (e) {}
-    }
-  }, []);
+const DEFAULTS = {
+  patientId: "",
+  prescriptionId: "",
+  patientName: "",
+  procedure: "",
+  prescriber: "",
+  priority: "",
+  age: "54",
+};
+
+function readStorage() {
+  if (typeof window === "undefined") return DEFAULTS;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return { ...DEFAULTS, ...JSON.parse(saved) };
+  } catch (e) {}
+  return DEFAULTS;
+}
+
+export function PatientProvider({ children }: { children: React.ReactNode }) {
+  const [data, setData] = useState(readStorage);
 
   const setPatientData = (newData: Partial<Omit<PatientContextType, 'setPatientData' | 'clearPatientData'>>) => {
     setData((prev) => {
       const updated = { ...prev, ...newData };
-      localStorage.setItem("current_patient_context", JSON.stringify(updated));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
   };
 
   const clearPatientData = () => {
-    const empty = { patientId: "", prescriptionId: "", patientName: "", procedure: "", prescriber: "", priority: "", age: "" };
-    setData(empty);
-    localStorage.removeItem("current_patient_context");
+    setData(DEFAULTS);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   return (

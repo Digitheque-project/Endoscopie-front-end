@@ -1,20 +1,94 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { useRouter } from "next/navigation";
 import { apiFetch, apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 
+// ---------------------------------------------------------------------------
+// Dictée globale des constatations — parser organe → champ
+// ---------------------------------------------------------------------------
+type ConstatationKey = keyof Constatations;
+
+const ORGAN_PATTERNS: Array<{ re: RegExp; field: ConstatationKey }> = [
+  { re: /toucher\s+rectal/gi,                                   field: 'toucherRectal' },
+  { re: /pr[eé]paration\s+colique/gi,                           field: 'preparationColique' },
+  { re: /il[eé]on\s+terminal/gi,                                field: 'ileonTerminal' },
+  { re: /valvule(?:\s+il[eé]o[-\s]*ca?[eé]c\w*)?/gi,          field: 'valvuleIleoCaecaie' },
+  { re: /(?:oe|œ|[eé])sophage/gi,                              field: 'oesophage' },
+  { re: /cardia/gi,                                             field: 'cardia' },
+  { re: /estomac/gi,                                            field: 'estomac' },
+  { re: /p[yi]lore?/gi,                                        field: 'pylore' },
+  { re: /duod[eé]num/gi,                                       field: 'duodenum' },
+  { re: /c[aâ]ecum/gi,                                         field: 'caecum' },
+  { re: /il[eé]on/gi,                                          field: 'ileonTerminal' },
+  { re: /sigmo[ïi]d[eé]?/gi,                                   field: 'sigmoid' },
+  { re: /c[oô]lon/gi,                                          field: 'colon' },
+  { re: /rectum/gi,                                            field: 'rectum' },
+  { re: /\banus\b/gi,                                          field: 'anus' },
+];
+
+function parseConstatationsText(text: string): Partial<Constatations> {
+  type M = { index: number; end: number; field: ConstatationKey };
+  const all: M[] = [];
+
+  for (const { re, field } of ORGAN_PATTERNS) {
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      all.push({ index: m.index, end: m.index + m[0].length, field });
+    }
+  }
+
+  // sort by position; longer match wins on ties
+  all.sort((a, b) => a.index - b.index || (b.end - b.index) - (a.end - a.index));
+
+  // remove overlapping
+  const matches: M[] = [];
+  for (const m of all) {
+    if (!matches.some(p => m.index < p.end)) matches.push(m);
+  }
+
+  if (matches.length === 0) return {};
+
+  const result: Partial<Constatations> = {};
+  for (let i = 0; i < matches.length; i++) {
+    const { end, field } = matches[i];
+    const nextStart = matches[i + 1]?.index ?? text.length;
+    const content = text.slice(end, nextStart)
+      .trim()
+      .replace(/^[:\s,;.]+/, '')
+      .replace(/[.\s,;]+$/, '')
+      .trim();
+    if (content) result[field] = content;
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+
+const VALID_TYPE_EXAMEN = new Set<string>([
+  "fibroscopie", "coloscopie", "rectosigmoidoscopie",
+  "ligature_varices", "injection_colle", "dilatation_oesophagienne", "extraction_corps_etranger",
+]);
+
 const procedureTypeMap: Record<string, TypeExamen> = {
   "fibroscopie digestive haute": "fibroscopie",
   "fibroscopie oeso-gastro-duodénale": "fibroscopie",
   "fibroscopie oeso-gastro-duodenale": "fibroscopie",
+  "oesogastroduodenoscopie": "fibroscopie",
+  "oeso-gastro-duodenoscopie": "fibroscopie",
+  "gastroscopie": "fibroscopie",
+  "endoscopie digestive haute": "fibroscopie",
   "coloscopie": "coloscopie",
+  "coloscopie totale": "coloscopie",
+  "colonoscopie": "coloscopie",
   "rectosigmoïdoscopie": "rectosigmoidoscopie",
   "rectosigmoidoscopie": "rectosigmoidoscopie",
   "ligature de varices oesophagiennes": "ligature_varices",
+  "ligature de varices œsophagiennes": "ligature_varices",
   "injection de colle biologique": "injection_colle",
   "dilatation oesophagienne": "dilatation_oesophagienne",
   "extraction de corps étranger": "extraction_corps_etranger",
@@ -24,10 +98,12 @@ const procedureTypeMap: Record<string, TypeExamen> = {
 function mapProcedureToExamType(procedure?: string): TypeExamen | null {
   if (!procedure) return null;
   const normalized = procedure.trim().toLowerCase();
+  // Valeurs enum directes stockées en base (ex: "fibroscopie", "ligature_varices")
+  if (VALID_TYPE_EXAMEN.has(normalized)) return normalized as TypeExamen;
   if (procedureTypeMap[normalized]) return procedureTypeMap[normalized];
-  if (normalized.includes("fibroscopie")) return "fibroscopie";
-  if (normalized.includes("coloscopie")) return "coloscopie";
-  if (normalized.includes("rectosigmoid")) return "rectosigmoidoscopie";
+  if (normalized.includes("fibroscopie") || normalized.includes("gastroscopie") || normalized.includes("ogd")) return "fibroscopie";
+  if (normalized.includes("colonoscopie") || normalized.includes("coloscopie")) return "coloscopie";
+  if (normalized.includes("rectosigmo")) return "rectosigmoidoscopie";
   if (normalized.includes("ligature")) return "ligature_varices";
   if (normalized.includes("colle")) return "injection_colle";
   if (normalized.includes("dilatation")) return "dilatation_oesophagienne";
@@ -122,6 +198,73 @@ export const ENDOSCOPES_LIGATURE: EndoscopeOption[] = [
   { id: 'GIF-H180J-2317815', modele: 'GIF H 180 J', serie: '2317815' },
 ];
 
+// Champs de constatations par famille d'examen
+type ConstatationField = { label: string; key: keyof Constatations };
+
+const CONSTATATIONS_HAUTE: ConstatationField[] = [
+  { label: 'Oesophage', key: 'oesophage' },
+  { label: 'Cardia', key: 'cardia' },
+  { label: 'Estomac', key: 'estomac' },
+  { label: 'Pylore', key: 'pylore' },
+  { label: 'Duodénum', key: 'duodenum' },
+];
+
+const CONSTATATIONS_COLOSCOPIE: ConstatationField[] = [
+  { label: 'Toucher rectal', key: 'toucherRectal' },
+  { label: 'Anus', key: 'anus' },
+  { label: 'Rectum', key: 'rectum' },
+  { label: 'Colon', key: 'colon' },
+  { label: 'Caecum', key: 'caecum' },
+  { label: 'Valvule iléo-caecale', key: 'valvuleIleoCaecaie' },
+  { label: 'Iléon terminal', key: 'ileonTerminal' },
+];
+
+const CONSTATATIONS_RECTOSIGMOIDOSCOPIE: ConstatationField[] = [
+  { label: 'Anus', key: 'anus' },
+  { label: 'Rectum', key: 'rectum' },
+  { label: 'Sigmoïde', key: 'sigmoid' },
+];
+
+function getConstatationsFields(typeExamen: TypeExamen): ConstatationField[] {
+  if (typeExamen === 'coloscopie') return CONSTATATIONS_COLOSCOPIE;
+  if (typeExamen === 'rectosigmoidoscopie') return CONSTATATIONS_RECTOSIGMOIDOSCOPIE;
+  return CONSTATATIONS_HAUTE;
+}
+
+// Sections spécifiques par type thérapeutique
+interface LigatureSpecifique {
+  gradeVarices: string;
+  nombreLigatures: string;
+  saignementActif: string;
+  resultat: string;
+}
+
+interface InjectionColleSpecifique {
+  siteInjection: string;
+  typeColle: string;
+  volumeInjecte: string;
+  nombreSeances: string;
+  resultat: string;
+}
+
+interface DilatationSpecifique {
+  indication: string;
+  localisationStenose: string;
+  calibreAvant: string;
+  calibreApres: string;
+  typeDilatateur: string;
+  resultat: string;
+  complication: string;
+}
+
+interface ExtractionSpecifique {
+  natureCE: string;
+  localisation: string;
+  technique: string;
+  resultat: string;
+  complication: string;
+}
+
 type Genre = "Masculin" | "Féminin";
 
 type ConditionExamen = "anesthesie_locale" | "anesthesie_generale";
@@ -184,6 +327,10 @@ interface CompteRenduEndoscopie {
   observations: string;
   conclusion: string;
   recommandations: string;
+  ligatureSpecifique: LigatureSpecifique;
+  injectionSpecifique: InjectionColleSpecifique;
+  dilatationSpecifique: DilatationSpecifique;
+  extractionSpecifique: ExtractionSpecifique;
 }
 
 const initialData: CompteRenduEndoscopie = {
@@ -232,50 +379,58 @@ const initialData: CompteRenduEndoscopie = {
   observations: "",
   conclusion: "",
   recommandations: "",
+  ligatureSpecifique: {
+    gradeVarices: "",
+    nombreLigatures: "",
+    saignementActif: "",
+    resultat: "",
+  },
+  injectionSpecifique: {
+    siteInjection: "",
+    typeColle: "",
+    volumeInjecte: "",
+    nombreSeances: "",
+    resultat: "",
+  },
+  dilatationSpecifique: {
+    indication: "",
+    localisationStenose: "",
+    calibreAvant: "",
+    calibreApres: "",
+    typeDilatateur: "",
+    resultat: "",
+    complication: "",
+  },
+  extractionSpecifique: {
+    natureCE: "",
+    localisation: "",
+    technique: "",
+    resultat: "",
+    complication: "",
+  },
 };
 
 function ResultatEndoscopieContent() {
   const router = useRouter();
   const { patientId, prescriptionId, patientName, procedure, age, prescriber } = usePatient();
-  const [formData, setFormData] = useState<CompteRenduEndoscopie>(initialData);
+  const [formData, setFormData] = useState<CompteRenduEndoscopie>(() => ({
+    ...initialData,
+    typeExamen: mapProcedureToExamType(procedure) ?? initialData.typeExamen,
+  }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [images, setImages] = useState<{ id: string; url: string; name: string; file: File }[]>([]);
 
-  const mappedProcedureType = mapProcedureToExamType(procedure);
-
   const dynamicTitle = useMemo(() => {
-    // La procédure de la prescription est la source de vérité principale
-    if (procedure && procedure.trim()) return `Compte rendu ${procedure.trim()}`;
-    // Repli : nom issu du type d'examen interne (si procédure non disponible)
     const selectedExam = examTypes.find((exam) => exam.value === formData.typeExamen);
-    if (selectedExam) return `Compte rendu ${selectedExam.label}`;
-    return 'Compte rendu';
-  }, [procedure, formData.typeExamen]);
+    return selectedExam ? `Compte rendu ${selectedExam.label}` : 'Compte rendu';
+  }, [formData.typeExamen]);
 
-  useEffect(() => {
-    if (!mappedProcedureType) return;
-    setFormData((prev) => {
-      if (prev.typeExamen === mappedProcedureType) return prev;
-      if (prev.typeExamen !== initialData.typeExamen) return prev;
-      return {
-        ...prev,
-        typeExamen: mappedProcedureType,
-      };
-    });
-  }, [mappedProcedureType]);
-
-  const isLigature = formData.typeExamen === "ligature_varices";
-  const isRectosigmoidoscopie = formData.typeExamen === "rectosigmoidoscopie";
-  const isColoscopie = formData.typeExamen === "coloscopie";
+  const typeExamen = formData.typeExamen;
+  const isLigature = typeExamen === "ligature_varices";
+  const isRectosigmoidoscopie = typeExamen === "rectosigmoidoscopie";
+  const isColoscopie = typeExamen === "coloscopie";
   const isColoscopieLike = isColoscopie || isRectosigmoidoscopie;
-  const isFibroscopie = [
-    "fibroscopie",
-    "injection_colle",
-    "dilatation_oesophagienne",
-    "extraction_corps_etranger",
-    "ligature_varices",
-  ].includes(formData.typeExamen);
   const availableEndoscopes = isLigature
     ? ENDOSCOPES_LIGATURE
     : isRectosigmoidoscopie
@@ -284,23 +439,60 @@ function ResultatEndoscopieContent() {
     ? ENDOSCOPES_COLOSCOPIE
     : ENDOSCOPES_FIBROSCOPIE;
 
+  const constatationsFields = getConstatationsFields(typeExamen);
+
+  const hasSpecifique = isLigature
+    || typeExamen === 'injection_colle'
+    || typeExamen === 'dilatation_oesophagienne'
+    || typeExamen === 'extraction_corps_etranger';
+
+  // Numérotation dynamique — sections 1-5 toujours présentes
+  let _n = 5;
+  const nextN = () => ++_n;
+  const sNum = {
+    preparationColique: isColoscopie          ? nextN() : 0,
+    constatations:                              nextN(),
+    specifique:         hasSpecifique          ? nextN() : 0,
+    observations:       hasSpecifique ? nextN() : 0,
+    conclusion:                                 nextN(),
+    recommandations:    !isRectosigmoidoscopie ? nextN() : 0,
+  };
+
 
   useEffect(() => {
     async function loadData() {
       if (!prescriptionId) return;
       try {
-        // Charge le compte rendu existant ET les notes d'opération en parallèle
-        const [data, opData] = await Promise.all([
+        // Charge en parallèle : compte rendu existant, notes d'opération, et prescription (source de vérité du type)
+        const [data, opData, prescriptionData] = await Promise.all([
           apiJson<any>(`/api/resultats/${prescriptionId}`).catch(() => null),
           apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null),
+          apiJson<any>(`/api/prescriptions/${prescriptionId}`).catch(() => null),
         ]);
+
+        // Détecte automatiquement le type d'examen depuis la prescription (source la plus fiable)
+        const detectedType =
+          mapProcedureToExamType(prescriptionData?.typeExamen) ||
+          mapProcedureToExamType(procedure) ||
+          (data?.details?.typeExamen as TypeExamen | undefined) ||
+          null;
+        if (detectedType) {
+          setFormData((prev) => prev.typeExamen === detectedType ? prev : { ...prev, typeExamen: detectedType });
+        }
 
         // Auto-remplit depuis les notes d'opération si les champs sont vides
         if (opData && !data) {
+          const parsedConstatations = opData.observationNotes
+            ? parseConstatationsText(opData.observationNotes)
+            : {};
           setFormData((prev) => ({
             ...prev,
             observations: opData.observationNotes || prev.observations,
             recommandations: opData.medicalNotes || prev.recommandations,
+            constatations: {
+              ...prev.constatations,
+              ...Object.fromEntries(Object.entries(parsedConstatations).filter(([, v]) => Boolean(v))),
+            },
           }));
         }
 
@@ -310,7 +502,7 @@ function ResultatEndoscopieContent() {
             // Si compte rendu vide, pré-remplit observations depuis les notes d'opération
             observations: data.observations || (opData?.observationNotes ?? prev.observations),
             recommandations: data.recommandations || (opData?.medicalNotes ?? prev.recommandations),
-            typeExamen: data.typeExamen || prev.typeExamen,
+            typeExamen: detectedType || (data.details?.typeExamen as TypeExamen | undefined) || prev.typeExamen,
             responsable: {
               nom: data.responsable?.nom || prev.responsable.nom,
               prenoms: data.responsable?.prenoms || prev.responsable.prenoms,
@@ -358,6 +550,35 @@ function ResultatEndoscopieContent() {
               pylore: data.constatations?.pylore || prev.constatations.pylore,
               duodenum: data.constatations?.duodenum || prev.constatations.duodenum,
             },
+            ligatureSpecifique: {
+              gradeVarices: data.ligatureSpecifique?.gradeVarices || prev.ligatureSpecifique.gradeVarices,
+              nombreLigatures: data.ligatureSpecifique?.nombreLigatures || prev.ligatureSpecifique.nombreLigatures,
+              saignementActif: data.ligatureSpecifique?.saignementActif || prev.ligatureSpecifique.saignementActif,
+              resultat: data.ligatureSpecifique?.resultat || prev.ligatureSpecifique.resultat,
+            },
+            injectionSpecifique: {
+              siteInjection: data.injectionSpecifique?.siteInjection || prev.injectionSpecifique.siteInjection,
+              typeColle: data.injectionSpecifique?.typeColle || prev.injectionSpecifique.typeColle,
+              volumeInjecte: data.injectionSpecifique?.volumeInjecte || prev.injectionSpecifique.volumeInjecte,
+              nombreSeances: data.injectionSpecifique?.nombreSeances || prev.injectionSpecifique.nombreSeances,
+              resultat: data.injectionSpecifique?.resultat || prev.injectionSpecifique.resultat,
+            },
+            dilatationSpecifique: {
+              indication: data.dilatationSpecifique?.indication || prev.dilatationSpecifique.indication,
+              localisationStenose: data.dilatationSpecifique?.localisationStenose || prev.dilatationSpecifique.localisationStenose,
+              calibreAvant: data.dilatationSpecifique?.calibreAvant || prev.dilatationSpecifique.calibreAvant,
+              calibreApres: data.dilatationSpecifique?.calibreApres || prev.dilatationSpecifique.calibreApres,
+              typeDilatateur: data.dilatationSpecifique?.typeDilatateur || prev.dilatationSpecifique.typeDilatateur,
+              resultat: data.dilatationSpecifique?.resultat || prev.dilatationSpecifique.resultat,
+              complication: data.dilatationSpecifique?.complication || prev.dilatationSpecifique.complication,
+            },
+            extractionSpecifique: {
+              natureCE: data.extractionSpecifique?.natureCE || prev.extractionSpecifique.natureCE,
+              localisation: data.extractionSpecifique?.localisation || prev.extractionSpecifique.localisation,
+              technique: data.extractionSpecifique?.technique || prev.extractionSpecifique.technique,
+              resultat: data.extractionSpecifique?.resultat || prev.extractionSpecifique.resultat,
+              complication: data.extractionSpecifique?.complication || prev.extractionSpecifique.complication,
+            },
           }));
         }
       } catch (err) {
@@ -366,7 +587,7 @@ function ResultatEndoscopieContent() {
     }
 
     loadData();
-  }, [prescriptionId]);
+  }, [prescriptionId, procedure]);
 
   // Pré-remplit automatiquement le responsable et les informations patient
   // à partir de la prescription (patient, prescripteur, indication clinique).
@@ -511,14 +732,6 @@ function ResultatEndoscopieContent() {
           )}
 
           <div className="space-y-8">
-            <section className="rounded-2xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold mb-2">1. Type d'examen</p>
-              {examTypes.find((e) => e.value === formData.typeExamen) && (
-                <span className="inline-block rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-900">
-                  {examTypes.find((e) => e.value === formData.typeExamen)?.label}
-                </span>
-              )}
-            </section>
 
             <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="mb-6">
@@ -672,7 +885,7 @@ function ResultatEndoscopieContent() {
                 </label>
               </div>
 
-              {(isFibroscopie || isColoscopieLike || isLigature) && (
+              {(
                 <div className="mt-6">
                   <div className="mb-4 flex items-center justify-between gap-4">
                     <p className="text-sm font-semibold text-slate-900">Sélectionner un endoscope</p>
@@ -839,47 +1052,27 @@ function ResultatEndoscopieContent() {
             </section>
 
             {isColoscopie && (
-              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm mb-6">
+              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  <span className="font-bold">6. Quantité de la préparation colique</span>
+                  <span className="font-bold">{sNum.preparationColique}. Quantité de la préparation colique</span>
                   <span className="font-normal"> : Score de Boston 9/9</span>
                 </p>
               </section>
             )}
 
             <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="mb-6">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                  {sNum.constatations}. Constatations
+                </p>
+              </div>
+
               <div className="grid gap-6">
-                {(
-                  isFibroscopie
-                    ? ([
-                        { label: "Oesophage", key: "oesophage" as const },
-                        { label: "Cardia", key: "cardia" as const },
-                        { label: "Estomac", key: "estomac" as const },
-                        { label: "Pylore", key: "pylore" as const },
-                        { label: "Duodénum", key: "duodenum" as const },
-                      ] as const)
-                    : isRectosigmoidoscopie
-                    ? ([
-                        { label: "Anus", key: "anus" as const },
-                        { label: "Rectum", key: "rectum" as const },
-                        { label: "Sigmoïde", key: "sigmoid" as const },
-                      ] as const)
-                    : ([
-                        { label: "Toucher rectal", key: "toucherRectal" as const },
-                        { label: "Anus", key: "anus" as const },
-                        { label: "Rectum", key: "rectum" as const },
-                        { label: "Colon", key: "colon" as const },
-                        { label: "Caecum", key: "caecum" as const },
-                        { label: "Valvule iléo-caecaie", key: "valvuleIleoCaecaie" as const },
-                        { label: "Iléon terminal", key: "ileonTerminal" as const },
-                      ] as const)
-                ).map((item) => (
+                {constatationsFields.map((item) => (
                   <div key={item.key} className="space-y-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-900">{item.label}</h3>
-                        <p className="text-xs text-slate-500">[au besoin]</p>
-                      </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">{item.label}</h3>
+                      <p className="text-xs text-slate-500">[au besoin]</p>
                     </div>
                     <textarea
                       value={formData.constatations[item.key]}
@@ -893,9 +1086,336 @@ function ResultatEndoscopieContent() {
               </div>
             </section>
 
+            {/* ── Section spécifique Ligature de varices ─────────────────────── */}
+            {isLigature && (
+              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
+                <div className="mb-6">
+                  <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
+                    {sNum.specifique}. Ligature de varices
+                  </p>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Grade des varices
+                    <select
+                      value={formData.ligatureSpecifique.gradeVarices}
+                      onChange={(e) => updateNested("ligatureSpecifique", "gradeVarices", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Grade I</option>
+                      <option>Grade II</option>
+                      <option>Grade III</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Nombre de ligatures posées
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.ligatureSpecifique.nombreLigatures}
+                      onChange={(e) => updateNested("ligatureSpecifique", "nombreLigatures", e.target.value)}
+                      placeholder="ex. 6"
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Saignement actif
+                    <select
+                      value={formData.ligatureSpecifique.saignementActif}
+                      onChange={(e) => updateNested("ligatureSpecifique", "saignementActif", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Oui</option>
+                      <option>Non</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Résultat de la procédure
+                    <select
+                      value={formData.ligatureSpecifique.resultat}
+                      onChange={(e) => updateNested("ligatureSpecifique", "resultat", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Hémostase obtenue</option>
+                      <option>Hémostase partielle</option>
+                      <option>Échec — reprise chirurgicale</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {/* ── Section spécifique Injection de colle ───────────────────────── */}
+            {typeExamen === 'injection_colle' && (
+              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
+                <div className="mb-6">
+                  <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
+                    {sNum.specifique}. Injection de colle biologique
+                  </p>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Site d'injection
+                    <select
+                      value={formData.injectionSpecifique.siteInjection}
+                      onChange={(e) => updateNested("injectionSpecifique", "siteInjection", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Cardial</option>
+                      <option>Fundique</option>
+                      <option>Oesophagien</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Type de colle
+                    <input
+                      value={formData.injectionSpecifique.typeColle}
+                      onChange={(e) => updateNested("injectionSpecifique", "typeColle", e.target.value)}
+                      placeholder="ex. Histoacryl, Cyanoacrylate"
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Volume injecté (ml)
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      value={formData.injectionSpecifique.volumeInjecte}
+                      onChange={(e) => updateNested("injectionSpecifique", "volumeInjecte", e.target.value)}
+                      placeholder="ex. 2"
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Nombre de séances
+                    <input
+                      type="number"
+                      min={1}
+                      value={formData.injectionSpecifique.nombreSeances}
+                      onChange={(e) => updateNested("injectionSpecifique", "nombreSeances", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700 sm:col-span-2">
+                    Résultat
+                    <select
+                      value={formData.injectionSpecifique.resultat}
+                      onChange={(e) => updateNested("injectionSpecifique", "resultat", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Hémostase obtenue</option>
+                      <option>Hémostase partielle</option>
+                      <option>Non obtenue</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {/* ── Section spécifique Dilatation oesophagienne ─────────────────── */}
+            {typeExamen === 'dilatation_oesophagienne' && (
+              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
+                <div className="mb-6">
+                  <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
+                    {sNum.specifique}. Dilatation oesophagienne
+                  </p>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Indication
+                    <select
+                      value={formData.dilatationSpecifique.indication}
+                      onChange={(e) => updateNested("dilatationSpecifique", "indication", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Sténose peptique</option>
+                      <option>Sténose anastomotique</option>
+                      <option>Sténose tumorale</option>
+                      <option>Achalasie</option>
+                      <option>Autre</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Localisation de la sténose
+                    <input
+                      value={formData.dilatationSpecifique.localisationStenose}
+                      onChange={(e) => updateNested("dilatationSpecifique", "localisationStenose", e.target.value)}
+                      placeholder="ex. Tiers inférieur oesophage à 35 cm"
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Calibre avant dilatation (mm)
+                    <input
+                      type="number"
+                      min={1}
+                      value={formData.dilatationSpecifique.calibreAvant}
+                      onChange={(e) => updateNested("dilatationSpecifique", "calibreAvant", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Calibre après dilatation (mm)
+                    <input
+                      type="number"
+                      min={1}
+                      value={formData.dilatationSpecifique.calibreApres}
+                      onChange={(e) => updateNested("dilatationSpecifique", "calibreApres", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Type de dilatateur
+                    <select
+                      value={formData.dilatationSpecifique.typeDilatateur}
+                      onChange={(e) => updateNested("dilatationSpecifique", "typeDilatateur", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Bougie de Savary-Gilliard</option>
+                      <option>Ballon pneumatique</option>
+                      <option>Sonde de Maloney</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Résultat
+                    <select
+                      value={formData.dilatationSpecifique.resultat}
+                      onChange={(e) => updateNested("dilatationSpecifique", "resultat", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Bon résultat</option>
+                      <option>Résultat partiel</option>
+                      <option>Résultat insuffisant</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700 sm:col-span-2">
+                    Complication
+                    <select
+                      value={formData.dilatationSpecifique.complication}
+                      onChange={(e) => updateNested("dilatationSpecifique", "complication", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Aucune</option>
+                      <option>Déchirure muqueuse</option>
+                      <option>Hémorragie</option>
+                      <option>Perforation</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {/* ── Section spécifique Extraction de corps étranger ─────────────── */}
+            {typeExamen === 'extraction_corps_etranger' && (
+              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
+                <div className="mb-6">
+                  <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
+                    {sNum.specifique}. Extraction de corps étranger
+                  </p>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Nature du corps étranger
+                    <input
+                      value={formData.extractionSpecifique.natureCE}
+                      onChange={(e) => updateNested("extractionSpecifique", "natureCE", e.target.value)}
+                      placeholder="ex. Bol alimentaire, pile bouton, arête"
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Localisation
+                    <select
+                      value={formData.extractionSpecifique.localisation}
+                      onChange={(e) => updateNested("extractionSpecifique", "localisation", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Oesophage — tiers supérieur</option>
+                      <option>Oesophage — tiers moyen</option>
+                      <option>Oesophage — tiers inférieur</option>
+                      <option>Estomac</option>
+                      <option>Duodénum</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Technique d'extraction
+                    <select
+                      value={formData.extractionSpecifique.technique}
+                      onChange={(e) => updateNested("extractionSpecifique", "technique", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Pince à corps étranger</option>
+                      <option>Filet de récupération</option>
+                      <option>Anse diathermique</option>
+                      <option>Sonde à panier de Dormia</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700">
+                    Résultat
+                    <select
+                      value={formData.extractionSpecifique.resultat}
+                      onChange={(e) => updateNested("extractionSpecifique", "resultat", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Extraction complète</option>
+                      <option>Extraction partielle</option>
+                      <option>Abandon — orientation chirurgicale</option>
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm text-slate-700 sm:col-span-2">
+                    Complication
+                    <select
+                      value={formData.extractionSpecifique.complication}
+                      onChange={(e) => updateNested("extractionSpecifique", "complication", e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    >
+                      <option value="">— Sélectionner —</option>
+                      <option>Aucune</option>
+                      <option>Lacération muqueuse</option>
+                      <option>Hémorragie</option>
+                      <option>Perforation</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+            )}
+
+            {/* ── Observations (pré-remplies depuis les notes d'opération) ─────── */}
+            {hasSpecifique && (
             <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="mb-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">7. Conclusion</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                  {sNum.observations}. Observations
+                </p>
+              </div>
+              <textarea
+                value={formData.observations}
+                onChange={(e) => updateField("observations", e.target.value)}
+                placeholder="Observations complémentaires, gestes réalisés, incidents…"
+                rows={5}
+                className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+              />
+            </section>
+            )}
+
+            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="mb-6">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                  {sNum.conclusion}. Conclusion
+                </p>
               </div>
               <textarea
                 value={formData.conclusion}
@@ -909,7 +1429,9 @@ function ResultatEndoscopieContent() {
             {!isRectosigmoidoscopie && (
               <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                 <div className="mb-6">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">8. Recommandations</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                    {sNum.recommandations}. Recommandations
+                  </p>
                 </div>
                 <textarea
                   value={formData.recommandations}

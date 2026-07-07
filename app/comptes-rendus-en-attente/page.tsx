@@ -122,12 +122,17 @@ const [rows, setRows] = useState<any[]>([]);
                     <th className="px-4 py-2.5">Procédure</th>
                     <th className="px-4 py-2.5">Prescripteur</th>
                     <th className="px-4 py-2.5">Date de l'examen</th>
+                    <th className="px-4 py-2.5">Statut</th>
                     <th className="px-4 py-2.5">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((row) => (
-                    <tr key={row.id} className="border-t border-outline-variant/10 hover:bg-surface-container/50">
+                  {filtered.map((row) => {
+                    const checklistValide = !!row.checklistApres?.estValide;
+                    const operationCommencee = !!row.operationEndoscopie;
+                    const interrompu = operationCommencee && !checklistValide;
+                    return (
+                    <tr key={row.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""}`}>
                       <td className="px-4 py-2.5 font-semibold text-on-surface">
                         {`${row.patient?.nom || ""} ${row.patient?.prenom || ""}`.trim() || "Patient inconnu"}
                       </td>
@@ -141,6 +146,19 @@ const [rows, setRows] = useState<any[]>([]);
                           : "—"}
                       </td>
                       <td className="px-4 py-2.5">
+                        {interrompu ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+                            <span className="material-symbols-outlined text-[13px]">bolt</span>
+                            Interrompu
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-800">
+                            <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                            Terminé
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">
                         <button
                           onClick={() => handleRediger(row)}
                           className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
@@ -149,7 +167,8 @@ const [rows, setRows] = useState<any[]>([]);
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
