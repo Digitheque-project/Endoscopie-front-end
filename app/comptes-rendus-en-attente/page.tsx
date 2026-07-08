@@ -6,12 +6,14 @@ import { RequireRole } from "@/components/auth/RequireRole";
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { apiJson } from "@/lib/api";
+import { usePatient } from "@/contexts/PatientContext";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 function PendingReportsContent() {
   const router = useRouter();
+  const { setPatientData } = usePatient();
 const [rows, setRows] = useState<any[]>([]);
   const [examTypes, setExamTypes] = useState<{ id: string; name: string }[]>([]);
   const [doctorNames, setDoctorNames] = useState<string[]>([]);
@@ -47,6 +49,21 @@ const [rows, setRows] = useState<any[]>([]);
 
   const handleRediger = (row: any) => {
     router.push(`/dossier-seance/${encodeURIComponent(row.id)}`);
+  };
+
+  // Reprendre la documentation d'un examen interrompu (ex: panne électrique) :
+  // la checklist avant reste acquise, on ré-ouvre juste la page de notes d'opération.
+  const handleReprendre = (row: any) => {
+    const patient = row.patient
+      ? `${row.patient.nom || ""} ${row.patient.prenom || ""}`.trim()
+      : "";
+    setPatientData({
+      patientId: row.patientId || row.patient?.id || "",
+      prescriptionId: row.id,
+      patientName: patient,
+      procedure: row.typeExamen || "",
+    });
+    router.push("/prescription-workflow");
   };
 
   const filtered = rows.filter((row) => {
@@ -159,12 +176,22 @@ const [rows, setRows] = useState<any[]>([]);
                         )}
                       </td>
                       <td className="px-4 py-2.5">
-                        <button
-                          onClick={() => handleRediger(row)}
-                          className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                        >
-                          Rédiger le compte-rendu
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {interrompu && (
+                            <button
+                              onClick={() => handleReprendre(row)}
+                              className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800 transition-all duration-200 hover:bg-amber-100"
+                            >
+                              Reprendre l'examen
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleRediger(row)}
+                            className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                          >
+                            Rédiger le compte-rendu
+                          </button>
+                        </div>
                       </td>
                     </tr>
                     );

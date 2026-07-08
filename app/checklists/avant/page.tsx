@@ -65,11 +65,17 @@ const checklistItems = [
   },
 ];
 
+// La CPA (consultation pré-anesthésique) doit être favorable avant de pouvoir
+// valider la checklist avant-examen — sécurité patient.
+const BLOCKING_CPA_DECISIONS = new Set(["INAPTE", "REPORT"]);
+
 function ChecklistAvantContent() {
   const router = useRouter();
   const { patientId, prescriptionId, patientName, procedure } = usePatient();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [cpaDecision, setCpaDecision] = useState<string | null>(null);
+  const isCpaBlocked = BLOCKING_CPA_DECISIONS.has(cpaDecision || "");
 
   const titleToDbKey: Record<string, string> = {
     "Identite du patient verifiee": "identiteVerifiee",
@@ -91,7 +97,10 @@ function ChecklistAvantContent() {
         return;
       }
       try {
-        const data = await apiJson<any>(`/api/checklists/avant/${prescriptionId}`);
+        const [data, prescription] = await Promise.all([
+          apiJson<any>(`/api/checklists/avant/${prescriptionId}`),
+          apiJson<any>(`/api/prescriptions/${prescriptionId}`).catch(() => null),
+        ]);
         if (data) {
           const mappedAnswers: Record<string, string> = {};
           Object.entries(titleToDbKey).forEach(([title, key]) => {
@@ -100,6 +109,7 @@ function ChecklistAvantContent() {
           });
           setAnswers(mappedAnswers);
         }
+        setCpaDecision(prescription?.dossierCPA?.decisionCpa ?? null);
       } catch (err) {
         console.error("Erreur lors du chargement de la checklist:", err);
       } finally {
@@ -172,6 +182,22 @@ function ChecklistAvantContent() {
       <div className="flex justify-center">
         <div className="max-w-[56rem] w-full space-y-4">
           <WorkflowProgressIndicator />
+
+          {isCpaBlocked && (
+            <div className="flex items-center gap-3 rounded-xl border border-error/30 bg-error-container/20 p-4 text-error">
+              <span className="material-symbols-outlined text-2xl">report_problem</span>
+              <div>
+                <p className="font-bold">
+                  {cpaDecision === "REPORT" ? "CPA reportée" : "CPA défavorable"}
+                </p>
+                <p className="text-sm">
+                  Le parcours ne peut pas continuer tant que la consultation pré-anesthésique
+                  n&apos;est pas favorable. La validation de la checklist est désactivée.
+                </p>
+              </div>
+            </div>
+          )}
+
           <section className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-start gap-4">
@@ -240,8 +266,9 @@ function ChecklistAvantContent() {
                         <button
                           key={label}
                           type="button"
+                          disabled={isCpaBlocked}
                           onClick={() => updateAnswer(item.title, label)}
-                          className={`flex-1 py-1.5 text-center rounded-lg border text-sm font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 ${buttonColorClass}`}
+                          className={`flex-1 py-1.5 text-center rounded-lg border text-sm font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none ${buttonColorClass}`}
                         >
                           {label}
                         </button>
@@ -262,12 +289,13 @@ function ChecklistAvantContent() {
             <span className="material-symbols-outlined">arrow_back</span>
             Retour au fil de prescription
           </button>
-          <button 
+          <button
+            disabled={isCpaBlocked}
             onClick={async () => {
               await saveChecklist(answers);
               router.push('/prescription-workflow');
-            }} 
-            className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90"
+            }}
+            className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
           >
             Passer à l'opération
             <span className="material-symbols-outlined">arrow_forward</span>

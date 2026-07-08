@@ -15,6 +15,8 @@ const STATUS_LABELS: Record<string, string> = {
   "Planifié": "En attente de décision médecin",
   "Confirmé": "Confirmé — RDV planifié",
   "CPA demandée": "CPA en attente du bloc opératoire",
+  "CPA Défavorable": "CPA défavorable — parcours bloqué",
+  "CPA Reportée": "CPA reportée — à redemander",
 };
 
 const EXCLUDED_RDV_STATUTS = new Set(["Annulé", "Terminé"]);
@@ -24,6 +26,8 @@ const MAJOR_TRACKED_STATUTS = new Set([
   "Décision rendue",
   "Confirmé",
   "CPA demandée",
+  "CPA Défavorable",
+  "CPA Reportée",
 ]);
 
 type MedecinTab = "a-decider" | "pret" | "tous";
@@ -33,11 +37,16 @@ const MEDECIN_TABS: { key: MedecinTab; label: string }[] = [
   { key: "tous", label: "Tous" },
 ];
 
-function medecinRowState(req: any): MedecinTab | "autre" {
+// La CPA (consultation pré-anesthésique) doit être favorable avant de pouvoir
+// considérer le patient prêt pour l'examen — sécurité patient.
+const BLOCKING_CPA_DECISIONS = new Set(["INAPTE", "REPORT"]);
+
+function medecinRowState(req: any): MedecinTab | "autre" | "cpa-bloquee" {
   if (!req.rendezVous) return "autre";
   if (!req.rendezVous.typeAnesthesie) return "a-decider";
   if (EXCLUDED_RDV_STATUTS.has(req.rendezVous.statut)) return "autre";
   if (req.checklistApresValide) return "autre";
+  if (BLOCKING_CPA_DECISIONS.has(req.dossierCPA?.decisionCpa)) return "cpa-bloquee";
   return "pret";
 }
 
@@ -120,9 +129,9 @@ function PrescriptionsContent() {
     return { label: "Normale", icon: "check_circle", className: "bg-surface-container text-on-surface-variant" };
   };
 
-  const fetchPrescriptions = async () => {
+  const fetchPrescriptions = async (opts?: { silent?: boolean }) => {
     try {
-      setIsLoading(true);
+      if (!opts?.silent) setIsLoading(true);
       setError(null);
 
       const [data, docsData, examTypesData] = await Promise.all([
@@ -164,20 +173,35 @@ function PrescriptionsContent() {
           status: p.statut || p.status || p.etat || "A planifier",
           rendezVous: p.rendezVous || null,
           checklistApresValide: !!p.checklistApres?.estValide,
+          dossierCPA: p.dossierCPA || null,
         };
       });
 
       setAllRequests(mapped);
     } catch (error: any) {
       console.error("Erreur de récupération des prescriptions:", error);
-      setError("Impossible de contacter le serveur. Veuillez vérifier que le backend est lancé.");
+      // En rafraîchissement silencieux, on garde la liste déjà affichée plutôt que
+      // de la remplacer par un écran d'erreur pour un simple raté réseau ponctuel.
+      if (!opts?.silent) {
+        setError("Impossible de contacter le serveur. Veuillez vérifier que le backend est lancé.");
+      }
     } finally {
-      setIsLoading(false);
+      if (!opts?.silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchPrescriptions();
+  }, []);
+
+  // Rafraîchit automatiquement la liste pour que les nouvelles prescriptions
+  // apparaissent sans que l'utilisateur ait besoin de recharger la page.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.hidden) return;
+      fetchPrescriptions({ silent: true });
+    }, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -558,6 +582,11 @@ function PrescriptionsContent() {
                                     patientId={req.patientId}
                                     procedure={req.procedure}
                                   />
+                                ) : medecinRowState(req) === "cpa-bloquee" ? (
+                                  <span className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error">
+                                    <span className="material-symbols-outlined text-[14px]">block</span>
+                                    {req.dossierCPA?.decisionCpa === "REPORT" ? "CPA reportée" : "CPA défavorable"}
+                                  </span>
                                 ) : (
                                   <button
                                     onClick={() => handleDetail(req.id)}

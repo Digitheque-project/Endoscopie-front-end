@@ -156,7 +156,7 @@ function DossierSeanceContent() {
               <div className="flex gap-2 mt-1">
                 <StatusBadge ok={!!ca?.estValide} label="Checklist avant" />
                 <StatusBadge ok={!!cap?.estValide} label="Checklist après" />
-                <StatusBadge ok={!!(op?.medicalNotes)} label="Notes opération" />
+                <StatusBadge ok={!!(op?.observationNotes)} label="Notes opération" />
               </div>
             </div>
           </div>
@@ -196,11 +196,12 @@ function DossierSeanceContent() {
           {/* Notes d'opération */}
           {op ? (
             <Section title="Observations et notes d'opération" icon="clinical_notes">
-              {op.medicalNotes ? (
-                <Field label="Observations durant l'examen" value={op.medicalNotes} />
+              {op.observationNotes ? (
+                <Field label="Observation durant l'examen (dictée vocale)" value={op.observationNotes} />
               ) : (
-                <p className="text-sm text-on-surface-variant italic">Aucune observation enregistrée.</p>
+                <p className="text-sm text-on-surface-variant italic">Aucune observation vocale enregistrée.</p>
               )}
+              {op.medicalNotes && <Field label="Notes complémentaires" value={op.medicalNotes} />}
               {voiceTranscripts.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Notes complémentaires vocales</p>

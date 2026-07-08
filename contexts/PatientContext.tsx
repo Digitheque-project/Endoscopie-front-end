@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface PatientContextType {
   patientId: string;
@@ -14,11 +14,13 @@ interface PatientContextType {
   clearPatientData: () => void;
 }
 
+type PatientData = Omit<PatientContextType, 'setPatientData' | 'clearPatientData'>;
+
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
 const STORAGE_KEY = "current_patient_context";
 
-const DEFAULTS = {
+const DEFAULTS: PatientData = {
   patientId: "",
   prescriptionId: "",
   patientName: "",
@@ -28,17 +30,27 @@ const DEFAULTS = {
   age: "54",
 };
 
-function readStorage() {
+// Utilisé par clearPatientData : contrairement à DEFAULTS (âge pré-rempli pour un nouveau
+// dossier), on veut un état réellement vide après une remise à zéro explicite.
+const EMPTY: PatientData = { ...DEFAULTS, age: "" };
+
+function readStorage(): PatientData {
   if (typeof window === "undefined") return DEFAULTS;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return { ...DEFAULTS, ...JSON.parse(saved) };
+    if (saved) return { ...DEFAULTS, ...(JSON.parse(saved) as Partial<PatientData>) };
   } catch (e) {}
   return DEFAULTS;
 }
 
 export function PatientProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState(readStorage);
+  // Toujours démarrer avec DEFAULTS (identique serveur/client) pour éviter un mismatch
+  // d'hydratation ; le contenu réel de localStorage est chargé juste après le montage.
+  const [data, setData] = useState<PatientData>(DEFAULTS);
+
+  useEffect(() => {
+    setData(readStorage());
+  }, []);
 
   const setPatientData = (newData: Partial<Omit<PatientContextType, 'setPatientData' | 'clearPatientData'>>) => {
     setData((prev) => {
@@ -49,7 +61,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearPatientData = () => {
-    setData(DEFAULTS);
+    setData(EMPTY);
     localStorage.removeItem(STORAGE_KEY);
   };
 

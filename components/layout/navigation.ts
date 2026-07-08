@@ -60,7 +60,7 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
   },
   "/rapport": {
     title: "Rapport",
-    subtitle: "Validation et consultation",
+    subtitle: "Statistiques d'activité",
     icon: "description",
   },
 

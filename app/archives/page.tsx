@@ -19,7 +19,7 @@ interface ArchiveRow {
   checklistAvantValide: boolean;
   checklistApresValide: boolean;
   resultatDisponible: boolean;
-  statutGlobal: "Complet" | "En cours";
+  statutGlobal: "Complet" | "En cours" | "Annulé";
 }
 
 function exportCsv(rows: ArchiveRow[]) {
@@ -197,7 +197,11 @@ export default function ArchivesPage() {
                       <td className="px-4 py-3">
                         <span
                           className={`px-2 py-1 rounded-full text-[11px] font-bold ${
-                            row.statutGlobal === "Complet" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                            row.statutGlobal === "Complet"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : row.statutGlobal === "Annulé"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-amber-100 text-amber-700"
                           }`}
                         >
                           {row.statutGlobal}
