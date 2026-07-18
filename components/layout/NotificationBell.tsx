@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   loadNotifications,
   type NotificationItem,
@@ -19,6 +20,8 @@ const TYPE_LABELS: Record<string, string> = {
   RENDEZ_VOUS: "Rendez-vous",
   AVIS_INTER_SERVICE: "Avis inter-service",
   RESULTAT_EXAMEN: "Résultat examen",
+  CPA_RESULTAT: "Réponse CPA du Bloc",
+  VPA_REALISEE: "Visite pré-anesthésique réalisée",
 };
 
 type DisplayNotification = {
@@ -29,6 +32,8 @@ type DisplayNotification = {
   receivedAt: string;
   readAt?: string | null;
   isLocal: boolean;
+  entiteRefType?: string;
+  entiteRefId?: string;
 };
 
 function typeLabel(type: string): string {
@@ -57,6 +62,8 @@ function fromRemote(n: NotificationItem): DisplayNotification {
     receivedAt: n.createdAt ?? new Date().toISOString(),
     readAt: n.readAt,
     isLocal: false,
+    entiteRefType: n.entiteRefType,
+    entiteRefId: n.entiteRefId,
   };
 }
 
@@ -69,6 +76,8 @@ function fromInbox(n: InboxNotification): DisplayNotification {
     receivedAt: n.receivedAt,
     readAt: n.readAt,
     isLocal: true,
+    entiteRefType: n.entiteRefType,
+    entiteRefId: n.entiteRefId,
   };
 }
 
@@ -122,6 +131,7 @@ function playNotificationSound() {
 }
 
 export function NotificationBell() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<DisplayNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -193,6 +203,14 @@ export function NotificationBell() {
       );
     }
     setOpen(false);
+
+    // La notification référence une prescription (ex. nouvelle demande) : on ouvre
+    // directement son détail. Le bouton "Retour" du dossier patient ramène toujours
+    // vers le fil de prescription, peu importe la page depuis laquelle la cloche a
+    // été ouverte.
+    if (item.entiteRefType?.toLowerCase() === "prescription" && item.entiteRefId) {
+      router.push(`/patient-dossier/${encodeURIComponent(item.entiteRefId)}`);
+    }
   };
 
   useEffect(() => {

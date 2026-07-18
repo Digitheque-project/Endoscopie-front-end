@@ -186,10 +186,6 @@ function DemandeCPAContent() {
                   <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">Poids</p>
                   <p className="text-sm font-bold text-on-surface">64.5 kg</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">Dernier Repas</p>
-                  <p className="text-sm font-bold text-error">À jeun (04:00 AM)</p>
-                </div>
               </div>
             </div>
           </div>
@@ -281,7 +277,7 @@ function DemandeCPAContent() {
             <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
               <h4 className="font-bold text-on-surface mb-6 flex items-center gap-3">
                 <span className="material-symbols-outlined text-primary">clinical_notes</span>
-                Détail de la prescription
+                Détails de la prescription
               </h4>
               <div className="space-y-6">
                 <div>

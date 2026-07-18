@@ -17,6 +17,8 @@ export type NotificationItem = {
   recipientName?: string;
   readAt?: string | null;
   serviceId?: string;
+  entiteRefType?: string;
+  entiteRefId?: string;
 };
 
 type RawNotification = Record<string, unknown>;
@@ -50,6 +52,8 @@ function normalizeNotification(raw: RawNotification): NotificationItem {
       (payload?.sourceServiceId as string) ??
       (raw.emitter as string) ??
       ENDOSCOPIE_SERVICE_ID,
+    entiteRefType: (raw.entiteRefType as string) ?? undefined,
+    entiteRefId: (raw.entiteRefId as string) ?? undefined,
   };
 }
 

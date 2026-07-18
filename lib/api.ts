@@ -45,6 +45,8 @@ export type CreatePrescriptionPayload = {
   patientId: string;
   medecinId: string;
   typeExamen: string;
+  /** Examens supplémentaires d'une même prescription multi-examens (une demande distincte par examen). */
+  typeExamensSupplementaires?: string[];
   motif?: string;
   priorite?: string;
   statut?: string;

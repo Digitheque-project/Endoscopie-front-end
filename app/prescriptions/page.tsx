@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const STATUS_LABELS: Record<string, string> = {
   "Planifié": "En attente de décision médecin",
   "Confirmé": "Confirmé — RDV planifié",
-  "CPA demandée": "CPA en attente du bloc opératoire",
+  "CPA demandée": "En attente CPA",
   "CPA Défavorable": "CPA défavorable — parcours bloqué",
   "CPA Reportée": "CPA reportée — à redemander",
 };
@@ -32,9 +32,9 @@ const MAJOR_TRACKED_STATUTS = new Set([
 
 type MedecinTab = "a-decider" | "pret" | "tous";
 const MEDECIN_TABS: { key: MedecinTab; label: string }[] = [
+  { key: "tous", label: "Tous" },
   { key: "a-decider", label: "À décider" },
   { key: "pret", label: "Prêt pour l'examen" },
-  { key: "tous", label: "Tous" },
 ];
 
 // La CPA (consultation pré-anesthésique) doit être favorable avant de pouvoir
@@ -60,13 +60,14 @@ function PrescriptionsContent() {
   const [allRequests, setAllRequests] = useState<any[]>([]);
   const [examTypes, setExamTypes] = useState<{ id: string; name: string }[]>([]);
   const [doctorNames, setDoctorNames] = useState<string[]>([]);
+  const [salles, setSalles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
-  const initialTab = (searchParams.get("tab") as MedecinTab) || "a-decider";
+  const initialTab = (searchParams.get("tab") as MedecinTab) || "tous";
   const [medecinTab, setMedecinTab] = useState<MedecinTab>(
-    MEDECIN_TABS.some((t) => t.key === initialTab) ? initialTab : "a-decider",
+    MEDECIN_TABS.some((t) => t.key === initialTab) ? initialTab : "tous",
   );
   const [filters, setFilters] = useState({
     nom: "",
@@ -126,7 +127,7 @@ function PrescriptionsContent() {
     if (level === "Moyenne" || p === "PRIORITAIRE") {
       return { label: "Prioritaire", icon: "warning", className: "bg-amber-400 text-black font-bold" };
     }
-    return { label: "Normale", icon: "check_circle", className: "bg-surface-container text-on-surface-variant" };
+    return { label: "Normale", icon: "check_circle", className: "bg-success-container text-success font-bold" };
   };
 
   const fetchPrescriptions = async (opts?: { silent?: boolean }) => {
@@ -190,16 +191,28 @@ function PrescriptionsContent() {
     }
   };
 
+  const fetchSalles = async () => {
+    try {
+      const data = await apiJson<any[]>('/api/salles');
+      setSalles(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Erreur de récupération des salles:", e);
+    }
+  };
+
   useEffect(() => {
     fetchPrescriptions();
+    fetchSalles();
   }, []);
 
-  // Rafraîchit automatiquement la liste pour que les nouvelles prescriptions
-  // apparaissent sans que l'utilisateur ait besoin de recharger la page.
+  // Rafraîchit automatiquement la liste (et les salles) pour que les nouvelles
+  // prescriptions et les salles ajoutées/modifiées apparaissent sans que
+  // l'utilisateur ait besoin de recharger la page.
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.hidden) return;
       fetchPrescriptions({ silent: true });
+      fetchSalles();
     }, 15000);
     return () => clearInterval(interval);
   }, []);
@@ -314,7 +327,15 @@ function PrescriptionsContent() {
     ? Math.round(((allRequests.length - baseFiltered.length) / allRequests.length) * 100)
     : 0;
 
+  // Salles réellement configurées (actives) — se met à jour automatiquement
+  // avec le rafraîchissement périodique dès qu'une salle est ajoutée/modifiée.
+  const sallesDisponibles = salles.filter((s: any) => s.estActive !== false);
+
   const showStatutColumn = role !== "MEDECIN" || medecinTab === "tous";
+
+  const columnWidths = showStatutColumn
+    ? ["9%", "17%", "15%", "13%", "12%", "15%", "19%"]
+    : ["10%", "20%", "18%", "16%", "14%", "22%"];
 
   return (
     <AppShell>
@@ -458,8 +479,8 @@ function PrescriptionsContent() {
             <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-4 shadow-sm">
               <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Salles Disponibles</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-secondary">02</span>
-                <span className="text-xs font-medium text-on-surface-variant">Salle 4 &amp; 5</span>
+                <span className="text-2xl font-headline font-extrabold text-secondary">{String(sallesDisponibles.length).padStart(2, "0")}</span>
+                <span className="text-xs font-medium text-on-surface-variant truncate">Prêtes à l&apos;usage</span>
               </div>
             </div>
             <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-4 shadow-sm">
@@ -509,13 +530,18 @@ function PrescriptionsContent() {
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
-                  <table className="min-w-full border-collapse text-left text-sm">
+                  <table className="w-full table-fixed border-collapse text-left text-sm">
+                    <colgroup>
+                      {columnWidths.map((w, i) => (
+                        <col key={i} style={{ width: w }} />
+                      ))}
+                    </colgroup>
                     <thead className="bg-surface-container-lowest text-xs uppercase tracking-wider text-on-surface-variant">
                       <tr>
                         <th className="px-4 py-2.5">Reçu</th>
                         <th className="px-4 py-2.5">Patient</th>
                         <th className="px-4 py-2.5">Procédure</th>
-                        <th className="px-4 py-2.5">Clinique</th>
+                        <th className="px-4 py-2.5">Médecin</th>
                         <th className="px-4 py-2.5">Urgence</th>
                         {showStatutColumn && <th className="px-4 py-2.5">Statut</th>}
                         <th className="px-4 py-2.5">Actions</th>
@@ -523,7 +549,12 @@ function PrescriptionsContent() {
                     </thead>
                   </table>
                   <div>
-                    <table className="min-w-full border-collapse text-left text-sm">
+                    <table className="w-full table-fixed border-collapse text-left text-sm">
+                      <colgroup>
+                        {columnWidths.map((w, i) => (
+                          <col key={i} style={{ width: w }} />
+                        ))}
+                      </colgroup>
                       <tbody>
                         {priorityRequests
                           .filter(req => {
@@ -535,20 +566,20 @@ function PrescriptionsContent() {
                           })
                           .map((req) => (
                         <tr key={req.id} className="border-t border-outline-variant/10 hover:bg-surface-container/50">
-                          <td className="px-4 py-2.5 text-on-surface-variant">{req.receivedTime}</td>
-                          <td className="px-4 py-2.5 font-semibold text-on-surface">{req.name}</td>
-                          <td className="px-4 py-2.5 text-on-surface-variant">{req.procedure}</td>
-                          <td className="px-4 py-2.5 text-on-surface-variant">{req.prescriber}</td>
+                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={req.receivedTime}>{req.receivedTime}</td>
+                          <td className="px-4 py-2.5 font-semibold text-on-surface truncate" title={req.name}>{req.name}</td>
+                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={req.procedure}>{req.procedure}</td>
+                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={req.prescriber}>{req.prescriber}</td>
                           <td className="px-4 py-2.5">
                             {req.priority === "STAT" ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white uppercase tracking-wider animate-pulse shadow-md">
-                                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                              <span className="inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white uppercase tracking-wider animate-pulse shadow-md">
+                                <span className="material-symbols-outlined text-base shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
                                 <span>STAT</span>
                               </span>
                             ) : (
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${req.priorityIndicatorClass}`}>
+                              <span className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${req.priorityIndicatorClass}`}>
                                 {req.priorityIndicatorIcon ? (
-                                  <span className="material-symbols-outlined text-[14px]">{req.priorityIndicatorIcon}</span>
+                                  <span className="material-symbols-outlined text-[14px] shrink-0">{req.priorityIndicatorIcon}</span>
                                 ) : null}
                                 {req.priorityIndicator}
                               </span>
@@ -556,7 +587,7 @@ function PrescriptionsContent() {
                           </td>
                           {showStatutColumn && (
                             <td className="px-4 py-2.5">
-                              <span className="inline-flex items-center rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">
+                              <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={req.status === "Décision rendue" ? `Décision rendue — ${req.rendezVous?.typeAnesthesie || "?"}` : (STATUS_LABELS[req.status] || req.status)}>
                                 {req.status === "Décision rendue"
                                   ? `Décision rendue — ${req.rendezVous?.typeAnesthesie || "?"}`
                                   : (STATUS_LABELS[req.status] || req.status)}
@@ -567,26 +598,50 @@ function PrescriptionsContent() {
                             <div className="flex flex-wrap items-center gap-2 whitespace-nowrap">
                               {role === "MEDECIN" ? (
                                 medecinRowState(req) === "a-decider" ? (
-                                  <button
-                                    onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}`)}
-                                    className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                                  >
-                                    Décider
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}?tab=${medecinTab}`)}
+                                      className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                                    >
+                                      Décider
+                                    </button>
+                                    <button
+                                      onClick={() => handleDetail(req.id)}
+                                      className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+                                    >
+                                      Détails
+                                    </button>
+                                  </>
                                 ) : medecinRowState(req) === "pret" ? (
-                                  <TreatButton
-                                    patient={req.originalName}
-                                    id={req.id}
-                                    rendezVousId={req.rendezVous?.id}
-                                    prescriptionId={req.id}
-                                    patientId={req.patientId}
-                                    procedure={req.procedure}
-                                  />
+                                  <>
+                                    <TreatButton
+                                      patient={req.originalName}
+                                      id={req.id}
+                                      rendezVousId={req.rendezVous?.id}
+                                      prescriptionId={req.id}
+                                      patientId={req.patientId}
+                                      procedure={req.procedure}
+                                    />
+                                    <button
+                                      onClick={() => handleDetail(req.id)}
+                                      className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+                                    >
+                                      Détails
+                                    </button>
+                                  </>
                                 ) : medecinRowState(req) === "cpa-bloquee" ? (
-                                  <span className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error">
-                                    <span className="material-symbols-outlined text-[14px]">block</span>
-                                    {req.dossierCPA?.decisionCpa === "REPORT" ? "CPA reportée" : "CPA défavorable"}
-                                  </span>
+                                  <>
+                                    <span className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error">
+                                      <span className="material-symbols-outlined text-[14px]">block</span>
+                                      {req.dossierCPA?.decisionCpa === "REPORT" ? "CPA reportée" : "CPA défavorable"}
+                                    </span>
+                                    <button
+                                      onClick={() => handleDetail(req.id)}
+                                      className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+                                    >
+                                      Détails
+                                    </button>
+                                  </>
                                 ) : (
                                   <button
                                     onClick={() => handleDetail(req.id)}

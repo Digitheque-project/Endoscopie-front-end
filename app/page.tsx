@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { apiFetch, apiJson } from "@/lib/api";
 import TreatButton from "@/components/navigation/TreatButton";
@@ -19,6 +20,7 @@ function toLocalDateKey(d: Date): string {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { role, medecinName } = useAuth();
   const greetingName = role === "MEDECIN" ? `Dr. ${medecinName}` : role === "MAJOR" ? "Major" : "";
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -83,7 +85,6 @@ export default function Home() {
           rawEnd: rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000),
           salleId: rdv.salleId || rdv.salle?.id || null,
           salleName: rdv.salle?.nom || rdv.salle || "",
-          hasCPA: !!rdv.prescription?.dossierCPA && rdv.prescription.dossierCPA.statut === "Valide",
           typeAnesthesie: rdv.typeAnesthesie || null,
         };
       });
@@ -111,6 +112,9 @@ export default function Home() {
   };
 
   const filteredSchedule = appointments.filter(item => {
+    // Un examen terminé n'a plus sa place dans le programme du jour — il est
+    // déjà suivi dans les Archives, pas besoin de l'y laisser traîner.
+    if (item.status === "Terminé") return false;
     const matchesNom = (item.patient || "").toLowerCase().includes((filters.nom || "").toLowerCase());
     const matchesProcedure = (item.procedure || "").toLowerCase().includes((filters.procedure || "").toLowerCase());
     const matchesMedecin = (item.doctor || "").toLowerCase().includes((filters.medecin || "").toLowerCase());
@@ -291,14 +295,14 @@ export default function Home() {
               isLoading={isLoadingProcedureCounts}
             />
 
-            <div className="col-span-12 md:col-span-6 text-on-primary p-4 rounded-xl border-none shadow-sm flex flex-col gap-3 bg-[#EA580C]">
+            <div className="col-span-12 md:col-span-4 text-on-primary p-3.5 rounded-xl border-none shadow-sm flex flex-col gap-2 bg-[#EA580C]">
               <div className="flex items-start justify-between">
-                <p className="text-orange-50 text-sm font-semibold">Urgents Actifs</p>
-                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg">emergency</span>
+                <p className="text-orange-50 text-xs font-semibold">Urgents Actifs</p>
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-sm">emergency</span>
                 </div>
               </div>
-              <h3 className="text-2xl font-extrabold text-white leading-none">
+              <h3 className="text-xl font-extrabold text-white leading-none">
                 {filteredSchedule.filter(a => a.status === 'Urgent' || a.status === 'Priorité').length.toString().padStart(2, '0')}
               </h3>
             </div>
@@ -413,6 +417,9 @@ export default function Home() {
                     <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
                       STATUT
                     </th>
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      DÉTAILS
+                    </th>
                     <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant text-right">
                       ACTION
                     </th>
@@ -421,7 +428,7 @@ export default function Home() {
                 <tbody className="divide-y divide-outline-variant/10">
                   {filteredSchedule.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center">
+                      <td colSpan={7} className="px-6 py-8 text-center">
                         <div className="flex flex-col items-center gap-2">
                           <span className="material-symbols-outlined text-4xl text-on-surface-variant/30">event_busy</span>
                           <p className="text-sm font-medium text-on-surface-variant">Il n'y a pas de rendez-vous aujourd'hui</p>
@@ -486,16 +493,40 @@ export default function Home() {
                             </span>
                           )}
                         </td>
+                        <td className="px-6 py-2">
+                          {item.prescriptionId ? (
+                            <button
+                              type="button"
+                              onClick={() => router.push(`/patient-dossier/${encodeURIComponent(item.prescriptionId)}?from=dashboard`)}
+                              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[10px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high hover:text-primary"
+                            >
+                              Voir détails
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-on-surface-variant/50">—</span>
+                          )}
+                        </td>
                         <td className="px-6 py-2 text-right">
                           <div className="flex justify-end">
-                            <TreatButton 
-                              patient={item.patient} 
-                              id={item.id} 
-                              rendezVousId={item.realId}
-                              prescriptionId={item.prescriptionId}
-                              patientId={item.patientRealId}
-                              procedure={item.procedure}
-                            />
+                            {role === "MEDECIN" && !item.typeAnesthesie && item.prescriptionId ? (
+                              <button
+                                type="button"
+                                onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(item.prescriptionId)}?from=dashboard`)}
+                                aria-label={`Décider de l'anesthésie pour ${item.patient}`}
+                                className="rounded-lg bg-primary px-3 py-1 text-[10px] font-bold text-white transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
+                              >
+                                Décider
+                              </button>
+                            ) : (
+                              <TreatButton
+                                patient={item.patient}
+                                id={item.id}
+                                rendezVousId={item.realId}
+                                prescriptionId={item.prescriptionId}
+                                patientId={item.patientRealId}
+                                procedure={item.procedure}
+                              />
+                            )}
                           </div>
                         </td>
                       </tr>

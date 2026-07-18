@@ -27,6 +27,7 @@ export interface RendezVous {
   dateHeureDebut: string;
   dateHeureFin?: string;
   typeExamen?: string;
+  typeExamenSecondaire?: string | null;
   statut: string;
   notesCliniques?: string;
   prescriptionId?: string;
@@ -67,6 +68,13 @@ export function useRendezVousSync(options: UseRendezVousSyncOptions = {}) {
   
   const previousCountRef = useRef(0);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const rendezVousRef = useRef<RendezVous[]>([]);
+
+  // Toujours à jour sans faire de loadRendezVous une fonction instable :
+  // évite que les callbacks/objets inline passés par l'appelant ne
+  // provoquent une boucle de re-render (dépendance `options` recréée à chaque rendu).
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   // Obtenir la date du jour au format YYYY-MM-DD
   const getTodayISO = useCallback(() => {
@@ -81,38 +89,39 @@ export function useRendezVousSync(options: UseRendezVousSyncOptions = {}) {
     try {
       setError(null);
       let url = apiUrl(`/api/rendezvous/jour/${date}`);
-      if (options.serviceId) {
-        url += `?serviceId=${options.serviceId}`;
+      if (optionsRef.current.serviceId) {
+        url += `?serviceId=${optionsRef.current.serviceId}`;
       }
-      
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Erreur ${response.status}: ${response.statusText}`);
       }
 
       const data: RendezVous[] = await response.json();
-      
+
       // Vérifier si un nouveau rendez-vous a été créé et notifier
       if (data.length > previousCountRef.current) {
-        const newRdv = data.find(rdv => !rendezVous.find(existing => existing.id === rdv.id));
-        if (newRdv && options.onRendezVousCreated) {
-          options.onRendezVousCreated(newRdv);
+        const newRdv = data.find(rdv => !rendezVousRef.current.find(existing => existing.id === rdv.id));
+        if (newRdv && optionsRef.current.onRendezVousCreated) {
+          optionsRef.current.onRendezVousCreated(newRdv);
         }
       }
 
       previousCountRef.current = data.length;
+      rendezVousRef.current = data;
       setRendezVous(data);
       setLastRefresh(new Date());
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
-      if (options.onError) {
-        options.onError(error);
+      if (optionsRef.current.onError) {
+        optionsRef.current.onError(error);
       }
     } finally {
       setLoading(false);
     }
-  }, [date, options, rendezVous]);
+  }, [date]);
 
   // Charger les rendez-vous au montage et quand la date change
   useEffect(() => {

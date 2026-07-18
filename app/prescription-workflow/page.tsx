@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, use, useEffect, Suspense } from "react";
+import { useState, useRef, use, useEffect, useMemo, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { appendFinalSegment } from "@/components/voice/formatTranscript";
+import { appendFinalSegment, capitalizeFirst, ensureEndsWithPunctuation } from "@/components/voice/formatTranscript";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
@@ -11,6 +11,7 @@ import { truncateText } from "@/components/voice/formatTranscript";
 import HistoryModal from "@/components/ui/HistoryModal";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
 
 
 function PrescriptionWorkflowContent() {
@@ -20,8 +21,44 @@ function PrescriptionWorkflowContent() {
   const [transcriptText, setTranscriptText] = useState("");
   const [savedMedicalNotes, setSavedMedicalNotes] = useState<SavedTranscriptionEntry[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [prescriptionPostActe, setPrescriptionPostActe] = useState("");
+  const [showPostActeModal, setShowPostActeModal] = useState(false);
+  const [draftPostActe, setDraftPostActe] = useState("");
+  const [organIndex, setOrganIndex] = useState(0);
 const lastSavedTranscriptionRef = useRef("");
   const controlsRef = useRef<{ start: () => void; stop: () => void; restart: () => void; pause: () => void; resume: () => void } | null>(null);
+
+  // Liste des organes à décrire pour ce type d'examen — dictée guidée organe par
+  // organe (voir handleFinalTranscript) : même source que le compte rendu, pour que
+  // les deux restent alignés.
+  const examType = useMemo(() => mapProcedureToExamType(procedure), [procedure]);
+  const organFields = useMemo(() => (examType ? getConstatationsFields(examType) : []), [examType]);
+  const currentOrgan = organFields[organIndex];
+  // VoiceRecorder ne reconstruit son écouteur SpeechRecognition qu'au démarrage de
+  // l'écoute (pas à chaque re-render) : onFinalTranscript reste donc figé sur les
+  // valeurs de son closure d'origine pendant toute une session d'écoute continue.
+  // On passe par des refs, synchronisées pendant le rendu (pas via un effet, qui
+  // laisserait une fenêtre où la ref serait encore vide/obsolète), pour toujours lire
+  // l'organe courant à l'instant de l'appel plutôt que celui capturé au démarrage.
+  const organIndexRef = useRef(organIndex);
+  organIndexRef.current = organIndex;
+  const organFieldsRef = useRef(organFields);
+  organFieldsRef.current = organFields;
+
+  // Écrit automatiquement le nom de l'organe directement dans le champ "Observation
+  // durant l'examen" dès que c'est son tour — le médecin n'a plus qu'à dicter
+  // l'observation pour compléter la ligne (voir handleFinalTranscript).
+  useEffect(() => {
+    if (!currentOrgan) return;
+    const label = `${currentOrgan.label} : `;
+    setTranscriptText((cur) => {
+      if (cur.endsWith(label)) return cur;
+      if (!cur.trim()) return label;
+      const withPunctuation = ensureEndsWithPunctuation(cur.replace(/\s+$/, ''));
+      return `${withPunctuation}\n${label}`;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrgan]);
 
   useEffect(() => {
     async function loadData() {
@@ -32,6 +69,7 @@ const lastSavedTranscriptionRef = useRef("");
           if (opData.observationNotes) setTranscriptText(opData.observationNotes);
           setMedicalNotes(opData.medicalNotes || "");
           setSavedMedicalNotes(opData.voiceTranscripts || []);
+          setPrescriptionPostActe(opData.prescriptionPostActe || "");
         }
       } catch (err) {
         console.error("Erreur chargement operation:", err);
@@ -40,14 +78,15 @@ const lastSavedTranscriptionRef = useRef("");
     loadData();
   }, [prescriptionId]);
 
-  const saveOperation = async () => {
+  const saveOperation = async (postActeOverride?: string) => {
     if (!prescriptionId || !patientId) return;
     const payload = {
       prescriptionId,
       patientId,
       observationNotes: transcriptText || null,
       medicalNotes,
-      voiceTranscripts: savedMedicalNotes
+      voiceTranscripts: savedMedicalNotes,
+      prescriptionPostActe: (postActeOverride ?? prescriptionPostActe) || null,
     };
     try {
       await apiFetch('/api/operations', {
@@ -64,28 +103,36 @@ const lastSavedTranscriptionRef = useRef("");
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (!prescriptionId || !patientId) return;
-      const payload = JSON.stringify({ prescriptionId, patientId, observationNotes: transcriptText || null, medicalNotes, voiceTranscripts: savedMedicalNotes });
+      const payload = JSON.stringify({ prescriptionId, patientId, observationNotes: transcriptText || null, medicalNotes, voiceTranscripts: savedMedicalNotes, prescriptionPostActe: prescriptionPostActe || null });
       navigator.sendBeacon('/api/operations', new Blob([payload], { type: 'application/json' }));
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [prescriptionId, patientId, medicalNotes, savedMedicalNotes]);
+  }, [prescriptionId, patientId, medicalNotes, savedMedicalNotes, prescriptionPostActe]);
 
   const handleFinalTranscript = (text: string, meta?: { startsAfterPause?: boolean }) => {
     const normalized = text.trim();
     if (!normalized) return;
+
+    const fields = organFieldsRef.current;
+    const organ = fields[organIndexRef.current];
+
+    if (organ) {
+      // Dictée guidée : le nom de l'organe est déjà écrit dans le champ (voir l'effet
+      // ci-dessus) — on complète simplement la ligne avec l'observation dictée.
+      const answer = capitalizeFirst(normalized);
+      setTranscriptText((cur) => (cur.endsWith(' ') || !cur ? cur + answer : `${cur} ${answer}`));
+      const nextIndex = Math.min(organIndexRef.current + 1, fields.length);
+      organIndexRef.current = nextIndex;
+      setOrganIndex(nextIndex);
+      return;
+    }
 
     setTranscriptText((cur) => appendFinalSegment(cur, normalized, Boolean(meta?.startsAfterPause)));
   };
 
   const handleAudioReady = (_blob: Blob) => {
     // audio blob ready for upload if needed
-  };
-
-  const handleSaveEditor = () => {
-    const normalizedTranscript = transcriptText.trim();
-    if (!normalizedTranscript) return;
-    setMedicalNotes((cur) => (cur && cur.trim().length > 0 ? `${cur}\n\n${normalizedTranscript}` : normalizedTranscript));
   };
 
   const handleSaveTranscription = (text: string) => {
@@ -111,7 +158,10 @@ const lastSavedTranscriptionRef = useRef("");
   };
 
   const handleClearEditor = () => {
-    setTranscriptText("");
+    organIndexRef.current = 0;
+    setOrganIndex(0);
+    const firstOrgan = organFieldsRef.current[0];
+    setTranscriptText(firstOrgan ? `${firstOrgan.label} : ` : "");
   };
 
   
@@ -180,7 +230,6 @@ const lastSavedTranscriptionRef = useRef("");
               <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
                 <button onClick={handleClearEditor} type="button" className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors">Effacer la transcription</button>
                 <button onClick={() => handleSaveTranscription(transcriptText)} type="button" className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">Enregistrer la transcription</button>
-                <button onClick={handleSaveEditor} type="button" className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">Ajouter aux notes complémentaires</button>
               </div>
             </div>
           </section>
@@ -215,8 +264,87 @@ const lastSavedTranscriptionRef = useRef("");
               </button>
             </div>
           </section>
+
+          <section
+            onClick={() => {
+              setDraftPostActe(prescriptionPostActe);
+              setShowPostActeModal(true);
+            }}
+            className="cursor-pointer rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6 flex items-center justify-between gap-4 transition-all hover:border-blue-300 hover:shadow-md"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <span className="material-symbols-outlined text-2xl">history_edu</span>
+              </div>
+              <div>
+                <h3 className="font-headline text-base text-slate-900">Prescriptions Post-Acte</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Saisie et vérification des prescriptions médicales pour la phase de réveil.</p>
+              </div>
+            </div>
+            {prescriptionPostActe.trim() ? (
+              <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shrink-0">
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                Rédigée
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500 shrink-0">
+                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                À rédiger
+              </span>
+            )}
+          </section>
         </div>
       </div>
+
+      {showPostActeModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setShowPostActeModal(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <span className="material-symbols-outlined text-2xl">history_edu</span>
+              </div>
+              <div>
+                <h3 className="font-headline text-lg font-bold text-slate-900">Prescriptions Post-Acte</h3>
+                <p className="text-xs text-slate-500">Phase de réveil — rédigez la prescription du patient.</p>
+              </div>
+            </div>
+            <textarea
+              autoFocus
+              value={draftPostActe}
+              onChange={(event) => setDraftPostActe(event.target.value)}
+              rows={8}
+              placeholder="Ex : Paracétamol 1g si douleur, surveillance constantes 2h, reprise alimentation à 4h..."
+              className="min-h-48 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+            />
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowPostActeModal(false)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setPrescriptionPostActe(draftPostActe);
+                  setShowPostActeModal(false);
+                  await saveOperation(draftPostActe);
+                }}
+                className="rounded-xl bg-gradient-to-r from-[#00478D] to-[#005EB8] px-5 py-2 text-sm font-semibold text-white hover:opacity-90 transition-colors"
+              >
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
         <div className="max-w-[896px] mx-auto flex items-center justify-end">

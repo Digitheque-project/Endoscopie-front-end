@@ -6,6 +6,15 @@ import { RequireRole } from "@/components/auth/RequireRole";
 import { useRouter } from "next/navigation";
 import { apiFetch, apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import MicButton from "@/components/voice/MicButton";
+import { appendFinalSegment } from "@/components/voice/formatTranscript";
+import {
+  type TypeExamen,
+  type Constatations,
+  type ConstatationField,
+  mapProcedureToExamType,
+  getConstatationsFields,
+} from "@/lib/examOrgans";
 
 // ---------------------------------------------------------------------------
 // Dictée globale des constatations — parser organe → champ
@@ -69,48 +78,6 @@ function parseConstatationsText(text: string): Partial<Constatations> {
 
 // ---------------------------------------------------------------------------
 
-const VALID_TYPE_EXAMEN = new Set<string>([
-  "fibroscopie", "coloscopie", "rectosigmoidoscopie",
-  "ligature_varices", "injection_colle", "dilatation_oesophagienne", "extraction_corps_etranger",
-]);
-
-const procedureTypeMap: Record<string, TypeExamen> = {
-  "fibroscopie digestive haute": "fibroscopie",
-  "fibroscopie oeso-gastro-duodénale": "fibroscopie",
-  "fibroscopie oeso-gastro-duodenale": "fibroscopie",
-  "oesogastroduodenoscopie": "fibroscopie",
-  "oeso-gastro-duodenoscopie": "fibroscopie",
-  "gastroscopie": "fibroscopie",
-  "endoscopie digestive haute": "fibroscopie",
-  "coloscopie": "coloscopie",
-  "coloscopie totale": "coloscopie",
-  "colonoscopie": "coloscopie",
-  "rectosigmoïdoscopie": "rectosigmoidoscopie",
-  "rectosigmoidoscopie": "rectosigmoidoscopie",
-  "ligature de varices oesophagiennes": "ligature_varices",
-  "ligature de varices œsophagiennes": "ligature_varices",
-  "injection de colle biologique": "injection_colle",
-  "dilatation oesophagienne": "dilatation_oesophagienne",
-  "extraction de corps étranger": "extraction_corps_etranger",
-  "extraction de corps etranger": "extraction_corps_etranger",
-};
-
-function mapProcedureToExamType(procedure?: string): TypeExamen | null {
-  if (!procedure) return null;
-  const normalized = procedure.trim().toLowerCase();
-  // Valeurs enum directes stockées en base (ex: "fibroscopie", "ligature_varices")
-  if (VALID_TYPE_EXAMEN.has(normalized)) return normalized as TypeExamen;
-  if (procedureTypeMap[normalized]) return procedureTypeMap[normalized];
-  if (normalized.includes("fibroscopie") || normalized.includes("gastroscopie") || normalized.includes("ogd")) return "fibroscopie";
-  if (normalized.includes("colonoscopie") || normalized.includes("coloscopie")) return "coloscopie";
-  if (normalized.includes("rectosigmo")) return "rectosigmoidoscopie";
-  if (normalized.includes("ligature")) return "ligature_varices";
-  if (normalized.includes("colle")) return "injection_colle";
-  if (normalized.includes("dilatation")) return "dilatation_oesophagienne";
-  if (normalized.includes("extraction")) return "extraction_corps_etranger";
-  return null;
-}
-
 const examTypes = [
   { value: "fibroscopie", label: "Fibroscopie digestive haute", phone: "038 61 740 54" },
   { value: "coloscopie", label: "Coloscopie", phone: "038 61 740 54" },
@@ -120,15 +87,6 @@ const examTypes = [
   { value: "dilatation_oesophagienne", label: "Dilatation oesophagienne", phone: "038 61 740 54" },
   { value: "extraction_corps_etranger", label: "Extraction de corps étranger", phone: "038 61 740 54" },
 ];
-
-export type TypeExamen =
-  | 'fibroscopie'
-  | 'coloscopie'
-  | 'rectosigmoidoscopie'
-  | 'ligature_varices'
-  | 'injection_colle'
-  | 'dilatation_oesophagienne'
-  | 'extraction_corps_etranger';
 
 export type EndoscopeIdFibroscopie =
   | 'GIF-H180-2909929'
@@ -198,39 +156,6 @@ export const ENDOSCOPES_LIGATURE: EndoscopeOption[] = [
   { id: 'GIF-H180J-2317815', modele: 'GIF H 180 J', serie: '2317815' },
 ];
 
-// Champs de constatations par famille d'examen
-type ConstatationField = { label: string; key: keyof Constatations };
-
-const CONSTATATIONS_HAUTE: ConstatationField[] = [
-  { label: 'Oesophage', key: 'oesophage' },
-  { label: 'Cardia', key: 'cardia' },
-  { label: 'Estomac', key: 'estomac' },
-  { label: 'Pylore', key: 'pylore' },
-  { label: 'Duodénum', key: 'duodenum' },
-];
-
-const CONSTATATIONS_COLOSCOPIE: ConstatationField[] = [
-  { label: 'Toucher rectal', key: 'toucherRectal' },
-  { label: 'Anus', key: 'anus' },
-  { label: 'Rectum', key: 'rectum' },
-  { label: 'Colon', key: 'colon' },
-  { label: 'Caecum', key: 'caecum' },
-  { label: 'Valvule iléo-caecale', key: 'valvuleIleoCaecaie' },
-  { label: 'Iléon terminal', key: 'ileonTerminal' },
-];
-
-const CONSTATATIONS_RECTOSIGMOIDOSCOPIE: ConstatationField[] = [
-  { label: 'Anus', key: 'anus' },
-  { label: 'Rectum', key: 'rectum' },
-  { label: 'Sigmoïde', key: 'sigmoid' },
-];
-
-function getConstatationsFields(typeExamen: TypeExamen): ConstatationField[] {
-  if (typeExamen === 'coloscopie') return CONSTATATIONS_COLOSCOPIE;
-  if (typeExamen === 'rectosigmoidoscopie') return CONSTATATIONS_RECTOSIGMOIDOSCOPIE;
-  return CONSTATATIONS_HAUTE;
-}
-
 // Sections spécifiques par type thérapeutique
 interface LigatureSpecifique {
   gradeVarices: string;
@@ -298,23 +223,6 @@ interface RendezVous {
   kitLigature?: string;
   elastiquesCharges?: number;
   elastiquesUtilises?: string;
-}
-
-interface Constatations {
-  preparationColique: string;
-  toucherRectal: string;
-  anus: string;
-  rectum: string;
-  sigmoid: string;
-  colon: string;
-  caecum: string;
-  valvuleIleoCaecaie: string;
-  ileonTerminal: string;
-  oesophage: string;
-  cardia: string;
-  estomac: string;
-  pylore: string;
-  duodenum: string;
 }
 
 interface CompteRenduEndoscopie {
@@ -419,6 +327,9 @@ function ResultatEndoscopieContent() {
   }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  // Simple référence de ce qui a été dicté par organe pendant l'opération (à côté du
+  // libellé) — n'alimente plus le champ officiel du médecin en dessous, voir loadData.
+  const [parsedOrganNotes, setParsedOrganNotes] = useState<Partial<Constatations>>({});
   const [images, setImages] = useState<{ id: string; url: string; name: string; file: File }[]>([]);
 
   const dynamicTitle = useMemo(() => {
@@ -453,7 +364,6 @@ function ResultatEndoscopieContent() {
     preparationColique: isColoscopie          ? nextN() : 0,
     constatations:                              nextN(),
     specifique:         hasSpecifique          ? nextN() : 0,
-    observations:       hasSpecifique ? nextN() : 0,
     conclusion:                                 nextN(),
     recommandations:    !isRectosigmoidoscopie ? nextN() : 0,
   };
@@ -480,27 +390,26 @@ function ResultatEndoscopieContent() {
           setFormData((prev) => prev.typeExamen === detectedType ? prev : { ...prev, typeExamen: detectedType });
         }
 
-        // Auto-remplit depuis les notes d'opération si les champs sont vides
+        // Ce qui a été dicté organe par organe pendant l'opération — affiché en simple
+        // référence à côté de chaque champ, ne pré-remplit plus le champ officiel.
+        if (opData?.observationNotes) {
+          setParsedOrganNotes(parseConstatationsText(opData.observationNotes));
+        }
+
+        // Auto-remplit "Note(s) complémentaire(s)" depuis les Notes complémentaires de
+        // l'opération (medicalNotes) si le champ est vide
         if (opData && !data) {
-          const parsedConstatations = opData.observationNotes
-            ? parseConstatationsText(opData.observationNotes)
-            : {};
           setFormData((prev) => ({
             ...prev,
-            observations: opData.observationNotes || prev.observations,
-            recommandations: opData.medicalNotes || prev.recommandations,
-            constatations: {
-              ...prev.constatations,
-              ...Object.fromEntries(Object.entries(parsedConstatations).filter(([, v]) => Boolean(v))),
-            },
+            observations: opData.medicalNotes || prev.observations,
           }));
         }
 
         if (data) {
           setFormData((prev) => ({
             ...prev,
-            // Si compte rendu vide, pré-remplit observations depuis les notes d'opération
-            observations: data.observations || (opData?.observationNotes ?? prev.observations),
+            // Si compte rendu vide, pré-remplit depuis les Notes complémentaires de l'opération
+            observations: data.observations || (opData?.medicalNotes ?? prev.observations),
             recommandations: data.recommandations || (opData?.medicalNotes ?? prev.recommandations),
             typeExamen: detectedType || (data.details?.typeExamen as TypeExamen | undefined) || prev.typeExamen,
             responsable: {
@@ -699,7 +608,7 @@ function ResultatEndoscopieContent() {
       });
       setIsSuccess(true);
       setTimeout(() => {
-        router.push("/rapport");
+        router.push("/");
       }, 1200);
     } catch (err) {
       console.error("Erreur lors de la sauvegarde du compte rendu :", err);
@@ -731,80 +640,81 @@ function ResultatEndoscopieContent() {
             </div>
           )}
 
-          <div className="space-y-8">
+          <div className="space-y-5">
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6">
+            <div className="grid gap-5 lg:grid-cols-2">
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">2. Responsable</p>
               </div>
 
-              <div className="grid gap-8 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 {/* Colonne gauche : Responsable */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-slate-900">Responsable</h3>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Nom de la responsable
                     <input
                       value={formData.responsable.nom}
                       onChange={(e) => updateNested("responsable", "nom", e.target.value)}
                       placeholder="Copier ou saisir le nom"
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700 md:col-span-2">
+                  <label className="space-y-1 text-sm text-slate-700 md:col-span-2">
                     Indication
                     <input
                       value={formData.responsable.indication}
                       onChange={(e) => updateNested("responsable", "indication", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700 md:col-span-2">
+                  <label className="space-y-1 text-sm text-slate-700 md:col-span-2">
                     Prescripteur
                     <input
                       value={formData.responsable.prescripteur}
                       onChange={(e) => updateNested("responsable", "prescripteur", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
                 </div>
 
                 {/* Colonne droite : Infos Patient */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-slate-900">Informations du patient</h3>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Nom
                     <input
                       value={formData.responsable.nom}
                       onChange={(e) => updateNested("responsable", "nom", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Prénom(s)
                     <input
                       value={formData.responsable.prenoms}
                       onChange={(e) => updateNested("responsable", "prenoms", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="space-y-2 text-sm text-slate-700">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="space-y-1 text-sm text-slate-700">
                       Âge
                       <input
                         type="number"
                         min={0}
                         value={formData.responsable.age}
                         onChange={(e) => updateNested("responsable", "age", e.target.value ? Number(e.target.value) : 0)}
-                        className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
                     </label>
-                    <label className="space-y-2 text-sm text-slate-700">
+                    <label className="space-y-1 text-sm text-slate-700">
                       Genre
                       <select
                         value={formData.responsable.genre}
                         onChange={(e) => updateNested("responsable", "genre", e.target.value as Genre)}
-                        className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                       >
                         <option value="Masculin">Masculin</option>
                         <option value="Féminin">Féminin</option>
@@ -815,11 +725,11 @@ function ResultatEndoscopieContent() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6">
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">3. Endoscopistes</p>
               </div>
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer">
                     <input
@@ -845,39 +755,41 @@ function ResultatEndoscopieContent() {
                   </label>
                 </div>
 
-                <label className="space-y-2 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-slate-700">
                   Opérateur
                   <input
                     value={formData.endoscopistes.operateur}
                     onChange={(e) => updateNested("endoscopistes", "operateur", e.target.value)}
-                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
-                <label className="space-y-2 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-slate-700">
                   Infirmière(s)
                   <input
                     value={formData.endoscopistes.infirmieres}
                     onChange={(e) => updateNested("endoscopistes", "infirmieres", e.target.value)}
-                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
-                <label className="space-y-2 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-slate-700">
                   Médecin anesthésiste
                   <input
                     value={formData.endoscopistes.medecinAnesthesiste}
                     onChange={(e) => updateNested("endoscopistes", "medecinAnesthesiste", e.target.value)}
-                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
               </div>
             </section>
+            </div>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6">
+            <div className="grid gap-5 lg:grid-cols-2">
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">4. Rendez-vous & Matériel</p>
               </div>
-              <div className="grid gap-4">
-                <label className="space-y-2 text-sm text-slate-700">
+              <div className="grid gap-3">
+                <label className="space-y-1 text-sm text-slate-700">
                   <div className="flex items-center justify-between gap-2">
                     <span>Endoscope</span>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">OLYMPUS*</span>
@@ -891,7 +803,7 @@ function ResultatEndoscopieContent() {
                     <p className="text-sm font-semibold text-slate-900">Sélectionner un endoscope</p>
                     <span className="text-xs uppercase tracking-[0.22em] text-slate-500">1 sélection</span>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {availableEndoscopes.map((endoscope) => {
                       const selected = formData.rendezVous.endoscope === endoscope.id;
                       return (
@@ -917,8 +829,8 @@ function ResultatEndoscopieContent() {
                 </div>
               )}
 
-              <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                <label className="space-y-2 text-sm text-slate-700">
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <label className="space-y-1 text-sm text-slate-700">
                   <div className="flex items-center justify-between gap-2">
                     <span>Pré-désinfection</span>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">HEXANIOS*</span>
@@ -926,13 +838,13 @@ function ResultatEndoscopieContent() {
                   <select
                     value={formData.rendezVous.preDesinfection}
                     onChange={(e) => updateNested("rendezVous", "preDesinfection", e.target.value as PreDesinfection)}
-                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   >
                     <option value="Effectuée">Effectuée</option>
                     <option value="Non effectuée">Non effectuée</option>
                   </select>
                 </label>
-                <label className="space-y-2 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-slate-700">
                   <div className="flex items-center justify-between gap-2">
                     <span>Désinfection</span>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">STERANIOS*</span>
@@ -941,7 +853,7 @@ function ResultatEndoscopieContent() {
                     value={formData.rendezVous.desinfection}
                     onChange={(e) => updateNested("rendezVous", "desinfection", e.target.value)}
                     placeholder="Saisir la désinfection"
-                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
               </div>
@@ -949,7 +861,7 @@ function ResultatEndoscopieContent() {
               {isLigature && (
                 <div className="mt-6 grid gap-4">
                   <div className="text-sm font-semibold text-slate-900">Kit ligature</div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {[
                       'Euroligator*',
                       'Micro-tech*',
@@ -977,24 +889,24 @@ function ResultatEndoscopieContent() {
                       );
                     })}
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="space-y-2 text-sm text-slate-700">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="space-y-1 text-sm text-slate-700">
                       Nombre d'élastiques chargés
                       <input
                         type="number"
                         min={0}
                         value={formData.rendezVous.elastiquesCharges ?? ''}
                         onChange={(e) => updateNested("rendezVous", "elastiquesCharges", e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
                     </label>
-                    <label className="space-y-2 text-sm text-slate-700">
+                    <label className="space-y-1 text-sm text-slate-700">
                       Élastiques utilisés
                       <input
                           type="text"
                           value={formData.rendezVous.elastiquesUtilises ?? ''}
                           onChange={(e) => updateNested("rendezVous", "elastiquesUtilises", e.target.value)}
-                          className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                         />
                     </label>
                   </div>
@@ -1002,8 +914,8 @@ function ResultatEndoscopieContent() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6 flex items-center justify-between gap-4">
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">5. Images de l'examen</p>
                   <h2 className="mt-2 text-xl font-semibold text-slate-900">Captures endoscopiques</h2>
@@ -1050,9 +962,10 @@ function ResultatEndoscopieContent() {
               </div>
               <p className="mt-4 text-xs text-slate-500">Formats acceptés : JPG, PNG. Les images sont jointes au compte rendu de l'examen.</p>
             </section>
+            </div>
 
             {isColoscopie && (
-              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                   <span className="font-bold">{sNum.preparationColique}. Quantité de la préparation colique</span>
                   <span className="font-normal"> : Score de Boston 9/9</span>
@@ -1060,47 +973,85 @@ function ResultatEndoscopieContent() {
               </section>
             )}
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
-                  {sNum.constatations}. Constatations
-                </p>
-              </div>
+            <div className={`grid grid-cols-1 gap-4 items-start ${formData.observations.trim() ? "lg:grid-cols-[1fr_260px]" : ""}`}>
+              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mb-3">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                    {sNum.constatations}. Observation
+                  </p>
+                </div>
 
-              <div className="grid gap-6">
-                {constatationsFields.map((item) => (
-                  <div key={item.key} className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-900">{item.label}</h3>
-                      <p className="text-xs text-slate-500">[au besoin]</p>
+                <div className="grid gap-4">
+                  {constatationsFields.map((item) => (
+                    <div key={item.key} className="space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-sm font-semibold text-slate-900">{item.label}</h3>
+                          <p className="text-xs text-slate-500">[au besoin]</p>
+                          {parsedOrganNotes[item.key] && (
+                            <span className="text-xs text-primary bg-primary/5 rounded-full px-2 py-0.5">
+                              note : {parsedOrganNotes[item.key]}
+                            </span>
+                          )}
+                        </div>
+                        <MicButton
+                          onFinalTranscript={(text, meta) =>
+                            updateNested(
+                              "constatations",
+                              item.key,
+                              appendFinalSegment(formData.constatations[item.key], text, Boolean(meta?.startsAfterPause)),
+                            )
+                          }
+                        />
+                      </div>
+                      <textarea
+                        value={formData.constatations[item.key]}
+                        onChange={(e) => updateNested("constatations", item.key, e.target.value)}
+                        placeholder="[à remplir]"
+                        rows={2}
+                        className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      />
                     </div>
-                    <textarea
-                      value={formData.constatations[item.key]}
-                      onChange={(e) => updateNested("constatations", item.key, e.target.value)}
-                      placeholder="[à remplir]"
-                      rows={3}
-                      className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
-                    />
+                  ))}
+                </div>
+              </section>
+
+              {formData.observations.trim() && (
+                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="mb-3">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                      Note(s) complémentaire(s)
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Résumé automatique de ce qui est écrit dans chaque organe ci-contre — modifiable ici.
+                    </p>
                   </div>
-                ))}
-              </div>
-            </section>
+                  <textarea
+                    value={formData.observations}
+                    onChange={(e) => updateField("observations", e.target.value)}
+                    placeholder="[à remplir]"
+                    rows={10}
+                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  />
+                </section>
+              )}
+            </div>
 
             {/* ── Section spécifique Ligature de varices ─────────────────────── */}
             {isLigature && (
-              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
-                <div className="mb-6">
+              <section className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm">
+                <div className="mb-3">
                   <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
                     {sNum.specifique}. Ligature de varices
                   </p>
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <label className="space-y-2 text-sm text-slate-700">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Grade des varices
                     <select
                       value={formData.ligatureSpecifique.gradeVarices}
                       onChange={(e) => updateNested("ligatureSpecifique", "gradeVarices", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Grade I</option>
@@ -1108,7 +1059,7 @@ function ResultatEndoscopieContent() {
                       <option>Grade III</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Nombre de ligatures posées
                     <input
                       type="number"
@@ -1116,27 +1067,27 @@ function ResultatEndoscopieContent() {
                       value={formData.ligatureSpecifique.nombreLigatures}
                       onChange={(e) => updateNested("ligatureSpecifique", "nombreLigatures", e.target.value)}
                       placeholder="ex. 6"
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Saignement actif
                     <select
                       value={formData.ligatureSpecifique.saignementActif}
                       onChange={(e) => updateNested("ligatureSpecifique", "saignementActif", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Oui</option>
                       <option>Non</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Résultat de la procédure
                     <select
                       value={formData.ligatureSpecifique.resultat}
                       onChange={(e) => updateNested("ligatureSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Hémostase obtenue</option>
@@ -1150,19 +1101,19 @@ function ResultatEndoscopieContent() {
 
             {/* ── Section spécifique Injection de colle ───────────────────────── */}
             {typeExamen === 'injection_colle' && (
-              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
-                <div className="mb-6">
+              <section className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm">
+                <div className="mb-3">
                   <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
                     {sNum.specifique}. Injection de colle biologique
                   </p>
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <label className="space-y-2 text-sm text-slate-700">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Site d'injection
                     <select
                       value={formData.injectionSpecifique.siteInjection}
                       onChange={(e) => updateNested("injectionSpecifique", "siteInjection", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Cardial</option>
@@ -1170,16 +1121,16 @@ function ResultatEndoscopieContent() {
                       <option>Oesophagien</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Type de colle
                     <input
                       value={formData.injectionSpecifique.typeColle}
                       onChange={(e) => updateNested("injectionSpecifique", "typeColle", e.target.value)}
                       placeholder="ex. Histoacryl, Cyanoacrylate"
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Volume injecté (ml)
                     <input
                       type="number"
@@ -1188,25 +1139,25 @@ function ResultatEndoscopieContent() {
                       value={formData.injectionSpecifique.volumeInjecte}
                       onChange={(e) => updateNested("injectionSpecifique", "volumeInjecte", e.target.value)}
                       placeholder="ex. 2"
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Nombre de séances
                     <input
                       type="number"
                       min={1}
                       value={formData.injectionSpecifique.nombreSeances}
                       onChange={(e) => updateNested("injectionSpecifique", "nombreSeances", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700 sm:col-span-2">
+                  <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
                     Résultat
                     <select
                       value={formData.injectionSpecifique.resultat}
                       onChange={(e) => updateNested("injectionSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Hémostase obtenue</option>
@@ -1220,19 +1171,19 @@ function ResultatEndoscopieContent() {
 
             {/* ── Section spécifique Dilatation oesophagienne ─────────────────── */}
             {typeExamen === 'dilatation_oesophagienne' && (
-              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
-                <div className="mb-6">
+              <section className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm">
+                <div className="mb-3">
                   <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
                     {sNum.specifique}. Dilatation oesophagienne
                   </p>
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <label className="space-y-2 text-sm text-slate-700">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Indication
                     <select
                       value={formData.dilatationSpecifique.indication}
                       onChange={(e) => updateNested("dilatationSpecifique", "indication", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Sténose peptique</option>
@@ -1242,41 +1193,41 @@ function ResultatEndoscopieContent() {
                       <option>Autre</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Localisation de la sténose
                     <input
                       value={formData.dilatationSpecifique.localisationStenose}
                       onChange={(e) => updateNested("dilatationSpecifique", "localisationStenose", e.target.value)}
                       placeholder="ex. Tiers inférieur oesophage à 35 cm"
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Calibre avant dilatation (mm)
                     <input
                       type="number"
                       min={1}
                       value={formData.dilatationSpecifique.calibreAvant}
                       onChange={(e) => updateNested("dilatationSpecifique", "calibreAvant", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Calibre après dilatation (mm)
                     <input
                       type="number"
                       min={1}
                       value={formData.dilatationSpecifique.calibreApres}
                       onChange={(e) => updateNested("dilatationSpecifique", "calibreApres", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Type de dilatateur
                     <select
                       value={formData.dilatationSpecifique.typeDilatateur}
                       onChange={(e) => updateNested("dilatationSpecifique", "typeDilatateur", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Bougie de Savary-Gilliard</option>
@@ -1284,12 +1235,12 @@ function ResultatEndoscopieContent() {
                       <option>Sonde de Maloney</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Résultat
                     <select
                       value={formData.dilatationSpecifique.resultat}
                       onChange={(e) => updateNested("dilatationSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Bon résultat</option>
@@ -1297,12 +1248,12 @@ function ResultatEndoscopieContent() {
                       <option>Résultat insuffisant</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700 sm:col-span-2">
+                  <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
                     Complication
                     <select
                       value={formData.dilatationSpecifique.complication}
                       onChange={(e) => updateNested("dilatationSpecifique", "complication", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Aucune</option>
@@ -1317,28 +1268,28 @@ function ResultatEndoscopieContent() {
 
             {/* ── Section spécifique Extraction de corps étranger ─────────────── */}
             {typeExamen === 'extraction_corps_etranger' && (
-              <section className="rounded-3xl border border-indigo-100 bg-white p-8 shadow-sm">
-                <div className="mb-6">
+              <section className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-sm">
+                <div className="mb-3">
                   <p className="text-xs uppercase tracking-[0.3em] text-indigo-600 font-bold">
                     {sNum.specifique}. Extraction de corps étranger
                   </p>
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <label className="space-y-2 text-sm text-slate-700">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Nature du corps étranger
                     <input
                       value={formData.extractionSpecifique.natureCE}
                       onChange={(e) => updateNested("extractionSpecifique", "natureCE", e.target.value)}
                       placeholder="ex. Bol alimentaire, pile bouton, arête"
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Localisation
                     <select
                       value={formData.extractionSpecifique.localisation}
                       onChange={(e) => updateNested("extractionSpecifique", "localisation", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Oesophage — tiers supérieur</option>
@@ -1348,12 +1299,12 @@ function ResultatEndoscopieContent() {
                       <option>Duodénum</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Technique d'extraction
                     <select
                       value={formData.extractionSpecifique.technique}
                       onChange={(e) => updateNested("extractionSpecifique", "technique", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Pince à corps étranger</option>
@@ -1362,12 +1313,12 @@ function ResultatEndoscopieContent() {
                       <option>Sonde à panier de Dormia</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-slate-700">
                     Résultat
                     <select
                       value={formData.extractionSpecifique.resultat}
                       onChange={(e) => updateNested("extractionSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Extraction complète</option>
@@ -1375,12 +1326,12 @@ function ResultatEndoscopieContent() {
                       <option>Abandon — orientation chirurgicale</option>
                     </select>
                   </label>
-                  <label className="space-y-2 text-sm text-slate-700 sm:col-span-2">
+                  <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
                     Complication
                     <select
                       value={formData.extractionSpecifique.complication}
                       onChange={(e) => updateNested("extractionSpecifique", "complication", e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Aucune</option>
@@ -1393,26 +1344,8 @@ function ResultatEndoscopieContent() {
               </section>
             )}
 
-            {/* ── Observations (pré-remplies depuis les notes d'opération) ─────── */}
-            {hasSpecifique && (
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
-                  {sNum.observations}. Observations
-                </p>
-              </div>
-              <textarea
-                value={formData.observations}
-                onChange={(e) => updateField("observations", e.target.value)}
-                placeholder="Observations complémentaires, gestes réalisés, incidents…"
-                rows={5}
-                className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
-              />
-            </section>
-            )}
-
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="mb-6">
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
                   {sNum.conclusion}. Conclusion
                 </p>
@@ -1421,14 +1354,14 @@ function ResultatEndoscopieContent() {
                 value={formData.conclusion}
                 onChange={(e) => updateField("conclusion", e.target.value)}
                 placeholder="[à remplir]"
-                rows={6}
-                className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                rows={4}
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
             </section>
 
             {!isRectosigmoidoscopie && (
-              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-                <div className="mb-6">
+              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mb-3">
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
                     {sNum.recommandations}. Recommandations
                   </p>
@@ -1437,8 +1370,8 @@ function ResultatEndoscopieContent() {
                   value={formData.recommandations}
                   onChange={(e) => updateField("recommandations", e.target.value)}
                   placeholder="[à remplir]"
-                  rows={4}
-                  className="w-full rounded-3xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  rows={3}
+                  className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
                 />
               </section>
             )}

@@ -173,7 +173,7 @@ function ChecklistAvantContent() {
   };
 
   const handleRetourWorkflow = () => {
-    router.push('/prescriptions');
+    router.push('/');
   };
 
   return (
@@ -198,31 +198,31 @@ function ChecklistAvantContent() {
             </div>
           )}
 
-          <section className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center">
-                  <span className="material-symbols-outlined text-on-primary-fixed-variant">person</span>
+          <section className="bg-white rounded-xl shadow-sm border border-slate-100 p-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[18px] text-on-primary-fixed-variant">person</span>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Patient</p>
-                  <h2 className="font-headline text-xl text-blue-900">{patientName}</h2>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Patient</p>
+                  <h2 className="font-headline text-base text-blue-900">{patientName}</h2>
                 </div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Procédure</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Procédure</p>
                     <p className="text-sm font-semibold text-slate-800">{procedure}</p>
                   <p className="text-sm text-slate-600">Date : 24/10/2023</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Service</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Service</p>
                   <p className="text-sm text-slate-800">Gastro-entérologie - Salle1</p>
                 </div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Equipe</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Equipe</p>
                   <div className="flex flex-col gap-1 text-sm text-slate-800">
                     <span><b>Anesthésiste:</b> Dr. Morel</span>
                     <span><b>IADE:</b> M. Lucas</span>
@@ -287,7 +287,7 @@ function ChecklistAvantContent() {
 
           <button onClick={handleRetourWorkflow} className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4">
             <span className="material-symbols-outlined">arrow_back</span>
-            Retour au fil de prescription
+            Retour au programme du jour
           </button>
           <button
             disabled={isCpaBlocked}

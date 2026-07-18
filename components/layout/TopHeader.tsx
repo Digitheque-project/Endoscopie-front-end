@@ -1,10 +1,21 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_HEADER, HEADER_BY_PATH } from "@/components/layout/navigation";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiJson } from "@/lib/api";
+
+const SEARCH_MIN_LENGTH = 2;
+const SEARCH_MAX_RESULTS = 8;
+
+function matchesQuery(p: any, q: string): boolean {
+  const patientName = `${p.patient?.nom || ""} ${p.patient?.prenom || ""}`.toLowerCase();
+  const procedure = (p.typeExamen || "").toLowerCase();
+  const identifiants = `${p.id || ""} ${p.externalId || ""} ${p.patientId || ""}`.toLowerCase();
+  return patientName.includes(q) || procedure.includes(q) || identifiants.includes(q);
+}
 
 function LiveClock() {
   const [time, setTime] = useState("");
@@ -41,14 +52,77 @@ const ROLE_LABELS: Record<string, string> = {
 export function TopHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { role, medecinName, logout } = useAuth();
+  const { role, medecinName, logout, otherServices, accessToken } = useAuth();
   const header = HEADER_BY_PATH[pathname] ?? DEFAULT_HEADER;
   const hideUnitLabel =
     HIDE_UNIT_LABEL_PATHS.has(pathname) || pathname.startsWith("/patient-dossier");
+  const [showServiceSwitcher, setShowServiceSwitcher] = useState(false);
+  const switcherRef = useRef<HTMLDivElement | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchCache, setSearchCache] = useState<any[] | null>(null);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement | null>(null);
 
   const handleChangeRole = () => {
     logout();
     router.push("/connexion");
+  };
+
+  const handleSwitchService = (baseUrl: string) => {
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    window.location.href = `${baseUrl}${separator}accessToken=${accessToken}`;
+  };
+
+  useEffect(() => {
+    if (!showServiceSwitcher) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (switcherRef.current && !switcherRef.current.contains(event.target as Node)) {
+        setShowServiceSwitcher(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showServiceSwitcher]);
+
+  useEffect(() => {
+    if (!showSearchResults) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showSearchResults]);
+
+  const handleSearchChange = async (value: string) => {
+    setSearchQuery(value);
+    setShowSearchResults(true);
+    if (value.trim().length >= SEARCH_MIN_LENGTH && searchCache === null && !isSearchLoading) {
+      setIsSearchLoading(true);
+      try {
+        const data = await apiJson<any[]>("/api/prescriptions");
+        setSearchCache(Array.isArray(data) ? data : []);
+      } catch {
+        setSearchCache([]);
+      } finally {
+        setIsSearchLoading(false);
+      }
+    }
+  };
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (q.length < SEARCH_MIN_LENGTH || !searchCache) return [];
+    return searchCache.filter((p) => matchesQuery(p, q)).slice(0, SEARCH_MAX_RESULTS);
+  }, [searchQuery, searchCache]);
+
+  const handleSelectResult = (prescription: any) => {
+    setSearchQuery("");
+    setShowSearchResults(false);
+    router.push(`/patient-dossier/${prescription.id}`);
   };
 
   return (
@@ -75,16 +149,116 @@ export function TopHeader() {
       </div>
 
       <div className="flex items-center gap-3 lg:gap-6">
-        <div className="relative hidden xl:block w-full max-w-xl">
+        <div className="relative hidden xl:block w-full max-w-xl" ref={searchRef}>
           <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-2xl font-bold">
             search
           </span>
           <input
-            className="w-full bg-white border-2 border-primary rounded-2xl pl-12 pr-4 py-3 text-sm transition-all hover:ring-4 hover:ring-primary/10 focus:ring-4 focus:ring-primary/20 text-on-surface placeholder:text-slate-400 font-bold shadow-md outline-none"
+            className="w-full bg-white border-2 border-primary rounded-2xl pl-12 pr-10 py-3 text-sm transition-all hover:ring-4 hover:ring-primary/10 focus:ring-4 focus:ring-primary/20 text-on-surface placeholder:text-slate-400 font-bold shadow-md outline-none"
             placeholder="Rechercher un patient, une procédure ou un identifiant..."
             type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onFocus={() => searchQuery.trim().length >= SEARCH_MIN_LENGTH && setShowSearchResults(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setShowSearchResults(false);
+            }}
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setShowSearchResults(false);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              aria-label="Effacer la recherche"
+            >
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+          )}
+
+          {showSearchResults && searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
+            <div className="absolute left-0 top-full mt-2 w-full rounded-xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
+              {isSearchLoading ? (
+                <div className="px-4 py-6 text-center text-xs font-semibold text-slate-400">
+                  Recherche en cours…
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="px-4 py-6 text-center text-xs font-semibold text-slate-400">
+                  Aucun résultat pour « {searchQuery.trim()} »
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto">
+                  {searchResults.map((p) => {
+                    const patientName = p.patient
+                      ? `${p.patient.nom || ""} ${p.patient.prenom || ""}`.trim()
+                      : "Patient inconnu";
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleSelectResult(p)}
+                        className="w-full px-4 py-3 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 text-left flex items-center gap-3"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <span className="material-symbols-outlined text-[18px]">person</span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-slate-800 truncate">{patientName}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{p.typeExamen || "Examen"}</p>
+                        </div>
+                        <span className="shrink-0 px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-[10px] font-bold uppercase tracking-wide">
+                          {p.statut || "—"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {(otherServices ?? []).length > 0 && (
+          <div className="relative" ref={switcherRef}>
+            <button
+              type="button"
+              onClick={() => setShowServiceSwitcher((v) => !v)}
+              title="Changer de service"
+              aria-label="Changer de service"
+              className="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-full relative"
+            >
+              <span className="material-symbols-outlined">switch_account</span>
+            </button>
+            {showServiceSwitcher && (
+              <div className="absolute right-0 top-full mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100">
+                  <p className="text-sm font-bold text-slate-800">Changer de service</p>
+                  <p className="text-[11px] text-slate-500">Accès rapide aux autres services disponibles pour votre compte</p>
+                </div>
+                <div className="max-h-72 overflow-y-auto">
+                  {otherServices.map((s) => (
+                    <button
+                      key={s.serviceId}
+                      type="button"
+                      onClick={() => handleSwitchService(s.baseUrl)}
+                      className="w-full px-4 py-3 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 text-left flex items-center gap-3"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <span className="material-symbols-outlined text-[18px]">business_center</span>
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{s.serviceName}</p>
+                        <p className="text-[11px] text-slate-500 truncate">{s.roleName}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <NotificationBell />
 

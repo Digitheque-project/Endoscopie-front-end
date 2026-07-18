@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson, updateRendezVous } from "@/lib/api";
@@ -22,6 +22,10 @@ function PlanificationExamenContent() {
   const router = useRouter();
   const params = useParams<{ prescriptionId: string }>();
   const prescriptionId = params.prescriptionId;
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
+  const from = searchParams.get("from");
+  const returnUrl = from === "dashboard" ? "/" : tab ? `/prescriptions?tab=${tab}` : "/prescriptions";
 
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +65,11 @@ function PlanificationExamenContent() {
         statut: "Décision rendue",
       });
       setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
+      // Décision rendue pour ce patient — retour au fil de prescription sur "À décider"
+      // pour enchaîner directement sur le patient suivant en attente.
+      setTimeout(() => {
+        router.push("/prescriptions?tab=a-decider");
+      }, 1000);
     } catch (err) {
       setDecisionError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement de la décision.");
     } finally {
@@ -105,7 +114,7 @@ function PlanificationExamenContent() {
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 space-y-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Détail de la prescription</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Détails de la prescription</p>
                   <div>
                     <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Motif de la demande</h4>
                     <p className="text-sm text-on-surface-variant">{prescription.motif || "Aucun motif renseigné."}</p>
@@ -114,17 +123,11 @@ function PlanificationExamenContent() {
                     <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Antécédents médicaux</h4>
                     <p className="text-sm text-on-surface-variant">{prescription.patient?.antecedentsMedicaux || "Aucun antécédent renseigné."}</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Groupe sanguin</h4>
-                      <p className="text-sm text-on-surface-variant">{prescription.patient?.groupeSanguin || "Non renseigné"}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Poids</h4>
-                      <p className="text-sm text-on-surface-variant">
-                        {prescription.patient?.poids != null ? `${prescription.patient.poids} kg` : "Non renseigné"}
-                      </p>
-                    </div>
+                  <div>
+                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Poids</h4>
+                    <p className="text-sm text-on-surface-variant">
+                      {prescription.patient?.poids != null ? `${prescription.patient.poids} kg` : "Non renseigné"}
+                    </p>
                   </div>
                 </div>
 
@@ -207,11 +210,11 @@ function PlanificationExamenContent() {
           )}
 
           <a
-            href="/prescriptions"
+            href={returnUrl}
             className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
-            <span className="font-semibold">Retour à la liste</span>
+            <span className="font-semibold">{from === "dashboard" ? "Retour au tableau de bord" : "Retour à la liste"}</span>
           </a>
         </RequireRole>
       </div>
@@ -220,5 +223,9 @@ function PlanificationExamenContent() {
 }
 
 export default function PlanificationExamenPage() {
-  return <PlanificationExamenContent />;
+  return (
+    <Suspense fallback={null}>
+      <PlanificationExamenContent />
+    </Suspense>
+  );
 }

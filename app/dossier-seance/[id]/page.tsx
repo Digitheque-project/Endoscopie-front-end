@@ -141,9 +141,16 @@ function DossierSeanceContent() {
                 {[age != null ? `${age} ans` : null, patient?.sexe === "M" ? "Homme" : patient?.sexe === "F" ? "Femme" : null]
                   .filter(Boolean).join(" • ")}
               </p>
-              <span className="inline-block mt-3 px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">
-                {prescription.typeExamen}
-              </span>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">
+                  {prescription.typeExamen}
+                </span>
+                {rdv?.typeExamenSecondaire && (
+                  <span className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider">
+                    + {rdv.typeExamenSecondaire}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex flex-col gap-2 sm:items-end">
               {rdv && (

@@ -39,20 +39,33 @@ function ChecklistApresContent() {
     async function loadData() {
       if (!prescriptionId) return;
       try {
-        const data = await apiJson<any>(`/api/checklists/apres/${prescriptionId}`);
+        const data = await apiJson<any>(`/api/checklists/apres/${prescriptionId}`).catch(() => null);
+        const mappedAnswers: Record<string, string> = {};
         if (data) {
-          const mappedAnswers: Record<string, string> = {};
           Object.entries(titleToDbKey).forEach(([title, key]) => {
             if (data[key]) mappedAnswers[title] = data[key];
           });
-          setAnswers(mappedAnswers);
-          setRemarques(data.remarques || "");
+        }
+
+        // Détection automatique : reflète à chaque chargement si le médecin a rédigé la
+        // prescription post-acte dans l'opération — se resynchronise même si une valeur
+        // (éventuellement obsolète, ex. "NON" déduit avant la rédaction) était déjà enregistrée.
+        const previousAnswer = mappedAnswers["Prescriptions Post-Acte"];
+        const operation = await apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null);
+        const derivedAnswer = operation?.prescriptionPostActe?.trim() ? "OUI" : "NON";
+        mappedAnswers["Prescriptions Post-Acte"] = derivedAnswer;
+
+        setAnswers(mappedAnswers);
+        setRemarques(data?.remarques || "");
+        if (derivedAnswer !== previousAnswer) {
+          saveChecklist(mappedAnswers, data?.remarques || "");
         }
       } catch (err) {
         console.error("Erreur chargement checklist après:", err);
       }
     }
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prescriptionId]);
 
   const saveChecklist = async (newAnswers: Record<string, string>, newRemarques: string) => {

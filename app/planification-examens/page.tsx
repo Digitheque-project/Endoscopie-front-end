@@ -8,19 +8,28 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
 import StatBadge from "@/components/ui/StatBadge";
 
+const INACTIVE_STATUTS = new Set(["Annulé", "Terminé"]);
+
 function PlanificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const patientContext = usePatient();
 
   const patientId = searchParams.get("patientId") || patientContext.patientId || "";
-  const from = searchParams.get("from") === "agenda" ? "agenda" : "prescriptions";
-  const returnUrl = from === "agenda" ? "/agenda-rendez-vous" : "/prescriptions";
   const patientName = searchParams.get("patientName") || patientContext.patientName || "MARIE LEFEBVRE";
   const priorityParam = searchParams.get("priority") || patientContext.priority || "NORMAL";
   const procedureParam = searchParams.get("procedure") || patientContext.procedure || "Fibroscopie Oeso-Gastro-Duodénale";
   const prescriptionId = searchParams.get("prescriptionId") || patientContext.prescriptionId || null;
   const medecinId = searchParams.get("medecinId") || null;
+
+  const fromParam = searchParams.get("from");
+  const from = fromParam === "agenda" ? "agenda" : fromParam === "patient-dossier" ? "patient-dossier" : "prescriptions";
+  const returnUrl =
+    from === "agenda"
+      ? "/agenda-rendez-vous"
+      : from === "patient-dossier" && prescriptionId
+      ? `/patient-dossier/${encodeURIComponent(prescriptionId)}`
+      : "/prescriptions";
 
   const [medecinInfo, setMedecinInfo] = useState<any | null>(null);
   const [isMedecinLoading, setIsMedecinLoading] = useState(false);
@@ -42,6 +51,11 @@ function PlanificationContent() {
   const [heureDebut, setHeureDebut] = useState("09:00");
   const [heureFin, setHeureFin] = useState("10:00");
   const [dateError, setDateError] = useState<string | null>(null);
+  const [slotError, setSlotError] = useState<string | null>(null);
+  const [isCheckingSlot, setIsCheckingSlot] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  /** Incrémenté pour forcer une nouvelle vérification de disponibilité sans changer de champ (bouton "Réessayer"). */
+  const [slotCheckRetryCount, setSlotCheckRetryCount] = useState(0);
 
   const buildDateTime = (date: string, time: string) => new Date(`${date}T${time}`);
 
@@ -53,7 +67,7 @@ function PlanificationContent() {
     if (end <= start) {
       setDateError("L'heure de fin doit être postérieure à l'heure de début.");
     } else if (start.getTime() < Date.now()) {
-      setDateError("Ce créneau est déjà passé.");
+      setDateError("Impossible de planifier un rendez-vous dans le passé. Veuillez sélectionner une date et une heure valides.");
     } else {
       setDateError(null);
     }
@@ -146,10 +160,10 @@ function PlanificationContent() {
         className: "bg-amber-400 text-black font-bold px-3 py-1 rounded-full" 
       };
     }
-    return { 
-      label: "Normale", 
-      icon: "check_circle", 
-      className: "bg-surface-container text-on-surface-variant px-3 py-1 rounded-full" 
+    return {
+      label: "Normale",
+      icon: "check_circle",
+      className: "bg-success-container text-success font-bold px-3 py-1 rounded-full"
     };
   }, [prescriptionData]);
 
@@ -161,55 +175,159 @@ function PlanificationContent() {
     return searchParams.get("prescriber") || patientContext.prescriber || "Dr. Antoine Moreau";
   }, [medecinInfo, searchParams, patientContext.prescriber]);
 
-  const [selectedSalle, setSelectedSalle] = useState("Salle 1");
+  // Sélection par id (pas par nom) : plusieurs salles peuvent partager le même nom
+  // affiché (ex. "Salle 01" et "Salle 02" ont toutes deux nom="Salle"), seul l'id
+  // les distingue de façon fiable — pour la mise en surbrillance comme pour la
+  // détection de conflit de créneau.
+  const [selectedSalleId, setSelectedSalleId] = useState("");
+  const selectedSalleObj = salles.find((s: any) => s.id === selectedSalleId) || null;
+  const selectedSalle = selectedSalleObj
+    ? `${selectedSalleObj.nom} (${selectedSalleObj.numero})`
+    : "";
 
-  const checkConflicts = async (newStart: Date, newEnd: Date, salle: string) => {
-    try {
-      const appointments = await apiJson<any[]>('/api/rendezvous');
-      return appointments.some((app: any) => {
-        if (app.salle === salle || (app.salle && app.salle.nom === salle)) {
-          const appStart = new Date(app.dateHeureDebut);
-          const appEnd = new Date(app.dateHeureFin);
-          return (newStart < appEnd && newEnd > appStart);
-        }
-        return false;
-      });
-    } catch (e) {
-      console.error("Error checking conflicts", e);
-      return false;
-    }
+  // Présélectionne la première salle active dès que la liste est chargée.
+  useEffect(() => {
+    if (selectedSalleId) return;
+    const firstActive = salles.find((s: any) => s.estActive !== false);
+    if (firstActive) setSelectedSalleId(firstActive.id);
+  }, [salles, selectedSalleId]);
+
+  /** Délai maximal pour la vérification de disponibilité — au-delà, on ne reste jamais bloqué en chargement infini. */
+  const SLOT_CHECK_TIMEOUT_MS = 15000;
+
+  /**
+   * Vérifie à la fois la disponibilité de la salle ET du médecin sur le créneau —
+   * le serveur valide aussi les deux (voir createRendezVous), mais sans ce
+   * pré-contrôle côté médecin, un conflit médecin ne remontait qu'à la soumission
+   * finale au lieu d'apparaître en direct comme pour la salle.
+   */
+  const checkConflicts = async (newStart: Date, newEnd: Date, salleId: string): Promise<"salle" | "medecin" | null> => {
+    const appointments = await apiJson<any[]>('/api/rendezvous', {
+      signal: AbortSignal.timeout(SLOT_CHECK_TIMEOUT_MS),
+    });
+    const overlapsSlot = (app: any) => {
+      // Un rendez-vous annulé ou terminé ne bloque pas le créneau, et on ignore
+      // le rendez-vous de cette même prescription (cas d'une replanification).
+      if (INACTIVE_STATUTS.has(app.statut)) return false;
+      if (prescriptionId && app.prescriptionId === prescriptionId) return false;
+      const appStart = new Date(app.dateHeureDebut);
+      const appEnd = new Date(app.dateHeureFin);
+      return newStart < appEnd && newEnd > appStart;
+    };
+    if (appointments.some((app: any) => app.salleId === salleId && overlapsSlot(app))) return "salle";
+    if (medecinId && appointments.some((app: any) => app.medecinId === medecinId && overlapsSlot(app))) return "medecin";
+    return null;
   };
 
+  // Vérification automatique de la disponibilité du créneau (date + heure + salle)
+  // dès que l'utilisateur modifie l'un de ces champs, avant tout envoi au serveur.
+  useEffect(() => {
+    setSubmitError(null);
+    if (dateError) {
+      // Toujours réinitialiser isCheckingSlot ici : sans ça, si cet effet avait déjà
+      // démarré une vérification (isCheckingSlot=true) lors d'un rendu précédent
+      // avant que dateError ne soit calculé, le spinner restait bloqué indéfiniment.
+      setSlotError(null);
+      setIsCheckingSlot(false);
+      return;
+    }
+
+    if (!selectedSalleId) {
+      setIsCheckingSlot(false);
+      return;
+    }
+
+    // La salle a pu être désactivée entre-temps : on bloque immédiatement,
+    // sans attendre la vérification de chevauchement.
+    if (selectedSalleObj && selectedSalleObj.estActive === false) {
+      setSlotError(`La salle "${selectedSalle}" n'est plus disponible. Veuillez choisir une autre salle.`);
+      setIsCheckingSlot(false);
+      return;
+    }
+
+    let cancelled = false;
+    const start = buildDateTime(date, heureDebut);
+    const end = buildDateTime(date, heureFin);
+
+    setIsCheckingSlot(true);
+    const timer = setTimeout(() => {
+      checkConflicts(start, end, selectedSalleId)
+        .then((reason) => {
+          if (cancelled) return;
+          setSlotError(
+            reason === "salle"
+              ? `La salle "${selectedSalle}" est déjà réservée sur ce créneau. Veuillez choisir une autre date ou un autre horaire.`
+              : reason === "medecin"
+              ? "Ce médecin a déjà un rendez-vous sur ce créneau. Veuillez choisir une autre date ou un autre horaire."
+              : null,
+          );
+        })
+        .catch((e) => {
+          console.error("Error checking conflicts", e);
+          if (cancelled) return;
+          // On ne peut pas confirmer que la salle est libre : on bloque par prudence
+          // plutôt que de laisser passer silencieusement un éventuel conflit.
+          const isTimeout = e?.name === "TimeoutError" || e?.name === "AbortError";
+          setSlotError(
+            isTimeout
+              ? "La vérification de la disponibilité prend trop de temps. Vérifiez votre connexion et réessayez."
+              : "Impossible de vérifier la disponibilité de la salle. Veuillez réessayer.",
+          );
+        })
+        .finally(() => {
+          if (!cancelled) setIsCheckingSlot(false);
+        });
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, heureDebut, heureFin, selectedSalleId, dateError, salles, slotCheckRetryCount]);
+
   const handleConfirmRDV = async () => {
+    setSubmitError(null);
+
+    // Garde-fou : revalide au moment de l'envoi (au cas où l'utilisateur aurait
+    // soumis avant la fin de la vérification automatique en arrière-plan).
+    const dateTimeDebut = buildDateTime(date, heureDebut);
+    const dateTimeFin = buildDateTime(date, heureFin);
+
+    if (dateTimeFin <= dateTimeDebut) {
+      setSubmitError("L'heure de fin doit être postérieure à l'heure de début.");
+      return;
+    }
+
+    if (dateTimeDebut.getTime() < Date.now()) {
+      setSubmitError("Impossible de planifier un rendez-vous dans le passé. Veuillez sélectionner une date et une heure valides.");
+      return;
+    }
+
+    if (!selectedSalleId || !selectedSalleObj) {
+      setSlotError("Veuillez sélectionner une salle.");
+      return;
+    }
+    if (selectedSalleObj.estActive === false) {
+      setSlotError(`La salle "${selectedSalle}" n'est plus disponible. Veuillez choisir une autre salle.`);
+      return;
+    }
+
     setIsSubmitting(true);
-    
+
     try {
-      const dateTimeDebut = buildDateTime(date, heureDebut);
-      const dateTimeFin = buildDateTime(date, heureFin);
-
-      if (dateTimeFin <= dateTimeDebut) {
-        alert("Erreur: L'heure de fin doit être après l'heure de début.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (dateTimeDebut.getTime() < Date.now()) {
-        alert("Erreur : impossible de planifier un rendez-vous dans le passé.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Check for conflicts
-      const hasConflict = await checkConflicts(dateTimeDebut, dateTimeFin, selectedSalle);
-      if (hasConflict) {
-        alert(`Conflit d'horaire : La ${selectedSalle} est déjà occupée sur ce créneau.`);
+      const conflictReason = await checkConflicts(dateTimeDebut, dateTimeFin, selectedSalleId);
+      if (conflictReason) {
+        setSlotError(
+          conflictReason === "salle"
+            ? `La salle "${selectedSalle}" est déjà réservée sur ce créneau. Veuillez choisir une autre date ou un autre horaire.`
+            : "Ce médecin a déjà un rendez-vous sur ce créneau. Veuillez choisir une autre date ou un autre horaire.",
+        );
         setIsSubmitting(false);
         return;
       }
 
       // Construction de l'objet rendez-vous avec les informations du formulaire
-      const selectedSalleObj = salles.find(s => s.nom === selectedSalle);
-      
       // Function to create a "naive" ISO string (no timezone/offset)
       // This ensures the database stores the EXACT hours/minutes selected
       const toNaiveISO = (d: Date) => {
@@ -229,7 +347,7 @@ function PlanificationContent() {
         dateHeureDebut: toNaiveISO(dateTimeDebut),
         dateHeureFin: toNaiveISO(dateTimeFin),
         statut: priorityIndicator.label === 'Urgent' || priorityIndicator.label === 'STAT' ? 'Urgent' : 'Prevu',
-        notesCliniques: observations || null
+        notesCliniques: observations || null,
       };
 
       // Sauvegarde en base de données via l'API
@@ -255,9 +373,14 @@ function PlanificationContent() {
       setTimeout(() => {
         router.push(returnUrl);
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de la synchronisation du rendez-vous:", error);
-      alert(error instanceof Error ? error.message : "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer.");
+      const isTimeout = error?.name === "TimeoutError" || error?.name === "AbortError";
+      setSubmitError(
+        isTimeout
+          ? "Impossible de vérifier la disponibilité de la salle (délai dépassé). Veuillez réessayer."
+          : error instanceof Error ? error.message : "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -281,7 +404,9 @@ function PlanificationContent() {
       {/* Back Button */}
       <a href={returnUrl} className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
         <span className="material-symbols-outlined text-lg">arrow_back</span>
-        <span className="font-semibold">{from === "agenda" ? "Retour à l'agenda" : "Retour au fil de prescription"}</span>
+        <span className="font-semibold">
+          {from === "agenda" ? "Retour à l'agenda" : from === "patient-dossier" ? "Retour au dossier patient" : "Retour au fil de prescription"}
+        </span>
       </a>
 
       {/* Patient Header */}
@@ -362,23 +487,47 @@ function PlanificationContent() {
             <div className="grid grid-cols-1 gap-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider px-1">SALLE D'OPÉRATION</label>
-                <select 
-                  className="w-full appearance-none bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3.5 rounded-t-lg text-sm font-bold text-on-surface transition-all focus:ring-0"
-                  value={selectedSalle}
-                  onChange={(e) => setSelectedSalle(e.target.value)}
-                  id="room-selector"
-                >
-                  {salles.length > 0 ? (
-                    salles.map((s: any) => (
-                      <option key={s.id} value={s.nom}>{s.nom} ({s.numero})</option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="Salle 1">Salle 1</option>
-                      <option value="Salle 2">Salle 2</option>
-                    </>
-                  )}
-                </select>
+                {(() => {
+                  const sallesDisponibles = salles.filter((s: any) => s.estActive !== false);
+                  if (sallesDisponibles.length === 0) {
+                    return (
+                      <p className="text-xs font-semibold text-on-surface-variant px-1 py-2">
+                        {salles.length === 0 ? "Chargement des salles…" : "Aucune salle disponible actuellement."}
+                      </p>
+                    );
+                  }
+                  return (
+                    <div role="group" aria-label="Salles disponibles" className="flex flex-wrap gap-2">
+                      {sallesDisponibles.map((s: any) => {
+                        const isSelected = selectedSalleId === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setSelectedSalleId(s.id)}
+                            aria-pressed={isSelected}
+                            className={`px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all flex items-center gap-2 ${
+                              isSelected
+                                ? "border-primary bg-primary text-white shadow-md"
+                                : slotError
+                                ? "border-error/30 bg-surface-container-low text-on-surface hover:border-primary/50"
+                                : "border-outline-variant bg-surface-container-low text-on-surface hover:border-primary/50"
+                            }`}
+                          >
+                            <span className={`material-symbols-outlined text-[16px] ${isSelected ? "" : "text-primary"}`}>meeting_room</span>
+                            {s.nom} ({s.numero})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+                {isCheckingSlot && !slotError && (
+                  <p className="text-[10px] font-semibold text-on-surface-variant px-1 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                    Vérification de la disponibilité du créneau…
+                  </p>
+                )}
               </div>
             </div>
 
@@ -436,7 +585,29 @@ function PlanificationContent() {
                   </div>
                 </div>
 
-                {dateError && <p className="text-[10px] font-bold text-error px-1">{dateError}</p>}
+                {dateError && (
+                  <div className="flex items-start gap-2 rounded-xl border border-error/30 bg-error-container/20 px-3 py-2.5 text-error animate-in fade-in duration-150">
+                    <span className="material-symbols-outlined text-[18px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
+                    <p className="text-xs font-bold leading-snug">{dateError}</p>
+                  </div>
+                )}
+                {slotError && (
+                  <div className="flex items-start gap-2 rounded-xl border border-error/30 bg-error-container/20 px-3 py-2.5 text-error animate-in fade-in duration-150">
+                    <span className="material-symbols-outlined text-[18px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold leading-snug">{slotError}</p>
+                      {slotError.includes("Impossible de vérifier") || slotError.includes("trop de temps") ? (
+                        <button
+                          type="button"
+                          onClick={() => setSlotCheckRetryCount((n) => n + 1)}
+                          className="mt-1 text-xs font-bold underline hover:no-underline"
+                        >
+                          Réessayer
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -455,36 +626,44 @@ function PlanificationContent() {
                   <p className="text-xs text-on-surface-variant font-medium">Le type d&apos;anesthésie sera décidé par le médecin après planification.</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <button 
-                  onClick={handleCancel}
-                  className="flex-1 md:flex-none bg-gray-200 text-gray-700 rounded-xl px-6 py-3 text-sm font-bold transition-all duration-200 hover:bg-gray-300 hover:scale-105 active:scale-95 shadow-sm"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleConfirmRDV}
-                  disabled={isSubmitting || isSuccess || !!dateError}
-                  className={`flex-[2] md:flex-none px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-center flex items-center justify-center gap-2 ${
-                    isSuccess 
-                      ? 'bg-green-500 text-white shadow-lg' 
-                      : 'bg-blue-600 text-white hover:scale-105 active:scale-95 hover:shadow-lg'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                      Confirmation en cours...
-                    </>
-                  ) : isSuccess ? (
-                    <>
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                      Confirmé !
-                    </>
-                  ) : (
-                    "Confirmer le RDV"
-                  )}
-                </button>
+              <div className="flex flex-col items-end gap-2 w-full md:w-auto">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  <button
+                    onClick={handleCancel}
+                    className="flex-1 md:flex-none bg-gray-200 text-gray-700 rounded-xl px-6 py-3 text-sm font-bold transition-all duration-200 hover:bg-gray-300 hover:scale-105 active:scale-95 shadow-sm"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleConfirmRDV}
+                    disabled={isSubmitting || isSuccess || !!dateError || !!slotError || isCheckingSlot}
+                    className={`flex-[2] md:flex-none px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-center flex items-center justify-center gap-2 disabled:opacity-60 ${
+                      isSuccess
+                        ? 'bg-green-500 text-white shadow-lg'
+                        : 'bg-blue-600 text-white hover:scale-105 active:scale-95 hover:shadow-lg'
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                        Confirmation en cours...
+                      </>
+                    ) : isSuccess ? (
+                      <>
+                        <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                        Confirmé !
+                      </>
+                    ) : (
+                      "Confirmer le RDV"
+                    )}
+                  </button>
+                </div>
+                {submitError && (
+                  <div className="flex w-full items-start gap-2 rounded-xl border border-error/30 bg-error-container/20 px-3 py-2.5 text-error animate-in fade-in duration-150">
+                    <span className="material-symbols-outlined text-[18px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+                    <p className="text-xs font-bold leading-snug">{submitError}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

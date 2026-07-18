@@ -35,6 +35,10 @@
   --color-on-surface: #191c1e;
   --color-on-surface-variant: #424752;
   --color-outline-variant: #c2c6d4;
+  --color-error: #b3261e;
+  --color-error-container: #f9dedc;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #410e0b;
 }
 
 @media (prefers-color-scheme: dark) {

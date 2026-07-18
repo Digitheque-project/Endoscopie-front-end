@@ -12,6 +12,7 @@ interface ArchiveRow {
   patientNom: string;
   patientPrenom: string;
   typeExamen: string;
+  typeAnesthesie: string | null;
   dateDemande: string;
   prescripteur: string | null;
   statutPrescription: string;
@@ -23,11 +24,12 @@ interface ArchiveRow {
 }
 
 function exportCsv(rows: ArchiveRow[]) {
-  const header = ["Date", "Patient", "Examen", "Prescripteur", "Statut CPA", "Checklist avant", "Checklist après", "Résultat", "Statut global"];
+  const header = ["Date", "Patient", "Examen", "Anesthésie", "Prescripteur", "Statut CPA", "Checklist avant", "Checklist après", "Résultat", "Statut global"];
   const lines = rows.map((r) => [
     new Date(r.dateDemande).toLocaleDateString("fr-FR"),
     `${r.patientNom} ${r.patientPrenom}`,
     r.typeExamen,
+    r.typeAnesthesie || "",
     r.prescripteur || "",
     r.cpaStatut || "",
     r.checklistAvantValide ? "Validée" : "Non validée",
@@ -47,10 +49,14 @@ function exportCsv(rows: ArchiveRow[]) {
   URL.revokeObjectURL(url);
 }
 
+const ANESTHESIE_OPTIONS = ["Locale", "Générale"];
+const EMPTY_FILTERS = { nom: "", dateFrom: "", dateTo: "", typeExamen: "", typeAnesthesie: "", motCle: "" };
+
 export default function ArchivesPage() {
   const router = useRouter();
-  const [filters, setFilters] = useState({ nom: "", dateFrom: "", dateTo: "" });
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [rows, setRows] = useState<ArchiveRow[]>([]);
+  const [examTypes, setExamTypes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +68,9 @@ export default function ArchivesPage() {
       if (f.nom) params.set("nom", f.nom);
       if (f.dateFrom) params.set("dateFrom", f.dateFrom);
       if (f.dateTo) params.set("dateTo", f.dateTo);
+      if (f.typeExamen) params.set("typeExamen", f.typeExamen);
+      if (f.typeAnesthesie) params.set("typeAnesthesie", f.typeAnesthesie);
+      if (f.motCle) params.set("motCle", f.motCle);
       const data = await apiJson<ArchiveRow[]>(`/api/archives?${params.toString()}`);
       setRows(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -73,7 +82,10 @@ export default function ArchivesPage() {
   };
 
   useEffect(() => {
-    fetchArchives({ nom: "", dateFrom: "", dateTo: "" });
+    fetchArchives(EMPTY_FILTERS);
+    apiJson<string[]>("/api/archives/types-examen")
+      .then((data) => setExamTypes(Array.isArray(data) ? data : []))
+      .catch(() => setExamTypes([]));
   }, []);
 
   const handleSearch = (e: FormEvent) => {
@@ -82,9 +94,8 @@ export default function ArchivesPage() {
   };
 
   const handleReset = () => {
-    const empty = { nom: "", dateFrom: "", dateTo: "" };
-    setFilters(empty);
-    fetchArchives(empty);
+    setFilters(EMPTY_FILTERS);
+    fetchArchives(EMPTY_FILTERS);
   };
 
   return (
@@ -105,42 +116,82 @@ export default function ArchivesPage() {
             </button>
           </div>
 
-          <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-4 mb-6">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Patient</label>
+          <form onSubmit={handleSearch} className="flex flex-nowrap items-end gap-2 mb-6 overflow-x-auto">
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Patient</label>
               <input
                 type="text"
                 value={filters.nom}
                 onChange={(e) => setFilters({ ...filters, nom: e.target.value })}
                 placeholder="Nom ou prénom"
-                className="bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-4 py-2 text-sm font-medium w-56"
+                title={filters.nom}
+                className="truncate bg-blue-50 border border-blue-200 text-blue-900 placeholder:text-blue-400 rounded-lg px-3 py-2 text-xs font-medium w-28 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Du</label>
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Du</label>
               <input
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                className="bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-4 py-2 text-sm font-medium"
+                className="truncate bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Au</label>
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Au</label>
               <input
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                className="bg-surface-container-lowest border border-outline-variant/15 rounded-lg px-4 py-2 text-sm font-medium"
+                className="truncate bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none"
               />
             </div>
-            <button type="submit" className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:opacity-90 transition-opacity">
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Examen</label>
+              <select
+                value={filters.typeExamen}
+                onChange={(e) => setFilters({ ...filters, typeExamen: e.target.value })}
+                title={filters.typeExamen || "Tous les examens"}
+                className="truncate bg-violet-50 border border-violet-200 text-violet-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none"
+              >
+                <option value="">Tous les examens</option>
+                {examTypes.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Anesthésie</label>
+              <select
+                value={filters.typeAnesthesie}
+                onChange={(e) => setFilters({ ...filters, typeAnesthesie: e.target.value })}
+                title={filters.typeAnesthesie || "Locale ou générale"}
+                className="truncate bg-rose-50 border border-rose-200 text-rose-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-rose-400 focus:ring-2 focus:ring-rose-100 outline-none"
+              >
+                <option value="">Locale ou générale</option>
+                {ANESTHESIE_OPTIONS.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Mot-clé</label>
+              <input
+                type="text"
+                value={filters.motCle}
+                onChange={(e) => setFilters({ ...filters, motCle: e.target.value })}
+                placeholder="Ex : polype..."
+                title={filters.motCle}
+                className="truncate bg-emerald-50 border border-emerald-200 text-emerald-900 placeholder:text-emerald-400 rounded-lg px-3 py-2 text-xs font-medium w-28 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none"
+              />
+            </div>
+            <button type="submit" className="shrink-0 whitespace-nowrap px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-opacity">
               Rechercher
             </button>
             <button
               type="button"
               onClick={handleReset}
-              className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+              className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
             >
               Réinitialiser
             </button>
@@ -167,6 +218,7 @@ export default function ArchivesPage() {
                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Date</th>
                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Patient</th>
                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Examen</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Anesthésie</th>
                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Prescripteur</th>
                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">CPA</th>
                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Checklists</th>
@@ -186,6 +238,7 @@ export default function ArchivesPage() {
                         {row.patientNom} {row.patientPrenom}
                       </td>
                       <td className="px-4 py-3 text-sm">{row.typeExamen}</td>
+                      <td className="px-4 py-3 text-sm text-on-surface-variant">{row.typeAnesthesie || "—"}</td>
                       <td className="px-4 py-3 text-sm text-on-surface-variant">{row.prescripteur || "—"}</td>
                       <td className="px-4 py-3 text-sm">{row.cpaStatut || "Non demandé"}</td>
                       <td className="px-4 py-3 text-sm">
