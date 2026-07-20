@@ -6,6 +6,7 @@ import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -126,6 +127,28 @@ function DossierSeanceContent() {
   const voiceTranscripts: Array<{ content: string; timestamp?: string }> =
     Array.isArray(op?.voiceTranscripts) ? op.voiceTranscripts : [];
 
+  // Tout ce que le médecin a rédigé dans le compte rendu (observations par organe,
+  // conclusion, recommandations, note complémentaire) — affiché ici aussi pour que ce
+  // dossier de séance reste le résumé complet, pas seulement la dictée brute pendant l'opération.
+  const resultat = prescription.resultatEndoscopie;
+  let resultatDetails: any = null;
+  try {
+    resultatDetails = resultat?.details ? JSON.parse(resultat.details) : null;
+  } catch {
+    resultatDetails = null;
+  }
+  const examType = mapProcedureToExamType(prescription.typeExamen);
+  const constatations: Record<string, string> | undefined = resultatDetails?.constatations;
+  const constatationsFilled = examType && constatations
+    ? getConstatationsFields(examType)
+        .map((f) => ({ label: f.label, value: constatations[f.key]?.trim() }))
+        .filter((f) => f.value)
+    : [];
+  const recommandations: string | undefined = resultatDetails?.recommandations;
+  const resultatHasContent = Boolean(
+    resultat && (constatationsFilled.length > 0 || resultat.conclusion || recommandations || resultat.observations),
+  );
+
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
@@ -201,27 +224,52 @@ function DossierSeanceContent() {
           )}
 
           {/* Notes d'opération */}
-          {op ? (
+          {(op || resultatHasContent) ? (
             <Section title="Observations et notes d'opération" icon="clinical_notes">
-              {op.observationNotes ? (
-                <Field label="Observation durant l'examen (dictée vocale)" value={op.observationNotes} />
-              ) : (
-                <p className="text-sm text-on-surface-variant italic">Aucune observation vocale enregistrée.</p>
-              )}
-              {op.medicalNotes && <Field label="Notes complémentaires" value={op.medicalNotes} />}
-              {voiceTranscripts.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Notes complémentaires vocales</p>
-                  <div className="space-y-2">
-                    {voiceTranscripts.map((t: any, i: number) => (
-                      <div key={t.id || i} className="rounded-xl bg-surface-container-low px-4 py-3">
-                        {t.timestamp && (
-                          <p className="text-[10px] text-on-surface-variant mb-1">{t.timestamp}</p>
-                        )}
-                        <p className="text-sm text-on-surface whitespace-pre-wrap">{t.content}</p>
+              {op && (
+                <>
+                  {op.observationNotes ? (
+                    <Field label="Observation durant l'examen (dictée vocale)" value={op.observationNotes} />
+                  ) : (
+                    <p className="text-sm text-on-surface-variant italic">Aucune observation vocale enregistrée.</p>
+                  )}
+                  {op.medicalNotes && <Field label="Notes complémentaires" value={op.medicalNotes} />}
+                  {voiceTranscripts.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Notes complémentaires vocales</p>
+                      <div className="space-y-2">
+                        {voiceTranscripts.map((t: any, i: number) => (
+                          <div key={t.id || i} className="rounded-xl bg-surface-container-low px-4 py-3">
+                            {t.timestamp && (
+                              <p className="text-[10px] text-on-surface-variant mb-1">{t.timestamp}</p>
+                            )}
+                            <p className="text-sm text-on-surface whitespace-pre-wrap">{t.content}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {resultatHasContent && (
+                <div className={`space-y-4 ${op ? "pt-3 border-t border-outline-variant/10" : ""}`}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Rédigé dans le compte rendu</p>
+                  {constatationsFilled.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Observations par organe</p>
+                      <div className="space-y-1.5">
+                        {constatationsFilled.map((f) => (
+                          <p key={f.label} className="text-sm text-on-surface">
+                            <span className="font-semibold">{f.label} :</span> {f.value}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {resultat.conclusion && <Field label="Conclusion" value={resultat.conclusion} />}
+                  {recommandations && <Field label="Recommandations" value={recommandations} />}
+                  {resultat.observations && <Field label="Note(s) complémentaire(s)" value={resultat.observations} />}
                 </div>
               )}
             </Section>

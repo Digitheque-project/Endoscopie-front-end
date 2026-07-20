@@ -31,6 +31,37 @@ function PlanificationContent() {
       ? `/patient-dossier/${encodeURIComponent(prescriptionId)}`
       : "/prescriptions";
 
+  // Prescription multi-examens (ex. Coloscopie + Fibroscopie pour le même patient) :
+  // liste de tous les examens à planifier l'un après l'autre, transmise depuis le fil
+  // de prescription (voir handlePlanifier). Absent ou à un seul élément = examen simple.
+  const groupExamsParam = searchParams.get("groupExams");
+  const groupExams = useMemo<{ id: string; procedure: string; status: string }[]>(() => {
+    if (!groupExamsParam) return [];
+    try {
+      const parsed = JSON.parse(groupExamsParam);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, [groupExamsParam]);
+  const [plannedExamIds, setPlannedExamIds] = useState<Set<string>>(new Set());
+
+  const switchActiveExam = (exam: { id: string; procedure: string }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("prescriptionId", exam.id);
+    params.set("procedure", exam.procedure);
+    router.replace(`/planification-examens?${params.toString()}`);
+    // Nouvel examen = nouveau rendez-vous : on repart d'un formulaire propre plutôt que
+    // de risquer de réserver la même salle/horaire pour deux examens différents.
+    setSelectedSalleId("");
+    setHeureDebut("09:00");
+    setHeureFin("10:00");
+    setObservations("");
+    setSlotError(null);
+    setSubmitError(null);
+    setIsSuccess(false);
+  };
+
   const [medecinInfo, setMedecinInfo] = useState<any | null>(null);
   const [isMedecinLoading, setIsMedecinLoading] = useState(false);
   const [medecinError, setMedecinError] = useState<string | null>(null);
@@ -141,9 +172,9 @@ function PlanificationContent() {
     // Logic similar to prescriptions/page.tsx
     if (rawPriority === "STAT" || rawPriority === "URGENCE VITALE") {
       return {
-        label: rawPriority === "STAT" ? "STAT" : "Urgent Vital",
+        label: rawPriority === "STAT" ? "TRES URGENT" : "Urgent Vital",
         icon: "warning",
-        className: "bg-red-600 text-white animate-pulse font-bold px-3 py-1 rounded-full shadow-md",
+        className: "bg-red-600 text-white animate-pulse font-bold px-2 py-0.5 rounded-full shadow-md",
       };
     }
     if (rawPriority === "URGENT" || rawPriority === "URGENCE") {
@@ -346,7 +377,7 @@ function PlanificationContent() {
         salle: selectedSalle,
         dateHeureDebut: toNaiveISO(dateTimeDebut),
         dateHeureFin: toNaiveISO(dateTimeFin),
-        statut: priorityIndicator.label === 'Urgent' || priorityIndicator.label === 'STAT' ? 'Urgent' : 'Prevu',
+        statut: priorityIndicator.label === 'Urgent' || priorityIndicator.label === 'TRES URGENT' ? 'Urgent' : 'Prevu',
         notesCliniques: observations || null,
       };
 
@@ -370,8 +401,20 @@ function PlanificationContent() {
       }
 
       setIsSuccess(true);
+
+      // Prescription multi-examens : reste sur la page pour enchaîner sur le prochain
+      // examen non planifié plutôt que de quitter dès le premier rendez-vous confirmé.
+      const justPlannedId = prescriptionId;
+      const updatedPlanned = justPlannedId ? new Set(plannedExamIds).add(justPlannedId) : plannedExamIds;
+      setPlannedExamIds(updatedPlanned);
+      const nextExam = groupExams.find((ex) => ex.id !== justPlannedId && !updatedPlanned.has(ex.id));
+
       setTimeout(() => {
-        router.push(returnUrl);
+        if (nextExam) {
+          switchActiveExam(nextExam);
+        } else {
+          router.push(returnUrl);
+        }
       }, 1000);
     } catch (error: any) {
       console.error("Erreur lors de la synchronisation du rendez-vous:", error);
@@ -427,8 +470,8 @@ function PlanificationContent() {
               <div>
                 <h3 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">{patientName}</h3>
               </div>
-              <div className={`flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider ${priorityIndicator.className}`}>
-                <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-normal whitespace-nowrap ${priorityIndicator.className}`}>
+                <span className="material-symbols-outlined text-[12px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
                   {priorityIndicator.icon}
                 </span>
                 {priorityIndicator.label}
@@ -463,6 +506,40 @@ function PlanificationContent() {
           </div>
         </div>
       </section>
+
+      {groupExams.length > 1 && (
+        <section className="bg-white rounded-xl border border-outline-variant/30 p-6 shadow-sm">
+          <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+            Prescription multi-examens — {plannedExamIds.size}/{groupExams.length} planifiés
+          </p>
+          <p className="text-xs text-on-surface-variant mb-3">
+            Choisissez l&apos;examen à planifier maintenant, puis passez au suivant une fois le rendez-vous confirmé.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {groupExams.map((exam) => {
+              const isActive = exam.id === prescriptionId;
+              const isPlanned = plannedExamIds.has(exam.id) || (exam.status && exam.status !== "A planifier" && !isActive);
+              return (
+                <button
+                  key={exam.id}
+                  type="button"
+                  onClick={() => switchActiveExam(exam)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+                    isActive
+                      ? "bg-primary text-white shadow-sm"
+                      : isPlanned
+                      ? "bg-success-container text-success"
+                      : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+                >
+                  {isPlanned && !isActive && <span className="material-symbols-outlined text-[14px]">check_circle</span>}
+                  {exam.procedure}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 gap-8 items-start">

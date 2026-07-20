@@ -116,7 +116,7 @@ function PrescriptionsContent() {
     const p = rawPriority.toUpperCase();
     if (p === "STAT" || p === "URGENCE VITALE") {
       return {
-        label: p === "STAT" ? "STAT" : "Urgent Vital",
+        label: p === "STAT" ? "TRES URGENT" : "Urgent Vital",
         icon: "warning",
         className: "bg-red-600 text-white animate-pulse font-bold",
       };
@@ -154,6 +154,9 @@ function PrescriptionsContent() {
 
         return {
           id: p.id,
+          // Regroupe les demandes issues d'une même prescription externe multi-examens
+          // (ex: Coloscopie + Fibroscopie pour le même patient) — voir groupedRequests.
+          prescriptionExternalId: p.prescriptionExternalId ?? null,
           medecinId: p.medecinId,
           patientId: p.patient?.id || p.patientId,
           // Preserve original name (case preserved) for navigation/synchronization,
@@ -253,7 +256,7 @@ function PrescriptionsContent() {
     router.push(`/patient-dossier/${encodeURIComponent(id)}`);
   };
 
-  const handlePlanifier = (req: any) => {
+  const handlePlanifier = (req: any, group?: any[]) => {
     const params = new URLSearchParams();
     if (req.id) params.set("prescriptionId", String(req.id));
     if (req.medecinId) params.set("medecinId", String(req.medecinId));
@@ -266,6 +269,14 @@ function PrescriptionsContent() {
     if (req.reason) params.set("reason", String(req.reason));
     if (req.priority) params.set("priority", String(req.priority));
     params.set("from", "prescriptions");
+    // Prescription multi-examens (ex. Coloscopie + Fibroscopie) : transmet la liste
+    // complète pour que la planification puisse enchaîner chaque examen l'un après l'autre.
+    if (group && group.length > 1) {
+      params.set(
+        "groupExams",
+        JSON.stringify(group.map((g) => ({ id: g.id, procedure: g.procedure, status: g.status }))),
+      );
+    }
 
     // Persist selection in PatientContext to ensure downstream pages can fallback reliably
     try {
@@ -308,6 +319,108 @@ function PrescriptionsContent() {
     router.push(`/demande-cpa?${params.toString()}`);
   };
 
+  // Boutons d'action pour UN examen — appelé une fois par examen d'une ligne
+  // groupée (prescription multi-examens) pour que chacun garde sa propre action
+  // indépendamment de l'état des autres examens du même groupe.
+  const renderActions = (req: any, group?: any[]) => (
+    <div className="flex flex-wrap items-center gap-2 whitespace-nowrap">
+      {role === "MEDECIN" ? (
+        medecinRowState(req) === "a-decider" ? (
+          <>
+            <button
+              onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}?tab=${medecinTab}`)}
+              className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+            >
+              Décider
+            </button>
+            <button
+              onClick={() => handleDetail(req.id)}
+              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            >
+              Détails
+            </button>
+          </>
+        ) : medecinRowState(req) === "pret" ? (
+          <>
+            <TreatButton
+              patient={req.originalName}
+              id={req.id}
+              rendezVousId={req.rendezVous?.id}
+              prescriptionId={req.id}
+              patientId={req.patientId}
+              procedure={req.procedure}
+            />
+            <button
+              onClick={() => handleDetail(req.id)}
+              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            >
+              Détails
+            </button>
+          </>
+        ) : medecinRowState(req) === "cpa-bloquee" ? (
+          <>
+            <span className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error">
+              <span className="material-symbols-outlined text-[14px]">block</span>
+              {req.dossierCPA?.decisionCpa === "REPORT" ? "CPA reportée" : "CPA défavorable"}
+            </span>
+            <button
+              onClick={() => handleDetail(req.id)}
+              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            >
+              Détails
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => handleDetail(req.id)}
+            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+          >
+            Détails
+          </button>
+        )
+      ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Locale" ? (
+        <button
+          disabled={confirmingId === req.id}
+          onClick={() => handleEnvoyerConfirmation(req)}
+          className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+        >
+          {confirmingId === req.id ? "Envoi…" : "Envoyer la confirmation"}
+        </button>
+      ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Générale" ? (
+        <button
+          onClick={() => handleDemandeCpaFromFil(req)}
+          className="rounded-lg bg-[#EA580C] px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+        >
+          Demande CPA
+        </button>
+      ) : req.status === "A planifier" ? (
+        <>
+          <button
+            onClick={() => handlePlanifier(req, group)}
+            className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+          >
+            Planifier
+          </button>
+          <button
+            onClick={() => handleDetail(req.id)}
+            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+          >
+            Détails
+          </button>
+        </>
+      ) : (
+        // Planifié / Confirmé / CPA demandée : déjà pris en charge,
+        // le patient reste visible mais sans action de planification.
+        <button
+          onClick={() => handleDetail(req.id)}
+          className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+        >
+          Détails
+        </button>
+      )}
+    </div>
+  );
+
   const baseFiltered = useMemo(() => {
     if (role === "MEDECIN") {
       if (medecinTab === "tous") return allRequests;
@@ -320,6 +433,24 @@ function PrescriptionsContent() {
     () => baseFiltered.slice().sort((a, b) => b.urgencyScore - a.urgencyScore),
     [baseFiltered],
   );
+
+  // Regroupe les demandes qui partagent la même prescription externe multi-examens
+  // (ex: un patient qui doit faire une coloscopie ET une fibroscopie) en une seule
+  // ligne dans le tableau — chaque examen garde son propre statut et ses propres
+  // actions (planification, décision...), voir le rendu du tableau plus bas.
+  const groupedRequests = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    const order: string[] = [];
+    for (const req of priorityRequests) {
+      const key = req.prescriptionExternalId || `single-${req.id}`;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+        order.push(key);
+      }
+      groups.get(key)!.push(req);
+    }
+    return order.map((key) => groups.get(key)!);
+  }, [priorityRequests]);
 
   const totalEnAttente = priorityRequests.length;
   const totalUrgents = priorityRequests.filter((p) => (p.priority || "").toUpperCase() === "STAT").length;
@@ -334,8 +465,8 @@ function PrescriptionsContent() {
   const showStatutColumn = role !== "MEDECIN" || medecinTab === "tous";
 
   const columnWidths = showStatutColumn
-    ? ["9%", "17%", "15%", "13%", "12%", "15%", "19%"]
-    : ["10%", "20%", "18%", "16%", "14%", "22%"];
+    ? ["9%", "16%", "14%", "12%", "16%", "14%", "19%"]
+    : ["10%", "19%", "17%", "15%", "18%", "21%"];
 
   return (
     <AppShell>
@@ -470,7 +601,7 @@ function PrescriptionsContent() {
               </div>
             </div>
             <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Urgents (STAT)</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Urgents (TRES URGENT)</p>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-2xl font-headline font-extrabold text-tertiary">{String(totalUrgents).padStart(2, "0")}</span>
                 <span className="text-xs font-medium text-on-surface-variant">Priorité immédiate</span>
@@ -556,144 +687,76 @@ function PrescriptionsContent() {
                         ))}
                       </colgroup>
                       <tbody>
-                        {priorityRequests
-                          .filter(req => {
+                        {groupedRequests
+                          .filter((group) => group.some((req) => {
                             const matchesNom = req.name.toLowerCase().includes(filters.nom.toLowerCase());
                             const matchesProc = req.procedure.toLowerCase().includes(filters.procedure.toLowerCase());
                             const matchesMed = req.prescriber.toLowerCase().includes(filters.medecin.toLowerCase());
                             const matchesDate = filters.date ? req.receivedTime.includes(new Date(filters.date).toLocaleDateString("fr-FR")) : true;
                             return matchesNom && matchesProc && matchesMed && matchesDate;
-                          })
-                          .map((req) => (
-                        <tr key={req.id} className="border-t border-outline-variant/10 hover:bg-surface-container/50">
-                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={req.receivedTime}>{req.receivedTime}</td>
-                          <td className="px-4 py-2.5 font-semibold text-on-surface truncate" title={req.name}>{req.name}</td>
-                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={req.procedure}>{req.procedure}</td>
-                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={req.prescriber}>{req.prescriber}</td>
+                          }))
+                          .map((group) => {
+                            const primary = group[0];
+                            const isGrouped = group.length > 1;
+                            const combinedProcedure = group.map((r) => r.procedure).join(" + ");
+                            // L'examen qui a le plus besoin d'une action, pour que le bouton
+                            // unique de la ligne groupée ne masque pas un examen encore en
+                            // attente juste parce que le premier de la liste est déjà traité.
+                            const actionableReq =
+                              group.find((r) => r.status === "A planifier") ||
+                              group.find((r) => medecinRowState(r) === "a-decider") ||
+                              group.find((r) => medecinRowState(r) === "pret") ||
+                              group.find((r) => medecinRowState(r) === "cpa-bloquee") ||
+                              primary;
+                            return (
+                        <tr key={primary.prescriptionExternalId || primary.id} className="border-t border-outline-variant/10 hover:bg-surface-container/50">
+                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.receivedTime}>{primary.receivedTime}</td>
+                          <td className="px-4 py-2.5 font-semibold text-on-surface truncate" title={primary.name}>{primary.name}</td>
+                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={combinedProcedure}>{combinedProcedure}</td>
+                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
                           <td className="px-4 py-2.5">
-                            {req.priority === "STAT" ? (
-                              <span className="inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white uppercase tracking-wider animate-pulse shadow-md">
-                                <span className="material-symbols-outlined text-base shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                                <span>STAT</span>
+                            {primary.priority === "STAT" ? (
+                              <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-red-600 px-2 py-1 text-[10px] font-bold text-white uppercase tracking-normal animate-pulse shadow-md">
+                                <span className="material-symbols-outlined text-[13px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                                <span className="truncate">TRES URGENT</span>
                               </span>
                             ) : (
-                              <span className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${req.priorityIndicatorClass}`}>
-                                {req.priorityIndicatorIcon ? (
-                                  <span className="material-symbols-outlined text-[14px] shrink-0">{req.priorityIndicatorIcon}</span>
+                              <span className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
+                                {primary.priorityIndicatorIcon ? (
+                                  <span className="material-symbols-outlined text-[14px] shrink-0">{primary.priorityIndicatorIcon}</span>
                                 ) : null}
-                                {req.priorityIndicator}
+                                {primary.priorityIndicator}
                               </span>
                             )}
                           </td>
                           {showStatutColumn && (
                             <td className="px-4 py-2.5">
-                              <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={req.status === "Décision rendue" ? `Décision rendue — ${req.rendezVous?.typeAnesthesie || "?"}` : (STATUS_LABELS[req.status] || req.status)}>
-                                {req.status === "Décision rendue"
-                                  ? `Décision rendue — ${req.rendezVous?.typeAnesthesie || "?"}`
-                                  : (STATUS_LABELS[req.status] || req.status)}
-                              </span>
+                              {isGrouped ? (
+                                (() => {
+                                  const planifiesCount = group.filter((r) => r.status !== "A planifier").length;
+                                  const label = `${planifiesCount}/${group.length} planifiés`;
+                                  const detail = group.map((r) => `${r.procedure} : ${STATUS_LABELS[r.status] || r.status}`).join("\n");
+                                  return (
+                                    <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={detail}>
+                                      {label}
+                                    </span>
+                                  );
+                                })()
+                              ) : (
+                                <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={primary.status === "Décision rendue" ? `Décision rendue — ${primary.rendezVous?.typeAnesthesie || "?"}` : (STATUS_LABELS[primary.status] || primary.status)}>
+                                  {primary.status === "Décision rendue"
+                                    ? `Décision rendue — ${primary.rendezVous?.typeAnesthesie || "?"}`
+                                    : (STATUS_LABELS[primary.status] || primary.status)}
+                                </span>
+                              )}
                             </td>
                           )}
                           <td className="px-4 py-2.5">
-                            <div className="flex flex-wrap items-center gap-2 whitespace-nowrap">
-                              {role === "MEDECIN" ? (
-                                medecinRowState(req) === "a-decider" ? (
-                                  <>
-                                    <button
-                                      onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}?tab=${medecinTab}`)}
-                                      className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                                    >
-                                      Décider
-                                    </button>
-                                    <button
-                                      onClick={() => handleDetail(req.id)}
-                                      className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-                                    >
-                                      Détails
-                                    </button>
-                                  </>
-                                ) : medecinRowState(req) === "pret" ? (
-                                  <>
-                                    <TreatButton
-                                      patient={req.originalName}
-                                      id={req.id}
-                                      rendezVousId={req.rendezVous?.id}
-                                      prescriptionId={req.id}
-                                      patientId={req.patientId}
-                                      procedure={req.procedure}
-                                    />
-                                    <button
-                                      onClick={() => handleDetail(req.id)}
-                                      className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-                                    >
-                                      Détails
-                                    </button>
-                                  </>
-                                ) : medecinRowState(req) === "cpa-bloquee" ? (
-                                  <>
-                                    <span className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error">
-                                      <span className="material-symbols-outlined text-[14px]">block</span>
-                                      {req.dossierCPA?.decisionCpa === "REPORT" ? "CPA reportée" : "CPA défavorable"}
-                                    </span>
-                                    <button
-                                      onClick={() => handleDetail(req.id)}
-                                      className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-                                    >
-                                      Détails
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button
-                                    onClick={() => handleDetail(req.id)}
-                                    className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-                                  >
-                                    Détails
-                                  </button>
-                                )
-                              ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Locale" ? (
-                                <button
-                                  disabled={confirmingId === req.id}
-                                  onClick={() => handleEnvoyerConfirmation(req)}
-                                  className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
-                                >
-                                  {confirmingId === req.id ? "Envoi…" : "Envoyer la confirmation"}
-                                </button>
-                              ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Générale" ? (
-                                <button
-                                  onClick={() => handleDemandeCpaFromFil(req)}
-                                  className="rounded-lg bg-[#EA580C] px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                                >
-                                  Demande CPA
-                                </button>
-                              ) : req.status === "A planifier" ? (
-                                <>
-                                  <button
-                                    onClick={() => handlePlanifier(req)}
-                                    className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-                                  >
-                                    Planifier
-                                  </button>
-                                  <button
-                                    onClick={() => handleDetail(req.id)}
-                                    className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-                                  >
-                                    Détails
-                                  </button>
-                                </>
-                              ) : (
-                                // Planifié / Confirmé / CPA demandée : déjà pris en charge,
-                                // le patient reste visible mais sans action de planification.
-                                <button
-                                  onClick={() => handleDetail(req.id)}
-                                  className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-                                >
-                                  Détails
-                                </button>
-                              )}
-                            </div>
+                            {renderActions(actionableReq, group)}
                           </td>
                         </tr>
-                      ))}
+                            );
+                          })}
                       </tbody>
                     </table>
                   </div>

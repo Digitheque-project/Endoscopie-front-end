@@ -810,7 +810,7 @@ function ResultatEndoscopieContent() {
                         <button
                           key={endoscope.id}
                           type="button"
-                          onClick={() => updateNested("rendezVous", "endoscope", endoscope.id)}
+                          onClick={() => updateNested("rendezVous", "endoscope", selected ? "" : endoscope.id)}
                           className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -873,7 +873,7 @@ function ResultatEndoscopieContent() {
                         <button
                           key={option}
                           type="button"
-                          onClick={() => updateNested("rendezVous", "kitLigature", option)}
+                          onClick={() => updateNested("rendezVous", "kitLigature", selected ? "" : option)}
                           className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <div className="flex items-start justify-between gap-3">

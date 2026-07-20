@@ -85,18 +85,19 @@ export function JCalendar({
     return layoutApps;
   };
 
+  const PIXELS_PER_HOUR = 96;
+
   const calculateTop = (timeStr: string) => {
     const [h, m] = timeStr.split(':').map(Number);
     const startHour = 8;
-    const pixelsPerHour = 80;
-    return (h - startHour) * pixelsPerHour + (m / 60) * pixelsPerHour;
+    return (h - startHour) * PIXELS_PER_HOUR + (m / 60) * PIXELS_PER_HOUR;
   };
 
   const calculateHeight = (startStr: string, endStr: string) => {
     const [h1, m1] = startStr.split(':').map(Number);
     const [h2, m2] = endStr.split(':').map(Number);
     const durationMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
-    return durationMinutes * (80 / 60);
+    return durationMinutes * (PIXELS_PER_HOUR / 60);
   };
 
   const appointmentsByDate = useMemo(() => {
@@ -123,11 +124,11 @@ export function JCalendar({
             </div>
           </div>
 
-          <div className="relative min-h-[800px] bg-surface-container-low/20">
+          <div className="relative min-h-[960px] bg-surface-container-low/20">
             {/* Grid lines */}
             <div className="absolute inset-0 grid grid-rows-10 pointer-events-none">
               {hours.map((_, i) => (
-                <div key={i} className="border-b border-outline-variant/5 h-20" />
+                <div key={i} className="border-b border-outline-variant/5 h-24" />
               ))}
             </div>
 
@@ -135,7 +136,7 @@ export function JCalendar({
               {/* Timeline */}
               <div className="flex flex-col border-r border-outline-variant/15 text-on-surface-variant text-[11px] font-bold text-center pt-2 bg-white/50">
                 {hours.map((slot) => (
-                  <div key={slot} className="h-20 flex items-start justify-center pt-2 border-b border-outline-variant/5">
+                  <div key={slot} className="h-24 flex items-start justify-center pt-2 border-b border-outline-variant/5">
                     {slot}
                   </div>
                 ))}
@@ -153,50 +154,49 @@ export function JCalendar({
                      }
                    }}>
                 {getLayout(appointments).map(app => (
-                  <div 
-                    key={app.id} 
+                  <div
+                    key={app.id}
                     onClick={() => onAppointmentClick?.(app)}
-                    className={`absolute rounded-xl p-4 shadow-lg border-l-4 group cursor-pointer transition-all hover:scale-[1.02] hover:z-50 hover:shadow-2xl overflow-hidden ${
-                      app.statut.toUpperCase() === 'URGENT' || app.statut.toUpperCase() === 'PRIORITÉ' 
-                        ? 'border-tertiary bg-tertiary-fixed/40 animate-pulse' : 
-                      app.statut.toUpperCase() === 'CONFIRMÉ' 
-                        ? 'border-primary bg-primary/5' : 
+                    title={`${app.typeExamen} — ${app.patient} — ${app.medecin}`}
+                    className={`absolute rounded-xl p-2.5 shadow-lg border-l-4 group cursor-pointer transition-all hover:scale-[1.02] hover:z-50 hover:shadow-2xl overflow-hidden flex flex-col min-h-[72px] ${
+                      app.statut.toUpperCase() === 'URGENT' || app.statut.toUpperCase() === 'PRIORITÉ'
+                        ? 'border-tertiary bg-tertiary-fixed/40 animate-pulse' :
+                      app.statut.toUpperCase() === 'CONFIRMÉ'
+                        ? 'border-primary bg-primary/5' :
                       'border-outline-variant/40 bg-white'
                     }`}
-                    style={{ 
-                      top: `${calculateTop(app.heureDebut)}px`, 
+                    style={{
+                      top: `${calculateTop(app.heureDebut)}px`,
                       height: `${calculateHeight(app.heureDebut, app.heureFin)}px`,
                       left: app.left,
                       width: `calc(${app.width} - 8px)`,
                       margin: '0 4px'
                     }}
                   >
-                    <div className="flex justify-between items-start">
-                      <h4 className="text-sm font-extrabold text-on-surface leading-tight group-hover:text-primary transition-colors">{app.typeExamen}</h4>
-                      <div className="flex flex-col items-end">
-                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm ${
-                          app.statut.toUpperCase() === 'URGENT' ? 'bg-tertiary text-white' : 
-                          app.statut.toUpperCase() === 'CONFIRMÉ' ? 'bg-primary text-white' : 
-                          'bg-surface-container-highest text-on-surface-variant'
-                        }`}>
-                          {app.statut}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-primary border border-primary/10">
-                        {app.patient.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </div>
-                      <span className="text-xs font-bold text-on-surface truncate">{app.patient}</span>
+                    <div className="flex justify-between items-start gap-1.5">
+                      <h4 className="text-xs font-extrabold text-on-surface leading-tight truncate min-w-0 flex-1 group-hover:text-primary transition-colors">{app.typeExamen}</h4>
+                      <span className={`shrink-0 whitespace-nowrap text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm ${
+                        app.statut.toUpperCase() === 'URGENT' ? 'bg-tertiary text-white' :
+                        app.statut.toUpperCase() === 'CONFIRMÉ' ? 'bg-primary text-white' :
+                        'bg-surface-container-highest text-on-surface-variant'
+                      }`}>
+                        {app.statut}
+                      </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] font-bold text-on-surface-variant mt-auto pt-2 border-t border-outline-variant/10">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">medical_information</span>
-                        {app.medecin}
+                    <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                      <div className="w-4 h-4 shrink-0 rounded-full bg-surface-container flex items-center justify-center text-[8px] font-bold text-primary border border-primary/10">
+                        {app.patient.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <span className="text-[11px] font-bold text-on-surface truncate min-w-0">{app.patient}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-1.5 text-[9px] font-bold text-on-surface-variant mt-auto pt-1.5 border-t border-outline-variant/10">
+                      <span className="flex items-center gap-1 min-w-0 truncate">
+                        <span className="material-symbols-outlined text-[12px] shrink-0">medical_information</span>
+                        <span className="truncate">{app.medecin}</span>
                       </span>
-                      <span className="bg-surface-container px-2 py-0.5 rounded-md tabular-nums">{app.heureDebut} - {app.heureFin}</span>
+                      <span className="shrink-0 whitespace-nowrap bg-surface-container px-1.5 py-0.5 rounded-md tabular-nums">{app.heureDebut}-{app.heureFin}</span>
                     </div>
 
                     {/* Interactive background effect */}
@@ -236,9 +236,10 @@ export function JCalendar({
                       .filter(app => app.date === date.toISOString().split('T')[0])
                       .slice(0, 3)
                       .map(app => (
-                        <div key={app.id} 
+                        <div key={app.id}
                              onClick={() => onAppointmentClick?.(app)}
-                             className="bg-surface-container-low/50 hover:bg-white border-l-2 border-primary p-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]">
+                             title={`${app.patient} — ${app.typeExamen}`}
+                             className="bg-surface-container-low/50 hover:bg-white border-l-2 border-primary p-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] min-w-0">
                           <p className="text-[10px] font-extrabold truncate text-on-surface">{app.patient}</p>
                           <p className="text-[9px] font-bold text-primary/70 tabular-nums">{app.heureDebut}</p>
                         </div>
