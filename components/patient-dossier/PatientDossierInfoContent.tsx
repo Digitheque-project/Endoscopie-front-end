@@ -239,35 +239,6 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
 
       <section>
         <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-          Examens complémentaires à prévoir avant l&apos;endoscopie
-        </p>
-        <textarea
-          value={examensComplementaires}
-          onChange={(e) => setExamensComplementaires(e.target.value)}
-          placeholder="Ex. Bilan de coagulation, ECG, consultation cardiologique..."
-          rows={3}
-          className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
-        />
-        <div className="flex items-center justify-end gap-3 mt-2">
-          {saveExamensStatus === "success" && (
-            <span className="text-[11px] font-semibold text-success">Enregistré</span>
-          )}
-          {saveExamensStatus === "error" && (
-            <span className="text-[11px] font-semibold text-error">Échec de l&apos;enregistrement</span>
-          )}
-          <button
-            type="button"
-            onClick={handleSaveExamensComplementaires}
-            disabled={isSavingExamens}
-            className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSavingExamens ? "Enregistrement…" : "Enregistrer"}
-          </button>
-        </div>
-      </section>
-
-      <section>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
           Notes / Observations
         </p>
         <div className="flex items-start gap-2">
@@ -409,6 +380,35 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
             )}
           </div>
         )}
+      </section>
+
+      <section>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+          Examens complémentaires à prévoir avant l&apos;endoscopie
+        </p>
+        <textarea
+          value={examensComplementaires}
+          onChange={(e) => setExamensComplementaires(e.target.value)}
+          placeholder="Ex. Bilan de coagulation, ECG, consultation cardiologique..."
+          rows={3}
+          className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
+        />
+        <div className="flex items-center justify-end gap-3 mt-2">
+          {saveExamensStatus === "success" && (
+            <span className="text-[11px] font-semibold text-success">Enregistré</span>
+          )}
+          {saveExamensStatus === "error" && (
+            <span className="text-[11px] font-semibold text-error">Échec de l&apos;enregistrement</span>
+          )}
+          <button
+            type="button"
+            onClick={handleSaveExamensComplementaires}
+            disabled={isSavingExamens}
+            className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingExamens ? "Enregistrement…" : "Enregistrer"}
+          </button>
+        </div>
       </section>
     </div>
   );
