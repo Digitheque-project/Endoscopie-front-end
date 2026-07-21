@@ -43,6 +43,18 @@ function decisionCpaDisplay(decision?: string | null): { label: string; classNam
   }
 }
 
+/** Traduit la priorité brute en badge d'urgence — mêmes règles/couleurs que le Fil de prescription. */
+function getUrgenceBadge(priorite?: string | null): { label: string; icon: string; className: string } {
+  const p = priorite?.trim().toUpperCase();
+  if (p === "STAT" || p === "URGENCE VITALE") {
+    return { label: "TRES URGENT", icon: "warning", className: "bg-red-600 text-white animate-pulse" };
+  }
+  if (p === "URGENT" || p === "URGENCE") {
+    return { label: "Urgent", icon: "priority_high", className: "bg-[#EA580C] text-white" };
+  }
+  return { label: "Normale", icon: "check_circle", className: "bg-success-container text-success" };
+}
+
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
   const birth = new Date(dateNaissance);
@@ -128,6 +140,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
   }
 
   const patient = prescription.patient;
+  const urgenceBadge = getUrgenceBadge(prescription.priorite);
   const age = computeAge(patient?.dateNaissance);
   const birthDate = patient?.dateNaissance
     ? new Date(patient.dateNaissance).toLocaleDateString("fr-FR")
@@ -182,6 +195,10 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                 .join(" • ")}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${urgenceBadge.className}`}>
+                <span className="material-symbols-outlined text-sm">{urgenceBadge.icon}</span>
+                {urgenceBadge.label}
+              </span>
               <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">
                 {prescription.typeExamen}
               </span>
