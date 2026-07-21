@@ -186,19 +186,21 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
           </div>
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Patient</p>
-            <h2 className="font-headline text-2xl font-extrabold tracking-tight">
-              {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
-            </h2>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="font-headline text-2xl font-extrabold tracking-tight">
+                {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
+              </h2>
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 ${urgenceBadge.className}`}>
+                <span className="material-symbols-outlined text-sm">{urgenceBadge.icon}</span>
+                {urgenceBadge.label}
+              </span>
+            </div>
             <p className="text-sm text-on-surface-variant mt-1">
               {[birthDate ? `Né(e) le ${birthDate}` : null, age != null ? `${age} ans` : null]
                 .filter(Boolean)
                 .join(" • ")}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${urgenceBadge.className}`}>
-                <span className="material-symbols-outlined text-sm">{urgenceBadge.icon}</span>
-                {urgenceBadge.label}
-              </span>
               <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">
                 {prescription.typeExamen}
               </span>
