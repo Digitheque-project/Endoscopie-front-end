@@ -61,6 +61,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [examensGroupe, setExamensGroupe] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +83,32 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
       cancelled = true;
     };
   }, [prescriptionId]);
+
+  // Prescription multi-examens (même prescriptionExternalId) : liste tous les examens
+  // demandés dans cette même prescription, pas seulement celui de cette ligne.
+  useEffect(() => {
+    if (!prescription?.prescriptionExternalId) {
+      setExamensGroupe(prescription?.typeExamen ? [prescription.typeExamen] : []);
+      return;
+    }
+    let cancelled = false;
+    apiJson<any[]>("/api/prescriptions")
+      .then((all) => {
+        if (cancelled) return;
+        const exams = (Array.isArray(all) ? all : [])
+          .filter((p) => p.prescriptionExternalId === prescription.prescriptionExternalId)
+          .map((p) => p.typeExamen)
+          .filter(Boolean);
+        setExamensGroupe(exams.length ? exams : [prescription.typeExamen]);
+      })
+      .catch((e) => {
+        console.error("Erreur chargement des examens groupés :", e);
+        setExamensGroupe([prescription.typeExamen]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [prescription?.prescriptionExternalId, prescription?.typeExamen]);
 
   if (isLoading) {
     return (
@@ -198,7 +225,17 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
 
             <section>
               <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Examen demandé</h4>
-              <p className="font-bold text-lg text-primary">{prescription.typeExamen}</p>
+              {examensGroupe.length > 1 ? (
+                <ul className="space-y-1">
+                  {examensGroupe.map((exam, i) => (
+                    <li key={i} className="font-bold text-lg text-primary">
+                      • {exam}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="font-bold text-lg text-primary">{prescription.typeExamen}</p>
+              )}
             </section>
 
             <section>
