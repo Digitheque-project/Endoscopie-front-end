@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PatientDossierInfoContentProps {
   prescriptionId: string;
@@ -19,7 +20,10 @@ function computeAge(dateNaissance?: string | null): number | null {
   return age;
 }
 
+const ROLE_LABELS: Record<string, string> = { MAJOR: "Major", MEDECIN: "Médecin" };
+
 export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfoContentProps) {
+  const { role, medecinName } = useAuth();
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +38,11 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
   const [examensComplementaires, setExamensComplementaires] = useState("");
   const [isSavingExamens, setIsSavingExamens] = useState(false);
   const [saveExamensStatus, setSaveExamensStatus] = useState<"idle" | "success" | "error">("idle");
+  const [notes, setNotes] = useState<any[] | null>(null);
+  const [isNotesLoading, setIsNotesLoading] = useState(false);
+  const [newNote, setNewNote] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [addNoteError, setAddNoteError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +95,47 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
       })
       .finally(() => setIsTraceabilityLoading(false));
   }, [prescription?.patientId]);
+
+  useEffect(() => {
+    if (!prescription?.id) return;
+    let cancelled = false;
+    setIsNotesLoading(true);
+    apiJson<any[]>(`/api/notes-dossier/${prescription.id}`)
+      .then((data) => {
+        if (!cancelled) setNotes(Array.isArray(data) ? data : []);
+      })
+      .catch((e) => {
+        console.error("Erreur chargement des notes du dossier :", e);
+        if (!cancelled) setNotes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIsNotesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [prescription?.id]);
+
+  const handleAddNote = async () => {
+    if (!prescription?.id || !newNote.trim()) return;
+    setIsAddingNote(true);
+    setAddNoteError(null);
+    const auteur = role === "MEDECIN" ? `Dr. ${medecinName}` : ROLE_LABELS[role ?? ""] || "Inconnu";
+    try {
+      const created = await apiJson<any>("/api/notes-dossier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prescriptionId: prescription.id, auteur, contenu: newNote.trim() }),
+      });
+      setNotes((prev) => [created, ...(prev || [])]);
+      setNewNote("");
+    } catch (e) {
+      console.error("Erreur ajout note dossier :", e);
+      setAddNoteError("Échec de l'ajout de la note.");
+    } finally {
+      setIsAddingNote(false);
+    }
+  };
 
   const handleSaveExamensComplementaires = async () => {
     if (!prescription?.id) return;
@@ -213,6 +263,50 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
           >
             {isSavingExamens ? "Enregistrement…" : "Enregistrer"}
           </button>
+        </div>
+      </section>
+
+      <section>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+          Notes / Observations
+        </p>
+        <div className="flex items-start gap-2">
+          <textarea
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Ajouter une note ou observation sur ce patient..."
+            rows={2}
+            className="flex-1 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
+          />
+          <button
+            type="button"
+            onClick={handleAddNote}
+            disabled={isAddingNote || !newNote.trim()}
+            className="shrink-0 px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isAddingNote ? "Ajout…" : "Ajouter"}
+          </button>
+        </div>
+        {addNoteError && <p className="text-[11px] font-semibold text-error mt-1.5">{addNoteError}</p>}
+
+        <div className="mt-3 space-y-2">
+          {isNotesLoading ? (
+            <p className="text-xs text-on-surface-variant">Chargement des notes…</p>
+          ) : !notes || notes.length === 0 ? (
+            <p className="text-xs text-on-surface-variant">Aucune note enregistrée pour ce patient.</p>
+          ) : (
+            notes.map((note) => (
+              <div key={note.id} className="rounded-xl border border-outline-variant/20 p-3">
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <span className="text-xs font-bold text-on-surface">{note.auteur}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant shrink-0">
+                    {new Date(note.dateCreation).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                  </span>
+                </div>
+                <p className="text-sm text-on-surface-variant whitespace-pre-wrap">{note.contenu}</p>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
