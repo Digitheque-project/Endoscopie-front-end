@@ -28,8 +28,6 @@ function DemandeCPAContent() {
     ? "Urgence vitale"
     : priorityState === "URGENT"
     ? "Urgent (24h)"
-    : priorityState === "PRIORITAIRE"
-    ? "Prioritaire (24h)"
     : "Standard (48h)";
 
   const prescriptionId = searchParams.get("prescriptionId") || patientContext.prescriptionId || null;

@@ -184,13 +184,6 @@ function PlanificationContent() {
         className: "bg-[#EA580C] hover:bg-[#C2410C] transition-all text-white font-bold shadow-sm px-3 py-1 rounded-full" 
       };
     }
-    if (rawPriority === "PRIORITAIRE") {
-      return { 
-        label: "Prioritaire", 
-        icon: "warning", 
-        className: "bg-amber-400 text-black font-bold px-3 py-1 rounded-full" 
-      };
-    }
     return {
       label: "Normale",
       icon: "check_circle",

@@ -91,7 +91,7 @@ function PrescriptionsContent() {
 
     let score = 0;
     if (prioriteUpper === "STAT" || prioriteUpper === "URGENCE VITALE") score += 35;
-    else if (prioriteUpper === "URGENT" || prioriteUpper === "URGENCE" || prioriteUpper === "PRIORITAIRE") score += 20;
+    else if (prioriteUpper === "URGENT" || prioriteUpper === "URGENCE") score += 20;
     else score += 10;
 
     if (hasVitalSign) score += 35;
@@ -112,7 +112,7 @@ function PrescriptionsContent() {
     return "Faible";
   };
 
-  const getPriorityIndicator = (rawPriority: string, level: string) => {
+  const getPriorityIndicator = (rawPriority: string) => {
     const p = rawPriority.toUpperCase();
     if (p === "STAT" || p === "URGENCE VITALE") {
       return {
@@ -121,11 +121,8 @@ function PrescriptionsContent() {
         className: "bg-red-600 text-white animate-pulse font-bold",
       };
     }
-    if (level === "Élevée" || p === "URGENT" || p === "URGENCE") {
+    if (p === "URGENT" || p === "URGENCE") {
       return { label: "Urgent", icon: "priority_high", className: "bg-[#EA580C] hover:bg-[#C2410C] active:scale-95 transition-all text-white font-bold shadow-sm" };
-    }
-    if (level === "Moyenne" || p === "PRIORITAIRE") {
-      return { label: "Prioritaire", icon: "warning", className: "bg-amber-400 text-black font-bold" };
     }
     return { label: "Normale", icon: "check_circle", className: "bg-success-container text-success font-bold" };
   };
@@ -150,7 +147,7 @@ function PrescriptionsContent() {
         const prescriberName = `Dr. ${p.medecinPrescripteur?.prenom || ""} ${p.medecinPrescripteur?.nom || ""}`.trim();
         const urgencyScore = getPriorityScore(p);
         const priorityLevel = getPriorityLevel(urgencyScore);
-        const indicator = getPriorityIndicator(prioriteUpper, priorityLevel);
+        const indicator = getPriorityIndicator(prioriteUpper);
 
         return {
           id: p.id,
