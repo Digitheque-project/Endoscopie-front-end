@@ -97,7 +97,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Jeton de connexion invalide.");
     }
 
-    const claim = payload.services.find((s) => s.serviceId === AUTH_ENDOSCOPIE_SERVICE_ID);
+    // Cherché d'abord par nom (stable d'un déploiement à l'autre — l'ID, lui, peut
+    // changer selon l'écosystème d'auth utilisé), avec l'ID figé en secours.
+    const claim =
+      payload.services.find((s) => s.serviceName?.trim().toLowerCase() === "endoscopie") ??
+      payload.services.find((s) => s.serviceId === AUTH_ENDOSCOPIE_SERVICE_ID);
     if (!claim) {
       throw new Error("Ce compte n'a pas accès au service Endoscopie.");
     }
@@ -119,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       medecinName = resolved.name;
     }
 
-    const otherServices = payload.services.filter((s) => s.serviceId !== AUTH_ENDOSCOPIE_SERVICE_ID);
+    const otherServices = payload.services.filter((s) => s.serviceId !== claim.serviceId);
 
     const updated: AuthData = {
       role,
