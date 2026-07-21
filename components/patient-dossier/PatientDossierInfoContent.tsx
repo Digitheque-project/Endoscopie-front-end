@@ -238,50 +238,6 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
       </section>
 
       <section>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-          Notes / Observations
-        </p>
-        <div className="flex items-start gap-2">
-          <textarea
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Ajouter une note ou observation sur ce patient..."
-            rows={2}
-            className="flex-1 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
-          />
-          <button
-            type="button"
-            onClick={handleAddNote}
-            disabled={isAddingNote || !newNote.trim()}
-            className="shrink-0 px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isAddingNote ? "Ajout…" : "Ajouter"}
-          </button>
-        </div>
-        {addNoteError && <p className="text-[11px] font-semibold text-error mt-1.5">{addNoteError}</p>}
-
-        <div className="mt-3 space-y-2">
-          {isNotesLoading ? (
-            <p className="text-xs text-on-surface-variant">Chargement des notes…</p>
-          ) : !notes || notes.length === 0 ? (
-            <p className="text-xs text-on-surface-variant">Aucune note enregistrée pour ce patient.</p>
-          ) : (
-            notes.map((note) => (
-              <div key={note.id} className="rounded-xl border border-outline-variant/20 p-3">
-                <div className="flex items-center justify-between gap-3 mb-1">
-                  <span className="text-xs font-bold text-on-surface">{note.auteur}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant shrink-0">
-                    {new Date(note.dateCreation).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                  </span>
-                </div>
-                <p className="text-sm text-on-surface-variant whitespace-pre-wrap">{note.contenu}</p>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section>
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
             Historique des examens — Endoscopie
@@ -408,6 +364,50 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
           >
             {isSavingExamens ? "Enregistrement…" : "Enregistrer"}
           </button>
+        </div>
+      </section>
+
+      <section>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+          Notes / Observations
+        </p>
+        <div className="flex items-start gap-2">
+          <textarea
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Ajouter une note ou observation sur ce patient..."
+            rows={2}
+            className="flex-1 rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
+          />
+          <button
+            type="button"
+            onClick={handleAddNote}
+            disabled={isAddingNote || !newNote.trim()}
+            className="shrink-0 px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isAddingNote ? "Ajout…" : "Ajouter"}
+          </button>
+        </div>
+        {addNoteError && <p className="text-[11px] font-semibold text-error mt-1.5">{addNoteError}</p>}
+
+        <div className="mt-3 space-y-2">
+          {isNotesLoading ? (
+            <p className="text-xs text-on-surface-variant">Chargement des notes…</p>
+          ) : !notes || notes.length === 0 ? (
+            <p className="text-xs text-on-surface-variant">Aucune note enregistrée pour ce patient.</p>
+          ) : (
+            notes.map((note) => (
+              <div key={note.id} className="rounded-xl border border-outline-variant/20 p-3">
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <span className="text-xs font-bold text-on-surface">{note.auteur}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant shrink-0">
+                    {new Date(note.dateCreation).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                  </span>
+                </div>
+                <p className="text-sm text-on-surface-variant whitespace-pre-wrap">{note.contenu}</p>
+              </div>
+            ))
+          )}
         </div>
       </section>
     </div>
