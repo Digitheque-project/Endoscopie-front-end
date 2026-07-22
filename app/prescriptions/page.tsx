@@ -307,6 +307,51 @@ function PrescriptionsContent() {
     }
   };
 
+  // Petite interface "Maintenir la date prévue / Décaler la date" ouverte en cliquant
+  // sur le statut "Décision rendue" — permet au major de confirmer ou de replanifier
+  // le rendez-vous déjà fixé avant de poursuivre le parcours (CPA, confirmation...).
+  const [decisionReq, setDecisionReq] = useState<any | null>(null);
+  const [decisionMode, setDecisionMode] = useState<"choix" | "decaler">("choix");
+  const [decisionDate, setDecisionDate] = useState("");
+  const [decisionHeure, setDecisionHeure] = useState("");
+  const [isDecisionSaving, setIsDecisionSaving] = useState(false);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
+
+  const openDecisionModal = (req: any) => {
+    setDecisionReq(req);
+    setDecisionMode("choix");
+    setDecisionError(null);
+    if (req.rendezVous?.dateHeureDebut) {
+      const d = new Date(req.rendezVous.dateHeureDebut);
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      setDecisionDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+      setDecisionHeure(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    }
+  };
+
+  const closeDecisionModal = () => {
+    setDecisionReq(null);
+    setDecisionMode("choix");
+    setDecisionError(null);
+  };
+
+  const handleConfirmDecalage = async () => {
+    if (!decisionReq?.rendezVous?.id || !decisionDate || !decisionHeure) return;
+    setIsDecisionSaving(true);
+    setDecisionError(null);
+    try {
+      await updateRendezVous(decisionReq.rendezVous.id, {
+        dateHeureDebut: `${decisionDate}T${decisionHeure}:00`,
+      });
+      await fetchPrescriptions();
+      closeDecisionModal();
+    } catch (err) {
+      setDecisionError(err instanceof Error ? err.message : "Erreur lors du décalage du rendez-vous.");
+    } finally {
+      setIsDecisionSaving(false);
+    }
+  };
+
   const handleDemandeCpaFromFil = (req: any) => {
     const params = new URLSearchParams();
     if (req.patientId) params.set("patientId", String(req.patientId));
@@ -754,11 +799,19 @@ function PrescriptionsContent() {
                                     </span>
                                   );
                                 })()
+                              ) : primary.status === "Décision rendue" ? (
+                                <button
+                                  type="button"
+                                  onClick={() => openDecisionModal(primary)}
+                                  title="Cliquer pour maintenir ou décaler la date prévue"
+                                  className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-primary/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-[13px] shrink-0">edit_calendar</span>
+                                  <span className="truncate">{`Décision rendue — ${primary.rendezVous?.typeAnesthesie || "?"}`}</span>
+                                </button>
                               ) : (
-                                <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={primary.status === "Décision rendue" ? `Décision rendue — ${primary.rendezVous?.typeAnesthesie || "?"}` : (STATUS_LABELS[primary.status] || primary.status)}>
-                                  {primary.status === "Décision rendue"
-                                    ? `Décision rendue — ${primary.rendezVous?.typeAnesthesie || "?"}`
-                                    : (STATUS_LABELS[primary.status] || primary.status)}
+                                <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={STATUS_LABELS[primary.status] || primary.status}>
+                                  {STATUS_LABELS[primary.status] || primary.status}
                                 </span>
                               )}
                             </td>
@@ -778,6 +831,99 @@ function PrescriptionsContent() {
 
           </div>
       </div>
+
+      {decisionReq && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                  Décision rendue — {decisionReq.rendezVous?.typeAnesthesie || "?"}
+                </p>
+                <h3 className="text-lg font-black text-on-surface mt-0.5">{decisionReq.originalName || decisionReq.name}</h3>
+                {decisionReq.rendezVous?.dateHeureDebut && (
+                  <p className="text-sm text-on-surface-variant mt-1">
+                    Rendez-vous prévu le{" "}
+                    {new Date(decisionReq.rendezVous.dateHeureDebut).toLocaleString("fr-FR", {
+                      dateStyle: "long",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={closeDecisionModal}
+                className="text-on-surface-variant hover:text-on-surface shrink-0"
+                aria-label="Fermer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {decisionMode === "choix" ? (
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={closeDecisionModal}
+                  className="w-full rounded-xl border-2 border-primary px-4 py-3 text-sm font-bold text-primary hover:bg-primary/5 transition-colors"
+                >
+                  Maintenir la date prévue
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDecisionMode("decaler")}
+                  className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity"
+                >
+                  Décaler la date
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="flex gap-3">
+                  <div className="flex-1 flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nouvelle date</label>
+                    <input
+                      type="date"
+                      value={decisionDate}
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={(e) => setDecisionDate(e.target.value)}
+                      className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nouvelle heure</label>
+                    <input
+                      type="time"
+                      value={decisionHeure}
+                      onChange={(e) => setDecisionHeure(e.target.value)}
+                      className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+                {decisionError && <p className="text-sm text-error">{decisionError}</p>}
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDecisionMode("choix")}
+                    className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                  >
+                    Retour
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDecisionSaving || !decisionDate || !decisionHeure}
+                    onClick={handleConfirmDecalage}
+                    className="px-5 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {isDecisionSaving ? "Décalage…" : "Confirmer le décalage"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
