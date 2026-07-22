@@ -406,7 +406,14 @@ function PlanificationContent() {
       const justPlannedId = prescriptionId;
       const updatedPlanned = justPlannedId ? new Set(plannedExamIds).add(justPlannedId) : plannedExamIds;
       setPlannedExamIds(updatedPlanned);
-      const nextExam = groupExams.find((ex) => ex.id !== justPlannedId && !updatedPlanned.has(ex.id));
+      // `ex.status` reflète l'état réel côté serveur au moment où cette page a été
+      // ouverte (voir handlePlanifier) — on s'y fie en plus de `plannedExamIds` (mémoire
+      // client, perdue si la page est rechargée ou si l'utilisateur revient plus tard
+      // planifier le dernier examen restant depuis le Fil de prescription), pour ne pas
+      // reproposer un examen déjà planifié et ne jamais rebasculer vers le Fil.
+      const nextExam = groupExams.find(
+        (ex) => ex.id !== justPlannedId && ex.status === "A planifier" && !updatedPlanned.has(ex.id),
+      );
 
       setTimeout(() => {
         if (nextExam) {
