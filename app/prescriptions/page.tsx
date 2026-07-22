@@ -806,11 +806,10 @@ function PrescriptionsContent() {
                                   title="Cliquer pour maintenir ou décaler la date prévue"
                                   className="flex w-full flex-col items-start gap-0.5 rounded-lg bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
                                 >
-                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide leading-tight">
-                                    <span className="material-symbols-outlined text-[11px] shrink-0">edit_calendar</span>
+                                  <span className="text-[9px] font-bold uppercase tracking-wide leading-tight">
                                     Décision rendue
                                   </span>
-                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-tight opacity-80 pl-[15px]">
+                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-tight opacity-80">
                                     Anesthésie {primary.rendezVous?.typeAnesthesie || "?"}
                                   </span>
                                 </button>
