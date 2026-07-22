@@ -195,7 +195,7 @@ function DemandeCPAContent() {
               </div>
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center justify-between gap-2 mb-1">
                 <h2 className="text-lg font-black text-on-surface tracking-tight">{patientName}</h2>
                 <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 ${urgenceBadge.className}`}>
                   <span className="material-symbols-outlined text-sm">{urgenceBadge.icon}</span>
