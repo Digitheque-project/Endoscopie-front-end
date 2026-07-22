@@ -240,20 +240,34 @@ export default function Home() {
 
   const getSalleStatus = (salle: any) => {
     const now = new Date();
-    // Find if there's an appointment in this salle happening right now
-    const activeRdv = appointments.find(rdv => {
+    // Tous les rendez-vous en cours dans cette salle en ce moment — une salle peut
+    // accueillir plusieurs patients en simultané selon sa capacité (ex: capacité 5 =
+    // jusqu'à 5 patients différents), donc "occupé" dépend du nombre atteint, pas
+    // du simple fait qu'un rendez-vous soit en cours.
+    const activeRdvs = appointments.filter(rdv => {
       const isSameSalle = rdv.salleId === salle.id || rdv.salleName === salle.nom;
       const isHappeningNow = now >= rdv.rawStart && now <= rdv.rawEnd;
       return isSameSalle && isHappeningNow && rdv.status !== "Terminé" && rdv.status !== "Annulé";
     });
+    const capacite = salle.capacite > 0 ? salle.capacite : 1;
 
-    if (activeRdv) {
+    if (activeRdvs.length >= capacite) {
+      return {
+        status: "Occupé",
+        statusClass: "text-error",
+        borderClass: "border-error",
+        icon: "block",
+        description: `Capacité atteinte (${activeRdvs.length}/${capacite}) : ${activeRdvs.map(r => r.patient).join(", ")}`
+      };
+    }
+
+    if (activeRdvs.length > 0) {
       return {
         status: "En cours",
         statusClass: "text-primary",
         borderClass: "border-primary",
         icon: "surgical",
-        description: `Examen: ${activeRdv.procedure} - ${activeRdv.patient}`
+        description: `${activeRdvs.length}/${capacite} places occupées : ${activeRdvs.map(r => r.patient).join(", ")}`
       };
     }
 

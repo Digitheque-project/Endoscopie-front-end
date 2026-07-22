@@ -238,7 +238,13 @@ function PlanificationContent() {
       const appEnd = new Date(app.dateHeureFin);
       return newStart < appEnd && newEnd > appStart;
     };
-    if (appointments.some((app: any) => app.salleId === salleId && overlapsSlot(app))) return "salle";
+    // La salle accueille jusqu'à `capacite` patients en simultané (même logique
+    // que createRendezVous côté serveur) — on ne bloque qu'une fois cette limite
+    // atteinte, pas dès le premier chevauchement.
+    const salleObj = salles.find((s: any) => s.id === salleId);
+    const capacite = salleObj?.capacite > 0 ? salleObj.capacite : 1;
+    const concurrentCount = appointments.filter((app: any) => app.salleId === salleId && overlapsSlot(app)).length;
+    if (concurrentCount >= capacite) return "salle";
     if (medecinId && appointments.some((app: any) => app.medecinId === medecinId && overlapsSlot(app))) return "medecin";
     return null;
   };
@@ -280,7 +286,7 @@ function PlanificationContent() {
           if (cancelled) return;
           setSlotError(
             reason === "salle"
-              ? `La salle "${selectedSalle}" est déjà réservée sur ce créneau. Veuillez choisir une autre date ou un autre horaire.`
+              ? `La salle "${selectedSalle}" a atteint sa capacité maximale (${selectedSalleObj?.capacite ?? 1} patient${(selectedSalleObj?.capacite ?? 1) > 1 ? "s" : ""}) sur ce créneau. Veuillez choisir une autre date, un autre horaire, ou une autre salle.`
               : reason === "medecin"
               ? "Ce médecin a déjà un rendez-vous sur ce créneau. Veuillez choisir une autre date ou un autre horaire."
               : null,
@@ -344,7 +350,7 @@ function PlanificationContent() {
       if (conflictReason) {
         setSlotError(
           conflictReason === "salle"
-            ? `La salle "${selectedSalle}" est déjà réservée sur ce créneau. Veuillez choisir une autre date ou un autre horaire.`
+            ? `La salle "${selectedSalle}" a atteint sa capacité maximale (${selectedSalleObj?.capacite ?? 1} patient${(selectedSalleObj?.capacite ?? 1) > 1 ? "s" : ""}) sur ce créneau. Veuillez choisir une autre date, un autre horaire, ou une autre salle.`
             : "Ce médecin a déjà un rendez-vous sur ce créneau. Veuillez choisir une autre date ou un autre horaire.",
         );
         setIsSubmitting(false);
