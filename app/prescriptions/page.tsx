@@ -804,10 +804,15 @@ function PrescriptionsContent() {
                                   type="button"
                                   onClick={() => openDecisionModal(primary)}
                                   title="Cliquer pour maintenir ou décaler la date prévue"
-                                  className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-primary/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                                  className="flex w-full flex-col items-start gap-0.5 rounded-lg bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
                                 >
-                                  <span className="material-symbols-outlined text-[13px] shrink-0">edit_calendar</span>
-                                  <span className="truncate">{`Décision rendue — ${primary.rendezVous?.typeAnesthesie || "?"}`}</span>
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide leading-tight">
+                                    <span className="material-symbols-outlined text-[11px] shrink-0">edit_calendar</span>
+                                    Décision rendue
+                                  </span>
+                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-tight opacity-80 pl-[15px]">
+                                    Anesthésie {primary.rendezVous?.typeAnesthesie || "?"}
+                                  </span>
                                 </button>
                               ) : (
                                 <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={STATUS_LABELS[primary.status] || primary.status}>
