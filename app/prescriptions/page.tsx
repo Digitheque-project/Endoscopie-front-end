@@ -313,6 +313,8 @@ function PrescriptionsContent() {
     if (req.originalName) params.set("patientName", String(req.originalName));
     else if (req.name) params.set("patientName", String(req.name));
     if (req.procedure) params.set("procedure", String(req.procedure));
+    if (req.prescriber) params.set("prescriber", String(req.prescriber));
+    if (req.priority) params.set("priority", String(req.priority));
     router.push(`/demande-cpa?${params.toString()}`);
   };
 

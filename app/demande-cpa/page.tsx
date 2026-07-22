@@ -2,11 +2,34 @@
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
-import StatBadge from "@/components/ui/StatBadge";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
 import { apiJson, apiUrl, createDossierCpa, updateRendezVous } from "@/lib/api";
+
+function computeAge(dateNaissance?: string | null): number | null {
+  if (!dateNaissance) return null;
+  const birth = new Date(dateNaissance);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const hasHadBirthdayThisYear =
+    now.getMonth() > birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() && now.getDate() >= birth.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age;
+}
+
+/** Traduit la priorité brute en badge d'urgence — mêmes règles/couleurs que le dossier patient. */
+function getUrgenceBadge(priorite?: string | null): { label: string; icon: string; className: string } {
+  const p = priorite?.trim().toUpperCase();
+  if (p === "STAT" || p === "URGENCE VITALE") {
+    return { label: "TRES URGENT", icon: "warning", className: "bg-red-600 text-white animate-pulse" };
+  }
+  if (p === "URGENT" || p === "URGENCE") {
+    return { label: "Urgent", icon: "priority_high", className: "bg-[#EA580C] text-white" };
+  }
+  return { label: "Normale", icon: "check_circle", className: "bg-success-container text-success" };
+}
 
 function DemandeCPAContent() {
   const router = useRouter();
@@ -16,19 +39,12 @@ function DemandeCPAContent() {
   const patientId = searchParams.get("patientId") || patientContext.patientId || "";
   const paramPatientName = searchParams.get("patientName");
   const [fetchedPatientName, setFetchedPatientName] = useState<string | null>(null);
-  const paramsDate = searchParams.get("date");
   const paramsPriority = searchParams.get("priority") || patientContext.priority || "NORMAL";
   const patientName = fetchedPatientName || paramPatientName || patientContext.patientName || "MARIE LEFEBVRE";
   const prescriber = searchParams.get("prescriber") || patientContext.prescriber || "Dr. Antoine Moreau";
-  const displayDate = paramsDate
-    ? new Date(paramsDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-    : new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  const procedureParam = searchParams.get("procedure") || patientContext.procedure || "";
   const priorityState = paramsPriority.toUpperCase();
-  const urgencyDescription = priorityState === "STAT" || priorityState === "URGENCE VITALE"
-    ? "Urgence vitale"
-    : priorityState === "URGENT"
-    ? "Urgent (24h)"
-    : "Standard (48h)";
+  const urgenceBadge = getUrgenceBadge(priorityState);
 
   const prescriptionId = searchParams.get("prescriptionId") || patientContext.prescriptionId || null;
 
@@ -37,7 +53,14 @@ function DemandeCPAContent() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const [accueilPatient, setAccueilPatient] = useState<any>(null);
+  const [prescriptionData, setPrescriptionData] = useState<any>(null);
   const [rendezVous, setRendezVous] = useState<any>(null);
+
+  const age = computeAge(accueilPatient?.dateNaissance);
+  const sexeLabel = accueilPatient?.sexe === "F" ? "Femme" : accueilPatient?.sexe === "M" ? "Homme" : null;
+  const examenDemande = procedureParam || prescriptionData?.typeExamen || "Examen non précisé";
+  const motif = prescriptionData?.motif || "Aucun motif renseigné.";
   const [showReschedule, setShowReschedule] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleHeure, setRescheduleHeure] = useState("");
@@ -86,6 +109,7 @@ function DemandeCPAContent() {
       try {
         const data = await apiJson<any>(`/api/patients/${encodeURIComponent(patientId)}`);
         if (!mounted) return;
+        setAccueilPatient(data);
         const name = `${data.nom || ''} ${data.prenom || ''}`.trim();
         if (name) {
           setFetchedPatientName(name);
@@ -107,6 +131,7 @@ function DemandeCPAContent() {
       try {
         const data = await apiJson<any>(`/api/prescriptions/${encodeURIComponent(prescriptionId)}`);
         if (!mounted) return;
+        setPrescriptionData(data);
         setRendezVous(data.rendezVous || null);
       } catch (e) {
         // ignore fetch errors
@@ -172,17 +197,22 @@ function DemandeCPAContent() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h2 className="text-lg font-black text-on-surface tracking-tight">{patientName}</h2>
-                <StatBadge />
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shrink-0 ${urgenceBadge.className}`}>
+                  <span className="material-symbols-outlined text-sm">{urgenceBadge.icon}</span>
+                  {urgenceBadge.label}
+                </span>
               </div>
               <div className="flex items-center gap-3 text-xs font-semibold text-on-surface-variant">
-                <span>Femme, 72 ans</span>
-                <span className="w-1 h-1 rounded-full bg-outline-variant"></span>
-                <span className="text-primary font-bold">Groupe A+</span>
+                <span>
+                  {[sexeLabel, age != null ? `${age} ans` : null].filter(Boolean).join(", ") || "Non renseigné"}
+                </span>
               </div>
               <div className="mt-3 flex gap-6">
                 <div>
                   <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-0.5">Poids</p>
-                  <p className="text-sm font-bold text-on-surface">64.5 kg</p>
+                  <p className="text-sm font-bold text-on-surface">
+                    {accueilPatient?.poids != null ? `${accueilPatient.poids} kg` : "Non renseigné"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -192,12 +222,11 @@ function DemandeCPAContent() {
             <div className="relative z-10 space-y-3">
               <div>
                 <p className="text-[9px] font-bold text-primary uppercase tracking-widest mb-1">Médecin Prescripteur</p>
-                <h3 className="text-sm font-bold text-on-surface">{prescriber || "Dr. Antoine Moreau"}</h3>
-                <p className="text-[11px] text-on-surface-variant font-medium">Service de Gastro-entérologie</p>
+                <h3 className="text-sm font-bold text-on-surface">{prescriber || "Non renseigné"}</h3>
               </div>
               <div className="pt-3 border-t border-secondary-container/40">
                 <p className="text-[9px] font-bold text-primary uppercase tracking-widest mb-1">Examen Demandé</p>
-                <p className="text-xs font-bold text-on-surface leading-snug">Fibroscopie Oeso-Gastro-Duodénale</p>
+                <p className="text-xs font-bold text-on-surface leading-snug">{examenDemande}</p>
               </div>
             </div>
           </div>
@@ -281,43 +310,15 @@ function DemandeCPAContent() {
                 <div>
                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-3">Motif de l'examen</p>
                   <div className="bg-white p-4 rounded-xl border border-outline-variant/10">
-                    <p className="text-sm font-medium text-on-surface leading-relaxed">Hémorragie digestive haute - Suspicion d'ulcère gastrique.</p>
+                    <p className="text-sm font-medium text-on-surface leading-relaxed">{motif}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Historique Médical</p>
-                  <ul className="space-y-3">
-                    <li className="flex items-center gap-3 text-sm font-medium text-on-surface-variant">
-                      <span className="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
-                      Hypertension chronique
-                    </li>
-                    <li className="flex items-center gap-3 text-sm font-medium text-on-surface-variant">
-                      <span className="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
-                      Traitement anticoagulant (interrompu)
-                    </li>
-                    <li className="flex items-center gap-3 text-sm font-medium text-on-surface-variant">
-                      <span className="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
-                      Anémie ferriprive
-                    </li>
-                  </ul>
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Antécédents médicaux</p>
+                  <p className="text-sm font-medium text-on-surface-variant">
+                    {accueilPatient?.antecedentsMedicaux || "Aucun antécédent renseigné."}
+                  </p>
                 </div>
-              </div>
-            </div>
-
-            <div className="bg-tertiary-fixed p-6 rounded-2xl border-l-[6px] border-tertiary shadow-sm">
-              <h4 className="font-bold text-on-tertiary-fixed mb-4 flex items-center gap-3">
-                <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  warning
-                </span>
-                Alertes Cliniques
-              </h4>
-              <div className="space-y-3">
-                <p className="text-sm font-bold text-on-tertiary-fixed leading-relaxed">
-                  Surveiller étroitement la saturation en O2.
-                </p>
-                <p className="text-sm font-bold text-on-tertiary-fixed leading-relaxed">
-                  Réaction indésirable signalée au propofol en 2019.
-                </p>
               </div>
             </div>
           </div>
