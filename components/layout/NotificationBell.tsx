@@ -40,6 +40,41 @@ function typeLabel(type: string): string {
   return TYPE_LABELS[type] ?? type.replace(/_/g, " ");
 }
 
+/**
+ * Le motif embarque parfois la ou les procédures après un tiret cadratin
+ * (ex. "Nouvelle prescription endoscopie — Coloscopie + Fibroscopie") — on les
+ * extrait pour les afficher en badges plutôt qu'en texte brut, purement pour
+ * la présentation (le texte du motif lui-même n'est pas modifié côté backend).
+ */
+function splitMotifProcedures(motif: string): { text: string; procedures: string[] } {
+  const sepIndex = motif.indexOf(" — ");
+  if (sepIndex === -1) return { text: motif, procedures: [] };
+  const text = motif.slice(0, sepIndex);
+  const procedures = motif
+    .slice(sepIndex + 3)
+    .split(" + ")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return { text, procedures };
+}
+
+function ProcedureBadges({ procedures }: { procedures: string[] }) {
+  if (procedures.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1 mt-1.5">
+      {procedures.map((proc, i) => (
+        <span
+          key={i}
+          className="inline-flex items-center gap-1 max-w-full truncate rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold text-secondary"
+        >
+          <span className="material-symbols-outlined text-[12px] shrink-0">medical_services</span>
+          <span className="truncate">{proc}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function formatTime(iso: string): string {
   try {
     return new Intl.DateTimeFormat("fr-BE", {
@@ -255,7 +290,8 @@ export function NotificationBell() {
               <p className="text-sm font-semibold text-slate-800 mt-0.5 truncate">
                 {typeLabel(toast.type)}
               </p>
-              <p className="text-sm text-slate-600 mt-1 line-clamp-2">{toast.motif}</p>
+              <p className="text-sm text-slate-600 mt-1 line-clamp-2">{splitMotifProcedures(toast.motif).text}</p>
+              <ProcedureBadges procedures={splitMotifProcedures(toast.motif).procedures} />
             </div>
             <button
               type="button"
@@ -322,7 +358,8 @@ export function NotificationBell() {
                       {formatTime(n.receivedAt)}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-0.5">{n.motif}</p>
+                  <p className="text-sm text-slate-600 mt-0.5">{splitMotifProcedures(n.motif).text}</p>
+                  <ProcedureBadges procedures={splitMotifProcedures(n.motif).procedures} />
                   {n.emitterName && (
                     <p className="text-[10px] text-slate-400 mt-1">{n.emitterName}</p>
                   )}

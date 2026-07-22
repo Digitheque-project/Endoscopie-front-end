@@ -711,7 +711,19 @@ function PrescriptionsContent() {
                         <tr key={primary.prescriptionExternalId || primary.id} className="border-t border-outline-variant/10 hover:bg-surface-container/50">
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.receivedTime}>{primary.receivedTime}</td>
                           <td className="px-4 py-2.5 font-semibold text-on-surface truncate" title={primary.name}>{primary.name}</td>
-                          <td className="px-4 py-2.5 text-on-surface-variant truncate" title={combinedProcedure}>{combinedProcedure}</td>
+                          <td className="px-4 py-2.5" title={combinedProcedure}>
+                            <div className="flex flex-wrap gap-1">
+                              {group.map((r, i) => (
+                                <span
+                                  key={i}
+                                  className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-secondary-container px-2 py-1 text-[11px] font-bold text-secondary"
+                                >
+                                  <span className="material-symbols-outlined text-[13px] shrink-0">medical_services</span>
+                                  <span className="truncate">{r.procedure}</span>
+                                </span>
+                              ))}
+                            </div>
+                          </td>
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
                           <td className="px-4 py-2.5">
                             {primary.priority === "STAT" ? (
