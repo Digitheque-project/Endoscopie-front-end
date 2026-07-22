@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState, useRef, type KeyboardEvent } from "react";
 import { usePatient } from "@/contexts/PatientContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 const STATUS_LABELS: Record<string, string> = {
   "Planifié": "En attente de décision médecin",
@@ -716,7 +717,7 @@ function PrescriptionsContent() {
                               {group.map((r, i) => (
                                 <span
                                   key={i}
-                                  className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-secondary-container px-2 py-1 text-[11px] font-bold text-secondary"
+                                  className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold ${getExamTypeBadgeClass(r.procedure)}`}
                                 >
                                   <span className="material-symbols-outlined text-[13px] shrink-0">medical_services</span>
                                   <span className="truncate">{r.procedure}</span>

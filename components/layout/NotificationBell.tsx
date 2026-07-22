@@ -12,6 +12,7 @@ import {
   subscribeNotificationStream,
   type InboxNotification,
 } from "@/lib/notification-inbox";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 const TYPE_LABELS: Record<string, string> = {
   DEMANDE_EXAMEN: "Demande examen",
@@ -65,7 +66,7 @@ function ProcedureBadges({ procedures }: { procedures: string[] }) {
       {procedures.map((proc, i) => (
         <span
           key={i}
-          className="inline-flex items-center gap-1 max-w-full truncate rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold text-secondary"
+          className={`inline-flex items-center gap-1 max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-bold ${getExamTypeBadgeClass(proc)}`}
         >
           <span className="material-symbols-outlined text-[12px] shrink-0">medical_services</span>
           <span className="truncate">{proc}</span>
