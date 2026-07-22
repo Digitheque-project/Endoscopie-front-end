@@ -5,7 +5,7 @@ import { RequireRole } from "@/components/auth/RequireRole";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
-import { apiJson, apiUrl, createDossierCpa, updateRendezVous } from "@/lib/api";
+import { apiJson, apiUrl, createDossierCpa } from "@/lib/api";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -61,12 +61,6 @@ function DemandeCPAContent() {
   const sexeLabel = accueilPatient?.sexe === "F" ? "Femme" : accueilPatient?.sexe === "M" ? "Homme" : null;
   const examenDemande = procedureParam || prescriptionData?.typeExamen || "Examen non précisé";
   const motif = prescriptionData?.motif || "Aucun motif renseigné.";
-  const [showReschedule, setShowReschedule] = useState(false);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleHeure, setRescheduleHeure] = useState("");
-  const [isRescheduling, setIsRescheduling] = useState(false);
-  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
-  const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
 
   const handleSubmit = async () => {
     if (!patientId) {
@@ -141,35 +135,6 @@ function DemandeCPAContent() {
     return () => { mounted = false; };
   }, [prescriptionId]);
 
-  const handleOpenReschedule = () => {
-    if (rendezVous?.dateHeureDebut) {
-      const d = new Date(rendezVous.dateHeureDebut);
-      const pad = (n: number) => n.toString().padStart(2, "0");
-      setRescheduleDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
-      setRescheduleHeure(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
-    }
-    setRescheduleSuccess(false);
-    setRescheduleError(null);
-    setShowReschedule(true);
-  };
-
-  const handleConfirmReschedule = async () => {
-    if (!rendezVous?.id || !rescheduleDate || !rescheduleHeure) return;
-    setIsRescheduling(true);
-    setRescheduleError(null);
-    try {
-      const newDateTime = `${rescheduleDate}T${rescheduleHeure}:00`;
-      const updated = await updateRendezVous(rendezVous.id, { dateHeureDebut: newDateTime });
-      setRendezVous((prev: any) => ({ ...prev, ...updated }));
-      setRescheduleSuccess(true);
-      setShowReschedule(false);
-    } catch (err) {
-      setRescheduleError(err instanceof Error ? err.message : "Erreur lors du décalage du rendez-vous.");
-    } finally {
-      setIsRescheduling(false);
-    }
-  };
-
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
@@ -233,67 +198,14 @@ function DemandeCPAContent() {
         </div>
 
         {rendezVous && (
-          <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-                Rendez-vous d&apos;endoscopie planifié
-              </p>
-              <p className="text-base font-bold text-on-surface">
-                {new Date(rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
-              </p>
-              <p className="text-sm text-on-surface-variant mt-0.5">{rendezVous.salle?.nom || "Salle non renseignée"}</p>
-              {rescheduleSuccess && (
-                <p className="text-sm font-semibold text-emerald-600 mt-2">Rendez-vous décalé avec succès.</p>
-              )}
-              {rescheduleError && <p className="text-sm text-error mt-2">{rescheduleError}</p>}
-            </div>
-
-            {!showReschedule ? (
-              <button
-                type="button"
-                onClick={handleOpenReschedule}
-                className="px-5 py-3 rounded-xl border-2 border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors whitespace-nowrap"
-              >
-                Décaler le rendez-vous
-              </button>
-            ) : (
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nouvelle date</label>
-                  <input
-                    type="date"
-                    value={rescheduleDate}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setRescheduleDate(e.target.value)}
-                    className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Nouvelle heure</label>
-                  <input
-                    type="time"
-                    value={rescheduleHeure}
-                    onChange={(e) => setRescheduleHeure(e.target.value)}
-                    className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowReschedule(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="button"
-                  disabled={isRescheduling}
-                  onClick={handleConfirmReschedule}
-                  className="px-5 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
-                >
-                  {isRescheduling ? "Décalage…" : "Confirmer le décalage"}
-                </button>
-              </div>
-            )}
+          <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+              Rendez-vous d&apos;endoscopie planifié
+            </p>
+            <p className="text-base font-bold text-on-surface">
+              {new Date(rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
+            </p>
+            <p className="text-sm text-on-surface-variant mt-0.5">{rendezVous.salle?.nom || "Salle non renseignée"}</p>
           </section>
         )}
 
