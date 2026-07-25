@@ -42,6 +42,29 @@ function typeLabel(type: string): string {
 }
 
 /**
+ * Fond distinct selon la provenance/nature de la notification, pour repérer
+ * d'un coup d'œil une nouvelle demande d'examen (autre service) d'un résultat
+ * d'examen (autre service) sans les confondre dans le flux.
+ */
+function getNotificationBgClass(type: string): string {
+  if (type === "DEMANDE_EXAMEN") return "bg-blue-50";
+  if (type === "RESULTAT_EXAMEN") return "bg-emerald-50";
+  return "bg-white";
+}
+
+function getNotificationBorderClass(type: string): string {
+  if (type === "DEMANDE_EXAMEN") return "border-l-4 border-l-blue-400";
+  if (type === "RESULTAT_EXAMEN") return "border-l-4 border-l-emerald-400";
+  return "border-l-4 border-l-transparent";
+}
+
+function getNotificationIconClass(type: string): string {
+  if (type === "DEMANDE_EXAMEN") return "text-blue-600";
+  if (type === "RESULTAT_EXAMEN") return "text-emerald-600";
+  return "text-primary";
+}
+
+/**
  * Le motif embarque parfois la ou les procédures après un tiret cadratin
  * (ex. "Nouvelle prescription endoscopie — Coloscopie + Fibroscopie") — on les
  * extrait pour les afficher en badges plutôt qu'en texte brut, purement pour
@@ -278,10 +301,10 @@ export function NotificationBell() {
       {toast && (
         <div
           role="alert"
-          className="fixed top-20 right-6 z-[60] w-80 rounded-xl border border-primary/30 bg-white shadow-2xl p-4 animate-in fade-in slide-in-from-top-2"
+          className={`fixed top-20 right-6 z-[60] w-80 rounded-xl border border-primary/30 shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 ${getNotificationBgClass(toast.type)} ${getNotificationBorderClass(toast.type)}`}
         >
           <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined text-primary text-xl">
+            <span className={`material-symbols-outlined text-xl ${getNotificationIconClass(toast.type)}`}>
               notifications_active
             </span>
             <div className="min-w-0 flex-1">
@@ -347,12 +370,11 @@ export function NotificationBell() {
                   key={n.id}
                   type="button"
                   onClick={() => handleOpenItem(n)}
-                  className={`w-full px-4 py-3 border-b border-slate-50 hover:bg-slate-50 text-left ${
-                    !n.readAt ? "bg-primary/5" : ""
-                  }`}
+                  className={`w-full px-4 py-3 border-b border-slate-50 hover:brightness-95 text-left transition-[filter] ${getNotificationBgClass(n.type)} ${getNotificationBorderClass(n.type)}`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold text-slate-700">
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      {!n.readAt && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-hidden />}
                       {typeLabel(n.type)}
                     </p>
                     <span className="text-[10px] text-slate-400 shrink-0">

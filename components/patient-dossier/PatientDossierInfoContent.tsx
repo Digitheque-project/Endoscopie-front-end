@@ -38,6 +38,8 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
   const [examensComplementaires, setExamensComplementaires] = useState("");
   const [isSavingExamens, setIsSavingExamens] = useState(false);
   const [saveExamensStatus, setSaveExamensStatus] = useState<"idle" | "success" | "error">("idle");
+  const [resultatsExternes, setResultatsExternes] = useState<any[] | null>(null);
+  const [isResultatsExternesLoading, setIsResultatsExternesLoading] = useState(false);
   const [notes, setNotes] = useState<any[] | null>(null);
   const [isNotesLoading, setIsNotesLoading] = useState(false);
   const [newNote, setNewNote] = useState("");
@@ -94,6 +96,15 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
         setTraceability({ available: false, suivis: [], diagnostics: [] });
       })
       .finally(() => setIsTraceabilityLoading(false));
+
+    setIsResultatsExternesLoading(true);
+    apiJson<any[]>(`/api/resultats-externes?patientId=${encodeURIComponent(prescription.patientId)}`)
+      .then((data) => setResultatsExternes(Array.isArray(data) ? data : []))
+      .catch((e) => {
+        console.error("Erreur chargement des résultats externes :", e);
+        setResultatsExternes([]);
+      })
+      .finally(() => setIsResultatsExternesLoading(false));
   }, [prescription?.patientId]);
 
   useEffect(() => {
@@ -335,6 +346,47 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
               </div>
             )}
           </div>
+        )}
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+            Résultats d&apos;examens (autres services)
+          </p>
+          {resultatsExternes && resultatsExternes.length > 0 && (
+            <span className="text-[10px] font-bold text-on-surface-variant">
+              {resultatsExternes.length} résultat{resultatsExternes.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
+        {isResultatsExternesLoading ? (
+          <p className="text-xs text-on-surface-variant">Chargement des résultats…</p>
+        ) : !resultatsExternes || resultatsExternes.length === 0 ? (
+          <p className="text-[11px] text-on-surface-variant">
+            Aucun résultat reçu pour l&apos;instant — dès qu&apos;un autre service (laboratoire, imagerie...)
+            transmet un résultat d&apos;examen pour ce patient, il apparaîtra automatiquement ici.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {resultatsExternes.map((r) => (
+              <li key={r.id} className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-on-surface truncate">
+                    {r.typeExamen || "Résultat d'examen"}
+                  </p>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 shrink-0">
+                    {new Date(r.receivedAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-on-surface-variant">{r.motif}</p>
+                {r.sourceService && (
+                  <p className="mt-1 text-[10px] font-semibold text-emerald-700">Source : {r.sourceService}</p>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
