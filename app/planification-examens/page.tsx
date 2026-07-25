@@ -90,6 +90,21 @@ function PlanificationContent() {
 
   const buildDateTime = (date: string, time: string) => new Date(`${date}T${time}`);
 
+  /**
+   * Les dates de rendez-vous sont enregistrées "naïves" (sans fuseau horaire, voir
+   * toNaiveISO ci-dessous et parseDateTimeAsUtc côté backend) : les composants UTC
+   * d'un ISO renvoyé par l'API correspondent donc directement aux valeurs saisies par
+   * l'utilisateur, sans conversion de fuseau horaire local.
+   */
+  const fromNaiveIso = (iso: string) => {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return {
+      date: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`,
+      time: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`,
+    };
+  };
+
   // Validation de la date et des heures
   useEffect(() => {
     const start = buildDateTime(date, heureDebut);
@@ -165,6 +180,22 @@ function PlanificationContent() {
     };
     fetchSalles();
   }, [medecinId, prescriptionId]);
+
+  // Examen d'un groupe multi-examens déjà planifié : dès que ses détails sont chargés,
+  // on réaffiche la date/heure/salle qui avaient été saisies et confirmées, au lieu du
+  // formulaire vierge réinitialisé par switchActiveExam — pratique si l'utilisateur
+  // revient sur cet examen après avoir enchaîné sur le suivant et ne se souvient plus
+  // du créneau qu'il lui avait donné.
+  useEffect(() => {
+    const rdv = prescriptionData?.rendezVous;
+    if (!prescriptionData || prescriptionData.id !== prescriptionId || !rdv?.dateHeureDebut) return;
+    const debut = fromNaiveIso(rdv.dateHeureDebut);
+    setDate(debut.date);
+    setHeureDebut(debut.time);
+    if (rdv.dateHeureFin) setHeureFin(fromNaiveIso(rdv.dateHeureFin).time);
+    if (rdv.salleId) setSelectedSalleId(rdv.salleId);
+    if (rdv.notesCliniques) setObservations(rdv.notesCliniques);
+  }, [prescriptionData, prescriptionId]);
 
   const priorityIndicator = useMemo(() => {
     const rawPriority = (prescriptionData?.priorite || searchParams.get("priority") || patientContext.priority || "NORMAL").toUpperCase();
