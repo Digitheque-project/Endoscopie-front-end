@@ -217,7 +217,7 @@ function PlanificationContent() {
   }, [salles, selectedSalleId]);
 
   /** Délai maximal pour la vérification de disponibilité — au-delà, on ne reste jamais bloqué en chargement infini. */
-  const SLOT_CHECK_TIMEOUT_MS = 15000;
+  const SLOT_CHECK_TIMEOUT_MS = 20000;
 
   /**
    * Vérifie à la fois la disponibilité de la salle ET du médecin sur le créneau —
@@ -226,7 +226,10 @@ function PlanificationContent() {
    * finale au lieu d'apparaître en direct comme pour la salle.
    */
   const checkConflicts = async (newStart: Date, newEnd: Date, salleId: string): Promise<"salle" | "medecin" | null> => {
-    const appointments = await apiJson<any[]>('/api/rendezvous', {
+    // Le créneau à planifier tient toujours sur une seule journée : on ne récupère que
+    // les rendez-vous de ce jour-là (au lieu de la table entière, qui grossit avec le
+    // temps) pour que cette vérification reste rapide même quand la base est sollicitée.
+    const appointments = await apiJson<any[]>(`/api/rendezvous/jour/${date}`, {
       signal: AbortSignal.timeout(SLOT_CHECK_TIMEOUT_MS),
     });
     const overlapsSlot = (app: any) => {
