@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson, updateRendezVous } from "@/lib/api";
@@ -22,11 +22,6 @@ function PlanificationExamenContent() {
   const router = useRouter();
   const params = useParams<{ prescriptionId: string }>();
   const prescriptionId = params.prescriptionId;
-  const searchParams = useSearchParams();
-  const tab = searchParams.get("tab");
-  const from = searchParams.get("from");
-  const returnUrl = from === "dashboard" ? "/" : tab ? `/prescriptions?tab=${tab}` : "/prescriptions";
-
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -208,14 +203,6 @@ function PlanificationExamenContent() {
               )}
             </>
           )}
-
-          <a
-            href={returnUrl}
-            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
-          >
-            <span className="material-symbols-outlined text-lg">arrow_back</span>
-            <span className="font-semibold">{from === "dashboard" ? "Retour au tableau de bord" : "Retour à la liste"}</span>
-          </a>
         </RequireRole>
       </div>
     </AppShell>
