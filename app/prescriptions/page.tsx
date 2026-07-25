@@ -759,15 +759,35 @@ function PrescriptionsContent() {
                           <td className="px-4 py-2.5 font-semibold text-on-surface truncate" title={primary.name}>{primary.name}</td>
                           <td className="px-4 py-2.5" title={combinedProcedure}>
                             <div className="flex flex-wrap gap-1">
-                              {group.map((r, i) => (
-                                <span
-                                  key={i}
-                                  className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold ${getExamTypeBadgeClass(r.procedure)}`}
-                                >
-                                  <span className="material-symbols-outlined text-[13px] shrink-0">medical_services</span>
-                                  <span className="truncate">{r.procedure}</span>
-                                </span>
-                              ))}
+                              {group.map((r, i) => {
+                                const badgeClass = `inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold ${getExamTypeBadgeClass(r.procedure)}`;
+                                // Examen déjà planifié dans ce groupe multi-examens : cliquable pour
+                                // retrouver immédiatement la date/heure enregistrée (ex. si l'utilisateur
+                                // a oublié le créneau donné pour ce premier examen).
+                                if (r.status !== "A planifier") {
+                                  const rdvLabel = r.rendezVous?.dateHeureDebut
+                                    ? `Planifié le ${new Date(r.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}${r.rendezVous.salle?.nom ? ` — ${r.rendezVous.salle.nom}` : ""}`
+                                    : STATUS_LABELS[r.status] || r.status;
+                                  return (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      onClick={() => handleDetail(r.id)}
+                                      title={`${r.procedure} — ${rdvLabel}`}
+                                      className={`${badgeClass} hover:brightness-95 hover:ring-2 hover:ring-offset-1 cursor-pointer transition-all`}
+                                    >
+                                      <span className="material-symbols-outlined text-[13px] shrink-0">event_available</span>
+                                      <span className="truncate">{r.procedure}</span>
+                                    </button>
+                                  );
+                                }
+                                return (
+                                  <span key={i} className={badgeClass}>
+                                    <span className="material-symbols-outlined text-[13px] shrink-0">medical_services</span>
+                                    <span className="truncate">{r.procedure}</span>
+                                  </span>
+                                );
+                              })}
                             </div>
                           </td>
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
