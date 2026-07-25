@@ -91,20 +91,31 @@ function PlanificationExamenContent() {
             </div>
           ) : (
             <>
-              <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-0.5">Patient</p>
-                <h2 className="font-headline text-lg font-extrabold tracking-tight">
-                  {prescription.patient ? `${prescription.patient.nom} ${prescription.patient.prenom}` : "Patient inconnu"}
-                </h2>
-                <p className="text-xs text-on-surface-variant mt-0.5">
-                  {(() => {
-                    const age = computeAge(prescription.patient?.dateNaissance);
-                    return age != null ? `${age} ans` : null;
-                  })()}
-                </p>
-                <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-secondary-container text-secondary text-[10px] font-bold uppercase tracking-wider">
-                  {prescription.typeExamen}
-                </span>
+              <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-0.5">Patient</p>
+                  <h2 className="font-headline text-lg font-extrabold tracking-tight">
+                    {prescription.patient ? `${prescription.patient.nom} ${prescription.patient.prenom}` : "Patient inconnu"}
+                  </h2>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    {(() => {
+                      const age = computeAge(prescription.patient?.dateNaissance);
+                      return age != null ? `${age} ans` : null;
+                    })()}
+                  </p>
+                  <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-secondary-container text-secondary text-[10px] font-bold uppercase tracking-wider">
+                    {prescription.typeExamen}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/patient-dossier/${encodeURIComponent(prescriptionId)}/informations`)}
+                  title="Voir le dossier patient complet"
+                  aria-label="Voir le dossier patient complet"
+                  className="flex items-center justify-center w-11 h-11 rounded-xl border border-outline-variant/20 text-primary hover:bg-primary/10 transition-colors shrink-0"
+                >
+                  <span className="material-symbols-outlined text-2xl">contact_page</span>
+                </button>
               </section>
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -138,7 +149,11 @@ function PlanificationExamenContent() {
                       </div>
                       <div>
                         <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Salle</h4>
-                        <p className="text-sm text-on-surface-variant">{prescription.rendezVous.salle?.nom || "Non renseignée"}</p>
+                        <p className="text-sm text-on-surface-variant">
+                          {prescription.rendezVous.salle
+                            ? `${prescription.rendezVous.salle.nom}${prescription.rendezVous.salle.numero ? ` (${prescription.rendezVous.salle.numero})` : ""}`
+                            : "Non renseignée"}
+                        </p>
                       </div>
                     </div>
                   ) : (
