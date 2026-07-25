@@ -484,6 +484,14 @@ function PlanificationContent() {
 
   return (
     <div className={PAGE_CONTENT_CLASS}>
+      {/* Back Button */}
+      <a href={returnUrl} className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
+        <span className="material-symbols-outlined text-lg">arrow_back</span>
+        <span className="font-semibold">
+          {from === "agenda" ? "Retour à l'agenda" : from === "patient-dossier" ? "Retour au dossier patient" : "Retour au fil de prescription"}
+        </span>
+      </a>
+
       {/* Patient Header */}
       {!patientId && (
         <div className="mt-4 p-4 rounded-lg border border-error/20 bg-error-container/10 text-error text-sm">
