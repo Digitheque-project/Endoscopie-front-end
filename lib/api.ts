@@ -153,6 +153,18 @@ export async function updateRendezVous(
   return resp.json();
 }
 
+/**
+ * Statuts transitoires typiques d'un service Render en train de se réveiller après
+ * hibernation (plan gratuit) : 429 "hibernate-rate-limited" quand plusieurs requêtes
+ * arrivent pendant le réveil, ou 502/503 le temps que le process démarre.
+ */
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+const RETRY_DELAYS_MS = [1500, 3000, 5000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /** Appel fetch vers l'API clinique avec serviceId (query + corps JSON). */
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method ?? 'GET').toUpperCase();
@@ -173,11 +185,28 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
     }
   }
 
-  return fetch(url, {
-    ...init,
-    body,
-    headers: { ...currentRoleHeaders(), ...init?.headers },
-  });
+  const doFetch = () =>
+    fetch(url, {
+      ...init,
+      body,
+      headers: { ...currentRoleHeaders(), ...init?.headers },
+    });
+
+  // Retry uniquement pour les requêtes de lecture (GET/HEAD) : elles sont sans
+  // effet de bord, donc rejouables sans risque en cas de réveil Render (voir
+  // RETRYABLE_STATUSES). Les POST/PATCH/DELETE remontent l'erreur immédiatement.
+  if (method !== 'GET' && method !== 'HEAD') {
+    return doFetch();
+  }
+
+  let lastResponse: Response;
+  for (let attempt = 0; ; attempt++) {
+    lastResponse = await doFetch();
+    if (!RETRYABLE_STATUSES.has(lastResponse.status) || attempt >= RETRY_DELAYS_MS.length) {
+      return lastResponse;
+    }
+    await sleep(RETRY_DELAYS_MS[attempt]);
+  }
 }
 
 export async function apiJson<T = unknown>(path: string, init?: RequestInit): Promise<T> {
