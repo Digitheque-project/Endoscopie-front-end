@@ -1,0 +1,42 @@
+# Blueprint Render — déploiement du frontend Next.js
+# https://render.com/docs/blueprint-spec
+#
+# Note : si ce service a été créé manuellement sur Render (hors Blueprint), les
+# variables ci-dessous doivent être renseignées à la main dans Dashboard →
+# endoscopie-front → Environment. Ce fichier sert alors de référence documentée
+# plutôt que d'être appliqué automatiquement.
+services:
+  - type: web
+    name: endoscopie-front
+    runtime: node
+    rootDir: endoscopie-front
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      # URL publique du backend NestJS — utilisée par le proxy Next.js (rewrites
+      # dans next.config.ts) pour router /api/* côté serveur. Sans cette variable,
+      # le proxy retombe sur http://127.0.0.1:3333 (inexistant sur Render) et
+      # tous les appels /api/* échouent avec "Impossible de contacter le serveur".
+      - key: BACKEND_URL
+        value: https://endoscopie-api.onrender.com
+      - key: NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID
+        value: ab97eaaa-9239-4f37-b5d7-d652c4231cc7
+      - key: NEXT_PUBLIC_ENDOSCOPIE_CHU_ID
+        value: 72d49761-2a65-446d-b025-15a74cac1ad4
+      - key: NEXT_PUBLIC_CHU_API_URL
+        value: https://service-chu-back-production-d6a8.up.railway.app
+      - key: NEXT_PUBLIC_ACCUEIL_API_URL
+        value: https://acceuil-back.onrender.com
+      - key: NEXT_PUBLIC_NOTIFICATION_API_URL
+        value: https://notification-back-xrl2.onrender.com
+      - key: NEXT_PUBLIC_AUTH_GATEWAY_URL
+        value: https://gateway-a33f.onrender.com
+      - key: NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID
+        value: ab97eaaa-9239-4f37-b5d7-d652c4231cc7
+      - key: NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL
+        value: https://auth-client-dun.vercel.app/login
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+    healthCheckPath: /
