@@ -7,10 +7,20 @@ import { useAuth } from "@/contexts/AuthContext";
 const PUBLIC_PATHS = new Set(["/connexion"]);
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { role, isLoaded, loginWithToken } = useAuth();
+  const { role, isLoaded, loginWithToken, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [isProcessingToken, setIsProcessingToken] = useState(false);
+
+  // Force logout on app startup - require fresh login every session
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasStartup = sessionStorage.getItem("auth_startup_check");
+    if (!hasStartup) {
+      logout();
+      sessionStorage.setItem("auth_startup_check", "true");
+    }
+  }, []);
 
   // Jeton reçu depuis le portail d'authentification central (redirection SSO,
   // ex. https://auth-client-dun.vercel.app) : on l'échange contre une session
