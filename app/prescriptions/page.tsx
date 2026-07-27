@@ -2,7 +2,7 @@
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
-import { apiJson, updateRendezVous } from "@/lib/api";
+import { apiJson, updateRendezVous, verifierStatutCpa } from "@/lib/api";
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import TreatButton from "@/components/navigation/TreatButton";
@@ -307,6 +307,31 @@ function PrescriptionsContent() {
     }
   };
 
+  // Filet de sécurité : si le webhook de retour du Bloc Opératoire (CPA_RESULTAT)
+  // n'est jamais arrivé, le major peut forcer une vérification manuelle du statut.
+  const [verifyingCpaId, setVerifyingCpaId] = useState<string | null>(null);
+  const [verifyCpaError, setVerifyCpaError] = useState<string | null>(null);
+
+  const handleVerifierStatutCpa = async (req: any) => {
+    const dossierId = req.dossierCPA?.id;
+    if (!dossierId) return;
+    setVerifyingCpaId(req.id);
+    setVerifyCpaError(null);
+    try {
+      const result = await verifierStatutCpa(dossierId);
+      if (result.blocSync === "en_attente") {
+        setVerifyCpaError("Le Bloc Opératoire n'a pas encore rendu de décision pour cette CPA.");
+      } else if (result.blocSync === "erreur_bloc" || result.blocSync === "erreur_reseau") {
+        setVerifyCpaError("Impossible de contacter le Bloc Opératoire pour le moment. Réessayez plus tard.");
+      }
+      await fetchPrescriptions();
+    } catch (err) {
+      setVerifyCpaError(err instanceof Error ? err.message : "Erreur lors de la vérification du statut CPA.");
+    } finally {
+      setVerifyingCpaId(null);
+    }
+  };
+
   // Petite interface "Maintenir la date prévue / Décaler la date" ouverte en cliquant
   // sur le statut "Décision rendue" — permet au major de confirmer ou de replanifier
   // le rendez-vous déjà fixé avant de poursuivre le parcours (CPA, confirmation...).
@@ -453,8 +478,25 @@ function PrescriptionsContent() {
             Détails
           </button>
         </>
+      ) : req.status === "CPA demandée" && req.dossierCPA?.id ? (
+        <>
+          <button
+            disabled={verifyingCpaId === req.id}
+            onClick={() => handleVerifierStatutCpa(req)}
+            title="Interroger le Bloc Opératoire (filet de sécurité si la notification automatique n'est pas arrivée)"
+            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-surface-container-high disabled:opacity-50"
+          >
+            {verifyingCpaId === req.id ? "Vérification…" : "Vérifier statut CPA"}
+          </button>
+          <button
+            onClick={() => handleDetail(req.id)}
+            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+          >
+            Détails
+          </button>
+        </>
       ) : (
-        // Planifié / Confirmé / CPA demandée : déjà pris en charge,
+        // Planifié / Confirmé : déjà pris en charge,
         // le patient reste visible mais sans action de planification.
         <button
           onClick={() => handleDetail(req.id)}
@@ -678,6 +720,12 @@ function PrescriptionsContent() {
               {confirmError && (
                 <div className="rounded-xl border border-error/20 bg-error-container/10 px-4 py-2.5 text-sm text-error">
                   {confirmError}
+                </div>
+              )}
+
+              {verifyCpaError && (
+                <div className="rounded-xl border border-error/20 bg-error-container/10 px-4 py-2.5 text-sm text-error">
+                  {verifyCpaError}
                 </div>
               )}
 

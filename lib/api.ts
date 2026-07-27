@@ -96,6 +96,18 @@ export async function createDossierCpa(
   return resp.json();
 }
 
+/**
+ * Vérifie manuellement auprès du Bloc Opératoire le statut d'une demande CPA
+ * (GET /api/dossiers-cpa/:id/verifier-statut). Filet de sécurité si le webhook de
+ * callback (CPA_RESULTAT/VPA_REALISEE) n'est jamais arrivé — voir app.service.ts
+ * côté backend.
+ */
+export async function verifierStatutCpa(dossierId: string) {
+  return apiJson<{ blocSync: string; decisionCpa?: string | null; statut?: string }>(
+    `/api/dossiers-cpa/${encodeURIComponent(dossierId)}/verifier-statut`,
+  );
+}
+
 /** Lit le rôle simulé courant (voir contexts/AuthContext.tsx) pour l'envoyer au backend. */
 function currentRoleHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {};
