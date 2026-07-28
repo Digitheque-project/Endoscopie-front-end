@@ -200,7 +200,7 @@ function ChecklistAvantContent() {
 
           <section className="bg-white rounded-xl shadow-sm border border-slate-100 p-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 pl-3 border-l-4 border-l-blue-300">
                 <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-[18px] text-on-primary-fixed-variant">person</span>
                 </div>
@@ -209,7 +209,7 @@ function ChecklistAvantContent() {
                   <h2 className="font-headline text-base text-blue-900">{patientName}</h2>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 pl-3 border-l-4 border-l-slate-200">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Procédure</p>
                     <p className="text-sm font-semibold text-slate-800">{procedure}</p>
@@ -220,7 +220,7 @@ function ChecklistAvantContent() {
                   <p className="text-sm text-slate-800">Gastro-entérologie - Salle1</p>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 pl-3 border-l-4 border-l-violet-200">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Equipe</p>
                   <div className="flex flex-col gap-1 text-sm text-slate-800">
@@ -234,15 +234,33 @@ function ChecklistAvantContent() {
           </section>
 
           <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold">1</span>
-              <h3 className="font-headline text-xl text-blue-900">1. AVANT L'ENDOSCOPIE</h3>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold">1</span>
+                <h3 className="font-headline text-xl text-blue-900">1. AVANT L'ENDOSCOPIE</h3>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
+                <span className="material-symbols-outlined text-sm">checklist</span>
+                {Object.keys(answers).filter((k) => answers[k]).length} / {checklistItems.length} complétés
+              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {checklistItems.map((item) => (
-                <div key={item.title} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-                  <div className="flex items-start gap-3 mb-2">
+              {checklistItems.map((item) => {
+                const isAnswered = !!answers[item.title];
+                const borderAccent = item.danger
+                  ? "border-l-red-300"
+                  : item.primary
+                  ? "border-l-blue-300"
+                  : "border-l-slate-200";
+                return (
+                <div key={item.title} className={`relative bg-white p-4 rounded-xl border border-slate-100 border-l-4 ${borderAccent} shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow`}>
+                  {isAnswered && (
+                    <span className="absolute top-2.5 right-2.5 flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600" title="Renseigné">
+                      <span className="material-symbols-outlined text-[14px]">check</span>
+                    </span>
+                  )}
+                  <div className="flex items-start gap-3 mb-2 pr-6">
                     <span className={`material-symbols-outlined ${item.danger ? "text-error" : "text-blue-700"}`}>{item.icon}</span>
                     <span className="text-sm font-medium text-slate-800">{item.title}</span>
                   </div>
@@ -276,7 +294,8 @@ function ChecklistAvantContent() {
                     })}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         </div>

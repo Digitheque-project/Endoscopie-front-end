@@ -154,7 +154,7 @@ function ChecklistApresContent() {
     <div className="bg-surface text-on-surface pb-24">
       <div className="flex justify-center pt-8 px-4">
         <div className="max-w-[56rem] w-full space-y-5">
-          <section className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+          <section className="bg-white rounded-xl p-5 border border-slate-200 border-l-4 border-l-blue-300 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 bg-primary-fixed rounded-xl flex items-center justify-center text-blue-900">
                 <span className="material-symbols-outlined text-3xl">person</span>
@@ -172,13 +172,25 @@ function ChecklistApresContent() {
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-slate-200" />
             <h2 className="font-headline text-blue-900 text-xl text-center px-4">2. APRÈS L'ENDOSCOPIE</h2>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold whitespace-nowrap">
+              <span className="material-symbols-outlined text-sm">checklist</span>
+              {Object.keys(answers).filter((k) => answers[k]).length} / {checklistItems.length} complétés
+            </span>
             <div className="h-px flex-1 bg-slate-200" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {checklistItems.map((item, index) => (
-              <div key={item.title} className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-5">
-                <div className="flex items-start gap-4">
+            {checklistItems.map((item, index) => {
+              const isAnswered = !!answers[item.title];
+              const borderAccent = index === 0 ? "border-l-amber-300" : "border-l-indigo-300";
+              return (
+              <div key={item.title} className={`relative bg-white rounded-xl p-5 border border-slate-200 border-l-4 ${borderAccent} shadow-sm space-y-5`}>
+                {isAnswered && (
+                  <span className="absolute top-3 right-3 flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600" title="Renseigné">
+                    <span className="material-symbols-outlined text-[14px]">check</span>
+                  </span>
+                )}
+                <div className="flex items-start gap-4 pr-6">
                   <div className="p-2 bg-secondary-container rounded-lg">
                     <span className="material-symbols-outlined text-on-secondary-fixed-variant">{item.icon}</span>
                   </div>
@@ -206,9 +218,10 @@ function ChecklistApresContent() {
                   })}
                 </div>
               </div>
-            ))}
+              );
+            })}
 
-            <div className="md:col-span-2 bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+            <div className="md:col-span-2 bg-white rounded-xl p-5 border border-slate-200 border-l-4 border-l-slate-300 shadow-sm space-y-4">
               <div className="flex items-center gap-4">
                 <div className="p-2 bg-surface-container-low rounded-lg">
                   <span className="material-symbols-outlined text-slate-600">rate_review</span>
