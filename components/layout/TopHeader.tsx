@@ -50,7 +50,7 @@ const ROLE_LABELS: Record<string, string> = {
   MEDECIN: "Médecin",
 };
 
-export function TopHeader() {
+export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { role, medecinName, logout, otherServices, accessToken } = useAuth();
@@ -129,6 +129,14 @@ export function TopHeader() {
   return (
     <header className="sticky top-0 lg:fixed lg:left-64 right-0 z-40 h-16 px-4 lg:px-8 flex items-center justify-between border-b border-outline-variant/30 bg-background/80 backdrop-blur-xl">
       <div className="flex items-center gap-4 min-w-0">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Ouvrir le menu"
+          className="lg:hidden shrink-0 w-10 h-10 rounded-lg text-on-surface-variant hover:bg-slate-100 flex items-center justify-center"
+        >
+          <span className="material-symbols-outlined">menu</span>
+        </button>
         <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white shrink-0">
           <span className="material-symbols-outlined">{header.icon}</span>
         </div>
@@ -266,7 +274,7 @@ export function TopHeader() {
 
         <LiveClock />
 
-        <div className="hidden sm:flex items-center gap-3 pl-3 lg:pl-4 border-l border-outline-variant/30">
+        <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 lg:pl-4 border-l border-outline-variant/30">
           <div className="text-right hidden lg:block">
             <p className="text-xs font-bold text-on-surface">
               {role === "MEDECIN" ? `Dr. ${medecinName}` : ROLE_LABELS[role ?? ""] || "—"}

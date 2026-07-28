@@ -110,8 +110,77 @@ export function JCalendar({
 
   const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
+  // Vue liste mobile (< md) : la page parente filtre déjà `appointments` selon le
+  // viewMode/currentDate courant (jour/semaine/mois) — on affiche simplement cette même
+  // liste, triée chronologiquement, plutôt que la grille (illisible sous ~768px).
+  const sortedForMobile = useMemo(
+    () =>
+      [...appointments].sort(
+        (a, b) => (a.date || "").localeCompare(b.date || "") || a.heureDebut.localeCompare(b.heureDebut),
+      ),
+    [appointments],
+  );
+
+  const mobileStatutClass = (statut: string) => {
+    const s = statut.toUpperCase();
+    if (s === "URGENT" || s === "PRIORITÉ") return "border-l-tertiary bg-tertiary-fixed/30";
+    if (s === "CONFIRMÉ") return "border-l-primary bg-primary/5";
+    return "border-l-outline-variant/40 bg-white";
+  };
+
   return (
     <div className="w-full bg-white rounded-2xl shadow-sm border border-outline-variant/10 overflow-hidden transition-all duration-500">
+      {/* Vue mobile — liste, remplace la grille sous md */}
+      <div className="md:hidden divide-y divide-outline-variant/10">
+        {sortedForMobile.length === 0 ? (
+          <p className="p-6 text-center text-sm text-on-surface-variant">Aucun rendez-vous sur cette période.</p>
+        ) : (
+          sortedForMobile.map((app) => (
+            <button
+              key={app.id}
+              type="button"
+              onClick={() => onAppointmentClick?.(app)}
+              className={`w-full text-left p-4 border-l-4 flex items-start gap-3 hover:bg-surface-container-low/60 transition-colors ${mobileStatutClass(app.statut)}`}
+            >
+              <div className="w-11 h-11 shrink-0 rounded-xl bg-surface-container flex flex-col items-center justify-center text-primary">
+                <span className="text-[11px] font-black leading-none tabular-nums">{app.heureDebut}</span>
+                <span className="text-[8px] font-bold text-on-surface-variant leading-none mt-0.5">{app.heureFin}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-extrabold text-on-surface truncate">{app.patient}</p>
+                  <span
+                    className={`shrink-0 whitespace-nowrap text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
+                      app.statut.toUpperCase() === "URGENT"
+                        ? "bg-tertiary text-white"
+                        : app.statut.toUpperCase() === "CONFIRMÉ"
+                        ? "bg-primary text-white"
+                        : "bg-surface-container-highest text-on-surface-variant"
+                    }`}
+                  >
+                    {app.statut}
+                  </span>
+                </div>
+                <p className="text-xs text-on-surface-variant truncate mt-0.5">{app.typeExamen}</p>
+                <div className="flex items-center justify-between gap-2 mt-1.5 text-[10px] font-bold text-on-surface-variant">
+                  <span className="flex items-center gap-1 min-w-0 truncate">
+                    <span className="material-symbols-outlined text-[13px] shrink-0">medical_information</span>
+                    <span className="truncate">{app.medecin}</span>
+                  </span>
+                  {app.date && (
+                    <span className="shrink-0 tabular-nums">
+                      {new Date(app.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+
+      {/* Vue desktop — grilles jour/semaine/mois, inchangées, à partir de md */}
+      <div className="hidden md:block">
       {viewMode === "day" && (
         <div className="flex flex-col">
           {/* Day Header */}
@@ -308,6 +377,7 @@ export function JCalendar({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

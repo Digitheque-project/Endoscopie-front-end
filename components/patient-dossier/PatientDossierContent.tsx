@@ -180,7 +180,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
 
   return (
     <>
-      <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 flex items-center justify-between gap-5">
+      <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex items-center gap-5 min-w-0">
           <div className="w-16 h-16 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
             <span className="material-symbols-outlined text-3xl">person</span>

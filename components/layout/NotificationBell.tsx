@@ -320,7 +320,7 @@ export function NotificationBell() {
       {toast && (
         <div
           role="alert"
-          className={`fixed top-20 right-6 z-[60] w-80 rounded-xl border border-primary/30 shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 ${getNotificationBgClass(toast.type)} ${getNotificationBorderClass(toast.type)}`}
+          className={`fixed top-20 right-4 sm:right-6 z-[60] w-[calc(100vw-2rem)] max-w-80 rounded-xl border border-primary/30 shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 ${getNotificationBgClass(toast.type)} ${getNotificationBorderClass(toast.type)}`}
         >
           <div className="flex items-start gap-3">
             <span className={`material-symbols-outlined text-xl ${getNotificationIconClass(toast.type)}`}>
@@ -368,7 +368,7 @@ export function NotificationBell() {
         </button>
 
         {open && (
-          <div ref={panelRef} className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl z-50">
+          <div ref={panelRef} className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-80 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl z-50">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <p className="text-sm font-bold text-slate-800">Notifications Endoscopie</p>
               <button

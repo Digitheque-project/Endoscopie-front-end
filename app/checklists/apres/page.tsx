@@ -241,7 +241,7 @@ function ChecklistApresContent() {
         </div>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
+      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
         <div className="max-w-[896px] mx-auto flex items-center justify-end">
 
           <button

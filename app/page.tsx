@@ -412,8 +412,8 @@ export default function Home() {
             </div>
 
             <div className="bg-surface-container-lowest rounded-2xl shadow-sm overflow-visible">
-              <div className="relative overflow-visible">
-                <table className="w-full text-left border-collapse">
+              <div className="relative overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[720px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-low/95 backdrop-blur-sm shadow-sm">
                   <tr className="bg-surface-container-low/50">
                     <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
@@ -631,7 +631,7 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Numéro *</label>
                     <input

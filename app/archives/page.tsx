@@ -118,7 +118,7 @@ export default function ArchivesPage() {
             </button>
           </div>
 
-          <form onSubmit={handleSearch} className="flex flex-nowrap items-end gap-2 mb-6 overflow-x-auto">
+          <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-2 mb-6">
             <div className="flex flex-col gap-1.5 shrink-0">
               <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Patient</label>
               <input

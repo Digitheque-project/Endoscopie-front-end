@@ -9,8 +9,8 @@ export default function ServiceSourcesLayout({
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">🔔 Services Sources</h1>
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+            <h1 className="text-xl sm:text-2xl font-bold">🔔 Services Sources</h1>
             <Link href="/admin" className="text-gray-600 hover:text-gray-900">
               ← Retour Admin
             </Link>

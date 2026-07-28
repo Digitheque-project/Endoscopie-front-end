@@ -135,7 +135,7 @@ export default function ResultatPublicPage() {
 
         {/* Patient & Prescription Info */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <h3 className="text-sm font-semibold text-gray-500 uppercase">
                 Type d'examen
