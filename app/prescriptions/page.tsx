@@ -3,6 +3,7 @@
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiJson, updateRendezVous, verifierStatutCpa } from "@/lib/api";
+import toast from "react-hot-toast";
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import TreatButton from "@/components/navigation/TreatButton";
@@ -11,6 +12,7 @@ import { Suspense, useEffect, useMemo, useState, useRef, type KeyboardEvent } fr
 import { usePatient } from "@/contexts/PatientContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
 
 const STATUS_LABELS: Record<string, string> = {
   "Planifié": "En attente de décision médecin",
@@ -179,6 +181,7 @@ function PrescriptionsContent() {
           rendezVous: p.rendezVous || null,
           checklistApresValide: !!p.checklistApres?.estValide,
           dossierCPA: p.dossierCPA || null,
+          priseEnChargeId: p.patient?.priseEnChargeId || null,
         };
       });
 
@@ -312,24 +315,27 @@ function PrescriptionsContent() {
 
   // Filet de sécurité : si le webhook de retour du Bloc Opératoire (CPA_RESULTAT)
   // n'est jamais arrivé, le major peut forcer une vérification manuelle du statut.
+  // Le retour se fait en toast (bas d'écran) plutôt qu'en bandeau en haut de page,
+  // pour rester visible sans avoir à remonter en scroll dans une liste potentiellement
+  // longue.
   const [verifyingCpaId, setVerifyingCpaId] = useState<string | null>(null);
-  const [verifyCpaError, setVerifyCpaError] = useState<string | null>(null);
 
   const handleVerifierStatutCpa = async (req: any) => {
     const dossierId = req.dossierCPA?.id;
     if (!dossierId) return;
     setVerifyingCpaId(req.id);
-    setVerifyCpaError(null);
     try {
       const result = await verifierStatutCpa(dossierId);
       if (result.blocSync === "en_attente") {
-        setVerifyCpaError("Le Bloc Opératoire n'a pas encore rendu de décision pour cette CPA.");
+        toast("Le Bloc Opératoire n'a pas encore rendu de décision pour cette CPA.", { icon: "⏳" });
       } else if (result.blocSync === "erreur_bloc" || result.blocSync === "erreur_reseau") {
-        setVerifyCpaError("Impossible de contacter le Bloc Opératoire pour le moment. Réessayez plus tard.");
+        toast.error("Impossible de contacter le Bloc Opératoire pour le moment. Réessayez plus tard.");
+      } else if (result.blocSync === "synchronise") {
+        toast.success("Statut CPA mis à jour.");
       }
       await fetchPrescriptions();
     } catch (err) {
-      setVerifyCpaError(err instanceof Error ? err.message : "Erreur lors de la vérification du statut CPA.");
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la vérification du statut CPA.");
     } finally {
       setVerifyingCpaId(null);
     }
@@ -726,12 +732,6 @@ function PrescriptionsContent() {
                 </div>
               )}
 
-              {verifyCpaError && (
-                <div className="rounded-xl border border-error/20 bg-error-container/10 px-4 py-2.5 text-sm text-error">
-                  {verifyCpaError}
-                </div>
-              )}
-
               {isLoading ? (
                 <div className="flex justify-center p-8">
                   <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-primary" />
@@ -805,9 +805,12 @@ function PrescriptionsContent() {
                               group.find((r) => medecinRowState(r) === "cpa-bloquee") ||
                               primary;
                             return (
-                        <tr key={primary.prescriptionExternalId || primary.id} className="border-t border-outline-variant/10 hover:bg-surface-container/50">
+                        <tr key={primary.prescriptionExternalId || primary.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${priseEnChargeStripeClass(!!primary.priseEnChargeId)}`}>
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.receivedTime}>{primary.receivedTime}</td>
-                          <td className="px-4 py-2.5 font-semibold text-on-surface truncate" title={primary.name}>{primary.name}</td>
+                          <td className="px-4 py-2.5 font-semibold text-on-surface">
+                            <div className="truncate" title={primary.name}>{primary.name}</div>
+                            <PriseEnChargeBadge priseEnChargeId={primary.priseEnChargeId} className="mt-0.5" />
+                          </td>
                           <td className="px-4 py-2.5" title={combinedProcedure}>
                             <div className="flex flex-wrap gap-1">
                               {group.map((r, i) => {

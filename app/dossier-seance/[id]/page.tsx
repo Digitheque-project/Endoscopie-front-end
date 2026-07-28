@@ -7,6 +7,7 @@ import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
+import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -160,6 +161,7 @@ function DossierSeanceContent() {
               <h1 className="text-2xl font-extrabold text-on-surface tracking-tight">
                 {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
               </h1>
+              <PriseEnChargeBadge priseEnChargeId={patient?.priseEnChargeId} className="mt-1" />
               <p className="text-sm text-on-surface-variant mt-0.5">
                 {[age != null ? `${age} ans` : null, patient?.sexe === "M" ? "Homme" : patient?.sexe === "F" ? "Femme" : null]
                   .filter(Boolean).join(" • ")}

@@ -11,11 +11,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import TreatButton from "@/components/navigation/TreatButton";
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
+import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
 interface Appointment {
   id: string; // rendezVousId
   prescriptionId?: string;
   patientId?: string;
+  priseEnChargeId?: string | null;
   medecinId?: string;
   salleId?: string;
   patient: string;
@@ -99,6 +101,7 @@ export default function AgendaPage() {
         id: rdv.id,
         prescriptionId: rdv.prescriptionId || rdv.prescription?.id,
         patientId: rdv.patient?.id,
+        priseEnChargeId: rdv.patient?.priseEnChargeId || null,
         medecinId: rdv.medecinId,
         salleId: rdv.salleId,
         patient: rdv.patient?.nom ? `${rdv.patient.prenom} ${rdv.patient.nom}` : (rdv.patientName || "Patient Inconnu"),
@@ -354,6 +357,7 @@ export default function AgendaPage() {
                 </button>
               </header>
               <div className="p-5 space-y-3 text-sm">
+                <PriseEnChargeBadge priseEnChargeId={selected.priseEnChargeId} />
                 <div className="flex justify-between"><span className="text-on-surface-variant">Procédure</span><span className="font-semibold">{selected.typeExamen}</span></div>
                 <div className="flex justify-between"><span className="text-on-surface-variant">Médecin</span><span className="font-semibold">{selected.medecin}</span></div>
                 <div className="flex justify-between"><span className="text-on-surface-variant">Salle</span><span className="font-semibold">{selected.salle}</span></div>

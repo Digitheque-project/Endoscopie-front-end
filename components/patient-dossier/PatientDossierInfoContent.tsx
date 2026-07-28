@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
 interface PatientDossierInfoContentProps {
   prescriptionId: string;
@@ -203,6 +204,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
           <h1 className="font-headline text-xl font-extrabold tracking-tight">
             {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
           </h1>
+          <PriseEnChargeBadge priseEnChargeId={patient?.priseEnChargeId} className="mt-1" />
         </div>
       </div>
 

@@ -24,7 +24,7 @@ services:
       - key: NEXT_PUBLIC_ENDOSCOPIE_CHU_ID
         value: 72d49761-2a65-446d-b025-15a74cac1ad4
       - key: NEXT_PUBLIC_CHU_API_URL
-        value: https://service-chu-back-production-d6a8.up.railway.app
+        value: https://chu-service-7bxj.onrender.com
       - key: NEXT_PUBLIC_ACCUEIL_API_URL
         value: https://acceuil-back.onrender.com
       - key: NEXT_PUBLIC_NOTIFICATION_API_URL

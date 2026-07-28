@@ -6,6 +6,7 @@ import { DEFAULT_HEADER, HEADER_BY_PATH } from "@/components/layout/navigation";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiJson } from "@/lib/api";
+import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
 const SEARCH_MIN_LENGTH = 2;
 const SEARCH_MAX_RESULTS = 8;
@@ -207,6 +208,7 @@ export function TopHeader() {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-bold text-slate-800 truncate">{patientName}</p>
                           <p className="text-[11px] text-slate-500 truncate">{p.typeExamen || "Examen"}</p>
+                          <PriseEnChargeBadge priseEnChargeId={p.patient?.priseEnChargeId} className="mt-0.5" />
                         </div>
                         <span className="shrink-0 px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-[10px] font-bold uppercase tracking-wide">
                           {p.statut || "—"}

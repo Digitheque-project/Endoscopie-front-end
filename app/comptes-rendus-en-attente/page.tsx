@@ -7,6 +7,7 @@ import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -149,9 +150,10 @@ const [rows, setRows] = useState<any[]>([]);
                     const operationCommencee = !!row.operationEndoscopie;
                     const interrompu = operationCommencee && !checklistValide;
                     return (
-                    <tr key={row.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""}`}>
+                    <tr key={row.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""} ${priseEnChargeStripeClass(!!row.patient?.priseEnChargeId)}`}>
                       <td className="px-4 py-2.5 font-semibold text-on-surface">
-                        {`${row.patient?.nom || ""} ${row.patient?.prenom || ""}`.trim() || "Patient inconnu"}
+                        <div>{`${row.patient?.nom || ""} ${row.patient?.prenom || ""}`.trim() || "Patient inconnu"}</div>
+                        <PriseEnChargeBadge priseEnChargeId={row.patient?.priseEnChargeId} className="mt-0.5" />
                       </td>
                       <td className="px-4 py-2.5 text-on-surface-variant">{row.typeExamen}</td>
                       <td className="px-4 py-2.5 text-on-surface-variant">

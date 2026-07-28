@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson, updateRendezVous } from "@/lib/api";
+import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -97,6 +98,7 @@ function PlanificationExamenContent() {
                   <h2 className="font-headline text-lg font-extrabold tracking-tight">
                     {prescription.patient ? `${prescription.patient.nom} ${prescription.patient.prenom}` : "Patient inconnu"}
                   </h2>
+                  <PriseEnChargeBadge priseEnChargeId={prescription.patient?.priseEnChargeId} className="mt-1" />
                   <p className="text-xs text-on-surface-variant mt-0.5">
                     {(() => {
                       const age = computeAge(prescription.patient?.dateNaissance);

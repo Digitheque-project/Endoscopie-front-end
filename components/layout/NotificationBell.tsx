@@ -41,27 +41,38 @@ function typeLabel(type: string): string {
   return TYPE_LABELS[type] ?? type.replace(/_/g, " ");
 }
 
+const CPA_BLOC_TYPES = new Set(["CPA_RESULTAT", "VPA_REALISEE"]);
+
 /**
  * Fond distinct selon la provenance/nature de la notification, pour repérer
  * d'un coup d'œil une nouvelle demande d'examen (autre service) d'un résultat
- * d'examen (autre service) sans les confondre dans le flux.
+ * d'examen (autre service) ou d'une réponse CPA du Bloc Opératoire sans les
+ * confondre dans le flux.
  */
 function getNotificationBgClass(type: string): string {
   if (type === "DEMANDE_EXAMEN") return "bg-blue-50";
   if (type === "RESULTAT_EXAMEN") return "bg-emerald-50";
+  if (CPA_BLOC_TYPES.has(type)) return "bg-violet-50";
   return "bg-white";
 }
 
 function getNotificationBorderClass(type: string): string {
   if (type === "DEMANDE_EXAMEN") return "border-l-4 border-l-blue-400";
   if (type === "RESULTAT_EXAMEN") return "border-l-4 border-l-emerald-400";
+  if (CPA_BLOC_TYPES.has(type)) return "border-l-4 border-l-violet-400";
   return "border-l-4 border-l-transparent";
 }
 
 function getNotificationIconClass(type: string): string {
   if (type === "DEMANDE_EXAMEN") return "text-blue-600";
   if (type === "RESULTAT_EXAMEN") return "text-emerald-600";
+  if (CPA_BLOC_TYPES.has(type)) return "text-violet-600";
   return "text-primary";
+}
+
+function getNotificationIconGlyph(type: string): string {
+  if (CPA_BLOC_TYPES.has(type)) return "medical_information";
+  return "notifications_active";
 }
 
 /**
@@ -269,6 +280,14 @@ export function NotificationBell() {
     // été ouverte.
     if (item.entiteRefType?.toLowerCase() === "prescription" && item.entiteRefId) {
       router.push(`/patient-dossier/${encodeURIComponent(item.entiteRefId)}`);
+      return;
+    }
+
+    // Réponse CPA/VPA du Bloc Opératoire : entiteRefId référence notre dossier CPA
+    // local (voir sourceReferenceType: 'dossier-cpa' dans notifyBlocCpa côté backend).
+    if (item.entiteRefType?.toLowerCase() === "dossier-cpa" && item.entiteRefId) {
+      router.push(`/dossier-cpa/${encodeURIComponent(item.entiteRefId)}`);
+      return;
     }
   };
 
@@ -305,7 +324,7 @@ export function NotificationBell() {
         >
           <div className="flex items-start gap-3">
             <span className={`material-symbols-outlined text-xl ${getNotificationIconClass(toast.type)}`}>
-              notifications_active
+              {getNotificationIconGlyph(toast.type)}
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-primary uppercase tracking-wide">
@@ -375,6 +394,11 @@ export function NotificationBell() {
                   <div className="flex items-center justify-between gap-2">
                     <p className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
                       {!n.readAt && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-hidden />}
+                      {CPA_BLOC_TYPES.has(n.type) && (
+                        <span className={`material-symbols-outlined text-sm ${getNotificationIconClass(n.type)}`}>
+                          {getNotificationIconGlyph(n.type)}
+                        </span>
+                      )}
                       {typeLabel(n.type)}
                     </p>
                     <span className="text-[10px] text-slate-400 shrink-0">

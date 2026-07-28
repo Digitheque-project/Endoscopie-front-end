@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useRendezVousSync } from "@/lib/hooks/useRendezVousSync";
 import { usePatient } from "@/contexts/PatientContext";
+import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -203,6 +204,7 @@ export default function PatientsPage() {
                               <p className="font-bold text-slate-800 text-sm group-hover:text-primary transition-colors">
                                 {rdv.patient ? `${rdv.patient.nom} ${rdv.patient.prenom}` : "Patient inconnu"}
                               </p>
+                              <PriseEnChargeBadge priseEnChargeId={rdv.patient?.priseEnChargeId} className="mt-0.5" />
                               <p className="text-[11px] text-slate-400">
                                 {age != null ? `${age} ans` : ""}
                                 {age != null && gender ? " • " : ""}

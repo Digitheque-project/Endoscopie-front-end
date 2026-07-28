@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { PatientProvider } from "@/contexts/PatientContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -39,6 +40,7 @@ export default function RootLayout({
             <AuthGate>{children}</AuthGate>
           </PatientProvider>
         </AuthProvider>
+        <Toaster position="bottom-right" toastOptions={{ duration: 6000 }} />
       </body>
     </html>
   );

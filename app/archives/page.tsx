@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiJson } from "@/lib/api";
+import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
 
 interface ArchiveRow {
   prescriptionId: string;
   patientId: string;
   patientNom: string;
   patientPrenom: string;
+  priseEnChargeId: string | null;
   typeExamen: string;
   typeAnesthesie: string | null;
   dateDemande: string;
@@ -231,11 +233,12 @@ export default function ArchivesPage() {
                     <tr
                       key={row.prescriptionId}
                       onClick={() => router.push(`/patient-dossier/${row.prescriptionId}`)}
-                      className="hover:bg-surface-container-low transition-colors cursor-pointer"
+                      className={`hover:bg-surface-container-low transition-colors cursor-pointer ${priseEnChargeStripeClass(!!row.priseEnChargeId)}`}
                     >
                       <td className="px-4 py-3 text-sm">{new Date(row.dateDemande).toLocaleDateString("fr-FR")}</td>
                       <td className="px-4 py-3 text-sm font-semibold">
-                        {row.patientNom} {row.patientPrenom}
+                        <div>{row.patientNom} {row.patientPrenom}</div>
+                        <PriseEnChargeBadge priseEnChargeId={row.priseEnChargeId} className="mt-0.5" />
                       </td>
                       <td className="px-4 py-3 text-sm">{row.typeExamen}</td>
                       <td className="px-4 py-3 text-sm text-on-surface-variant">{row.typeAnesthesie || "—"}</td>

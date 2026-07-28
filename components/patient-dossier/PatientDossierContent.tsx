@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
 interface PatientDossierContentProps {
   prescriptionId: string;
@@ -189,6 +190,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
             <h2 className="font-headline text-2xl font-extrabold tracking-tight">
               {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
             </h2>
+            <PriseEnChargeBadge priseEnChargeId={patient?.priseEnChargeId} className="mt-1" />
             <p className="text-sm text-on-surface-variant mt-1">
               {[birthDate ? `Né(e) le ${birthDate}` : null, age != null ? `${age} ans` : null]
                 .filter(Boolean)

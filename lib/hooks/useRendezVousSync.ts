@@ -15,6 +15,7 @@ export interface RendezVous {
     prenom: string;
     dateNaissance?: string | null;
     sexe?: string | null;
+    priseEnChargeId?: string | null;
   } | null;
   medecin: {
     nom: string;
