@@ -133,9 +133,12 @@ function PrescriptionsContent() {
       if (!opts?.silent) setIsLoading(true);
       setError(null);
 
+      // Seule /api/prescriptions est indispensable à l'affichage du fil : un raté sur
+      // /api/medecins ou /api/exam-types (listes annexes utilisées pour les filtres/noms
+      // affichés) ne doit jamais faire échouer toute la page avec l'écran d'erreur.
       const [data, docsData, examTypesData] = await Promise.all([
         apiJson<any[]>('/api/prescriptions'),
-        apiJson<any[]>('/api/medecins'),
+        apiJson<any[]>('/api/medecins').catch(() => []),
         apiJson<{ id: string; name: string }[]>('/api/exam-types').catch(() => []),
       ]);
       setDoctorNames(

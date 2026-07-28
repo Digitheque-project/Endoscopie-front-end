@@ -108,16 +108,26 @@ export async function verifierStatutCpa(dossierId: string) {
   );
 }
 
-/** Lit le rôle simulé courant (voir contexts/AuthContext.tsx) pour l'envoyer au backend. */
+/**
+ * Lit le rôle simulé courant (voir contexts/AuthContext.tsx) pour l'envoyer au backend.
+ * Transmet aussi le jeton SSO de l'utilisateur connecté (Authorization: Bearer) — le
+ * backend s'en sert pour interroger le service utilisateurs (liste des médecins) avec
+ * l'identité de l'utilisateur courant plutôt qu'un compte de service séparé.
+ */
 function currentRoleHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {};
   try {
     const saved = window.localStorage.getItem('current_auth_context');
     if (!saved) return {};
-    const { role, medecinId } = JSON.parse(saved) as { role?: string; medecinId?: string };
+    const { role, medecinId, accessToken } = JSON.parse(saved) as {
+      role?: string;
+      medecinId?: string;
+      accessToken?: string;
+    };
     const headers: Record<string, string> = {};
     if (role) headers['x-user-role'] = role;
     if (medecinId) headers['x-medecin-id'] = medecinId;
+    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
     return headers;
   } catch {
     return {};

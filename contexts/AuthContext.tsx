@@ -37,10 +37,19 @@ function isExpired(auth: AuthData): boolean {
   return !auth.exp || Date.now() >= auth.exp * 1000;
 }
 
-/** Retrouve le médecin local (base clinique) correspondant à l'utilisateur authentifié, pour préserver le rattachement des dossiers/comptes-rendus existants. */
-async function resolveMedecinId(nom: string, prenom: string, fallbackId: string): Promise<{ id: string; name: string }> {
+/**
+ * Retrouve le médecin local (base clinique) correspondant à l'utilisateur authentifié,
+ * pour préserver le rattachement des dossiers/comptes-rendus existants. Le token n'est
+ * pas encore dans localStorage à ce stade (on est encore en train de construire la
+ * session) : on le transmet explicitement pour que le backend utilise l'identité de
+ * l'utilisateur plutôt que de retomber sur le compte de service.
+ */
+async function resolveMedecinId(nom: string, prenom: string, fallbackId: string, token: string): Promise<{ id: string; name: string }> {
   try {
-    const medecins = await apiJson<Array<{ id: string; nom: string; prenom: string }>>("/api/medecins");
+    const medecins = await apiJson<Array<{ id: string; nom: string; prenom: string }>>(
+      "/api/medecins",
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
     const match = medecins.find(
       (m) => m.nom.trim().toLowerCase() === nom.trim().toLowerCase() && m.prenom.trim().toLowerCase() === prenom.trim().toLowerCase(),
     );
@@ -118,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let medecinId = "";
     let medecinName = `${payload.firstname} ${payload.name}`.trim();
     if (role === "MEDECIN") {
-      const resolved = await resolveMedecinId(payload.name, payload.firstname, payload.userId);
+      const resolved = await resolveMedecinId(payload.name, payload.firstname, payload.userId, token);
       medecinId = resolved.id;
       medecinName = resolved.name;
     }
