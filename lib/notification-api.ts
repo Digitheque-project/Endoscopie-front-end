@@ -3,7 +3,7 @@ import { ENDOSCOPIE_SERVICE_ID } from './config';
 
 const NOTIFICATION_API_URL =
   process.env.NEXT_PUBLIC_NOTIFICATION_API_URL?.trim().replace(/\/$/, '') ||
-  'https://service-notification.onrender.com';
+  'https://service-notification-nlqp.onrender.com';
 
 export type NotificationItem = {
   id?: string;
