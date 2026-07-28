@@ -248,11 +248,7 @@ function ChecklistAvantContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {checklistItems.map((item) => {
                 const isAnswered = !!answers[item.title];
-                const borderAccent = item.danger
-                  ? "border-l-red-300"
-                  : item.primary
-                  ? "border-l-blue-300"
-                  : "border-l-slate-200";
+                const borderAccent = item.danger ? "border-l-red-300" : "border-l-blue-300";
                 return (
                 <div key={item.title} className={`relative bg-white p-4 rounded-xl border border-slate-100 border-l-4 ${borderAccent} shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow`}>
                   {isAnswered && (
