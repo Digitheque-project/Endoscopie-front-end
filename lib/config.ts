@@ -26,7 +26,7 @@ export const ENDOSCOPIE_CHU_ID = requireEnv('NEXT_PUBLIC_ENDOSCOPIE_CHU_ID', pro
  */
 export const AUTH_GATEWAY_URL =
   process.env.NEXT_PUBLIC_AUTH_GATEWAY_URL?.trim().replace(/\/$/, '') ||
-  'https://gateway-a33f.onrender.com';
+  'https://auth-service-4q6g.onrender.com';
 
 /**
  * serviceId du service « Endoscopie » tel qu'enregistré dans le registre central
@@ -46,4 +46,4 @@ export const AUTH_ENDOSCOPIE_SERVICE_ID =
  */
 export const AUTH_CLIENT_LOGIN_URL =
   process.env.NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL?.trim().replace(/\/$/, '') ||
-  'https://auth-client-dun.vercel.app/login';
+  'https://authentification-front.vercel.app/login';

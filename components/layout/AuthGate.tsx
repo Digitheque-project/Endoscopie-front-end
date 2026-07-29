@@ -23,7 +23,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Jeton reçu depuis le portail d'authentification central (redirection SSO,
-  // ex. https://auth-client-dun.vercel.app) : on l'échange contre une session
+  // ex. https://authentification-front.vercel.app) : on l'échange contre une session
   // locale sans jamais repasser par notre propre formulaire /connexion.
   useEffect(() => {
     if (typeof window === "undefined") return;
