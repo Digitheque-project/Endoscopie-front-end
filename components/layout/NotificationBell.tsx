@@ -259,7 +259,10 @@ export function NotificationBell() {
     };
   }, [refresh, upsert]);
 
-  const unreadCount = items.filter((n) => !n.readAt).length;
+  // Une fois lue (cliquée), une notification disparaît du panneau — seules les non-lues
+  // y restent affichées ; le badge de comptage suit donc la même liste.
+  const unreadItems = items.filter((n) => !n.readAt);
+  const unreadCount = unreadItems.length;
 
   const handleOpenItem = async (item: DisplayNotification) => {
     if (!item.readAt) {
@@ -380,11 +383,11 @@ export function NotificationBell() {
               </button>
             </div>
             {error && <p className="px-4 py-3 text-xs text-red-600">{error}</p>}
-            {!error && items.length === 0 && (
+            {!error && unreadItems.length === 0 && (
               <p className="px-4 py-3 text-xs text-slate-500">Aucune notification.</p>
             )}
             {!error &&
-              items.map((n) => (
+              unreadItems.map((n) => (
                 <button
                   key={n.id}
                   type="button"
