@@ -208,9 +208,6 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                 .join(" • ")}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">
-                {prescription.typeExamen}
-              </span>
               {prescription.statut === "A planifier" ? (
                 <button
                   type="button"
