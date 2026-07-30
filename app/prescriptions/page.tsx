@@ -549,7 +549,13 @@ function PrescriptionsContent() {
   }, [priorityRequests]);
 
   const totalEnAttente = priorityRequests.length;
-  const totalUrgents = priorityRequests.filter((p) => (p.priority || "").toUpperCase() === "STAT").length;
+  // Compté par patient distinct ayant au moins une procédure TRES URGENT dans le fil,
+  // pas par procédure — un même patient avec 2 examens TRES URGENT ne compte qu'une fois.
+  const totalUrgents = new Set(
+    priorityRequests
+      .filter((p) => (p.priority || "").toUpperCase() === "STAT")
+      .map((p) => p.patientId),
+  ).size;
   const tauxTraitement = allRequests.length > 0
     ? Math.round(((allRequests.length - baseFiltered.length) / allRequests.length) * 100)
     : 0;
@@ -689,32 +695,32 @@ function PrescriptionsContent() {
           )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Total En attente</p>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Total En attente</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-primary">{totalEnAttente}</span>
-                <span className="text-xs font-medium text-on-surface-variant">{priorityRequests.length} demandes</span>
+                <span className="text-2xl font-headline font-extrabold text-blue-900">{totalEnAttente}</span>
+                <span className="text-xs font-medium text-blue-700/70">{priorityRequests.length} demandes</span>
               </div>
             </div>
-            <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Urgents (TRES URGENT)</p>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">TRES URGENT</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-tertiary">{String(totalUrgents).padStart(2, "0")}</span>
-                <span className="text-xs font-medium text-on-surface-variant">Priorité immédiate</span>
+                <span className="text-2xl font-headline font-extrabold text-blue-900">{String(totalUrgents).padStart(2, "0")}</span>
+                <span className="text-xs font-medium text-blue-700/70">Priorité immédiate</span>
               </div>
             </div>
-            <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Salles Disponibles</p>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Salles Disponibles</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-secondary">{String(sallesDisponibles.length).padStart(2, "0")}</span>
-                <span className="text-xs font-medium text-on-surface-variant truncate">Prêtes à l&apos;usage</span>
+                <span className="text-2xl font-headline font-extrabold text-blue-900">{String(sallesDisponibles.length).padStart(2, "0")}</span>
+                <span className="text-xs font-medium text-blue-700/70 truncate">Prêtes à l&apos;usage</span>
               </div>
             </div>
-            <div className="rounded-lg border border-outline-variant/5 bg-surface-container-lowest p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Taux de traitement</p>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Taux de traitement</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-secondary">{tauxTraitement}%</span>
-                <span className="text-xs font-medium text-on-surface-variant">Efficacité</span>
+                <span className="text-2xl font-headline font-extrabold text-blue-900">{tauxTraitement}%</span>
+                <span className="text-xs font-medium text-blue-700/70">Efficacité</span>
               </div>
             </div>
           </div>

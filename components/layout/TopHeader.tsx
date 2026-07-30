@@ -53,39 +53,16 @@ const ROLE_LABELS: Record<string, string> = {
 export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
   const pathname = usePathname();
   const router = useRouter();
-  const { role, medecinName, logout, otherServices, accessToken } = useAuth();
+  const { role, medecinName } = useAuth();
   const header = HEADER_BY_PATH[pathname] ?? DEFAULT_HEADER;
   const hideUnitLabel =
     HIDE_UNIT_LABEL_PATHS.has(pathname) || pathname.startsWith("/patient-dossier");
-  const [showServiceSwitcher, setShowServiceSwitcher] = useState(false);
-  const switcherRef = useRef<HTMLDivElement | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchCache, setSearchCache] = useState<any[] | null>(null);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const searchRef = useRef<HTMLDivElement | null>(null);
-
-  const handleChangeRole = () => {
-    logout();
-    router.push("/connexion");
-  };
-
-  const handleSwitchService = (baseUrl: string) => {
-    const separator = baseUrl.includes("?") ? "&" : "?";
-    window.location.href = `${baseUrl}${separator}accessToken=${accessToken}`;
-  };
-
-  useEffect(() => {
-    if (!showServiceSwitcher) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (switcherRef.current && !switcherRef.current.contains(event.target as Node)) {
-        setShowServiceSwitcher(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showServiceSwitcher]);
 
   useEffect(() => {
     if (!showSearchResults) return;
@@ -230,46 +207,6 @@ export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
           )}
         </div>
 
-        {(otherServices ?? []).length > 0 && (
-          <div className="relative" ref={switcherRef}>
-            <button
-              type="button"
-              onClick={() => setShowServiceSwitcher((v) => !v)}
-              title="Changer de service"
-              aria-label="Changer de service"
-              className="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-full relative"
-            >
-              <span className="material-symbols-outlined">switch_account</span>
-            </button>
-            {showServiceSwitcher && (
-              <div className="absolute right-0 top-full mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <p className="text-sm font-bold text-slate-800">Changer de service</p>
-                  <p className="text-[11px] text-slate-500">Accès rapide aux autres services disponibles pour votre compte</p>
-                </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {otherServices.map((s) => (
-                    <button
-                      key={s.serviceId}
-                      type="button"
-                      onClick={() => handleSwitchService(s.baseUrl)}
-                      className="w-full px-4 py-3 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 text-left flex items-center gap-3"
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <span className="material-symbols-outlined text-[18px]">business_center</span>
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">{s.serviceName}</p>
-                        <p className="text-[11px] text-slate-500 truncate">{s.roleName}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         <NotificationBell />
 
         <LiveClock />
@@ -288,14 +225,6 @@ export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
               {role === "MEDECIN" ? "stethoscope" : "badge"}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={handleChangeRole}
-            title="Changer de rôle"
-            className="text-on-surface-variant hover:text-primary transition-colors"
-          >
-            <span className="material-symbols-outlined">logout</span>
-          </button>
         </div>
       </div>
     </header>
