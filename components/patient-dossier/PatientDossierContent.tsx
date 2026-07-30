@@ -74,7 +74,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [examensGroupe, setExamensGroupe] = useState<string[]>([]);
+  const [examensGroupe, setExamensGroupe] = useState<{ id: string; typeExamen: string; statut: string }[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,10 +98,17 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
   }, [prescriptionId]);
 
   // Prescription multi-examens (même prescriptionExternalId) : liste tous les examens
-  // demandés dans cette même prescription, pas seulement celui de cette ligne.
+  // demandés dans cette même prescription, pas seulement celui de cette ligne — avec le
+  // statut propre à CHAQUE examen (chacun a sa propre décision d'anesthésie/confirmation),
+  // pour ne pas afficher "confirmé" pour un examen dont le médecin n'a en fait décidé que
+  // pour un autre du même groupe.
   useEffect(() => {
     if (!prescription?.prescriptionExternalId) {
-      setExamensGroupe(prescription?.typeExamen ? [prescription.typeExamen] : []);
+      setExamensGroupe(
+        prescription
+          ? [{ id: prescription.id, typeExamen: prescription.typeExamen, statut: prescription.statut }]
+          : [],
+      );
       return;
     }
     let cancelled = false;
@@ -110,18 +117,22 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
         if (cancelled) return;
         const exams = (Array.isArray(all) ? all : [])
           .filter((p) => p.prescriptionExternalId === prescription.prescriptionExternalId)
-          .map((p) => p.typeExamen)
-          .filter(Boolean);
-        setExamensGroupe(exams.length ? exams : [prescription.typeExamen]);
+          .map((p) => ({ id: p.id, typeExamen: p.typeExamen, statut: p.statut }))
+          .filter((e) => !!e.typeExamen);
+        setExamensGroupe(
+          exams.length
+            ? exams
+            : [{ id: prescription.id, typeExamen: prescription.typeExamen, statut: prescription.statut }],
+        );
       })
       .catch((e) => {
         console.error("Erreur chargement des examens groupés :", e);
-        setExamensGroupe([prescription.typeExamen]);
+        setExamensGroupe([{ id: prescription.id, typeExamen: prescription.typeExamen, statut: prescription.statut }]);
       });
     return () => {
       cancelled = true;
     };
-  }, [prescription?.prescriptionExternalId, prescription?.typeExamen]);
+  }, [prescription?.prescriptionExternalId, prescription?.typeExamen, prescription?.id, prescription?.statut]);
 
   if (isLoading) {
     return (
@@ -238,12 +249,22 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
             <section>
               <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Examen demandé</h4>
               {examensGroupe.length > 1 ? (
-                <ul className="space-y-1">
-                  {examensGroupe.map((exam, i) => (
-                    <li key={i} className="font-bold text-lg text-primary">
-                      • {exam}
-                    </li>
-                  ))}
+                <ul className="space-y-2">
+                  {examensGroupe.map((exam) => {
+                    const confirme = exam.statut === "Confirmé";
+                    return (
+                      <li key={exam.id} className="flex items-center justify-between gap-3">
+                        <span className="font-bold text-lg text-primary">• {exam.typeExamen}</span>
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${
+                            confirme ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {confirme ? "Confirmé" : "En attente"}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p className="font-bold text-lg text-primary">{prescription.typeExamen}</p>
