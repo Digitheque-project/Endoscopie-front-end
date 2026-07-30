@@ -257,7 +257,10 @@ function PrescriptionsContent() {
   const closeFilterPanel = () => setShowFilters(false);
 
   const handleDetail = (id: string) => {
-    router.push(`/patient-dossier/${encodeURIComponent(id)}`);
+    // Conserve l'onglet médecin actif ("À décider", "Prêt pour l'examen"...) pour que le
+    // retour depuis le détail y ramène, plutôt que de retomber sur "Tous".
+    const params = role === "MEDECIN" ? `?tab=${encodeURIComponent(medecinTab)}` : "";
+    router.push(`/patient-dossier/${encodeURIComponent(id)}${params}`);
   };
 
   const handlePlanifier = (req: any, group?: any[]) => {

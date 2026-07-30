@@ -10,7 +10,12 @@ function PatientDossierPageContent() {
   const searchParams = useSearchParams();
   const prescriptionId = params?.id ? decodeURIComponent(params.id as string) : "";
   const from = searchParams.get("from");
-  const returnUrl = from === "dashboard" ? "/" : "/prescriptions";
+  // Onglet médecin ("À décider", "Prêt pour l'examen"...) actif quand le détail a été
+  // ouvert depuis le Fil de prescription — restauré au retour pour ne pas retomber sur
+  // "Tous" et perdre la liste filtrée sur laquelle l'utilisateur travaillait.
+  const tab = searchParams.get("tab");
+  const returnUrl =
+    from === "dashboard" ? "/" : tab ? `/prescriptions?tab=${encodeURIComponent(tab)}` : "/prescriptions";
   const returnLabel = from === "dashboard" ? "Retour au tableau de bord" : "Retour à la liste des prescriptions";
 
   return (
