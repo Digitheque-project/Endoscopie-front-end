@@ -1,4 +1,4 @@
-import { apiUrl } from './api';
+import { apiFetch, apiUrl } from './api';
 
 export type InboxNotification = {
   id: string;
@@ -22,8 +22,10 @@ type InboxResponse = {
   webhookUrl?: string;
 };
 
+/** readAt renvoyé par le backend est propre au rôle courant (x-user-role, voir apiFetch) —
+ * le major et le médecin ont chacun leur propre statut lu/non-lu pour la même notification. */
 export async function fetchNotificationInbox(): Promise<InboxNotification[]> {
-  const resp = await fetch(apiUrl('/api/notifications/inbox'));
+  const resp = await apiFetch('/api/notifications/inbox');
   if (!resp.ok) {
     throw new Error(`Inbox (${resp.status})`);
   }
@@ -32,7 +34,7 @@ export async function fetchNotificationInbox(): Promise<InboxNotification[]> {
 }
 
 export async function markInboxNotificationRead(id: string): Promise<void> {
-  await fetch(apiUrl(`/api/notifications/inbox/${encodeURIComponent(id)}/read`), {
+  await apiFetch(`/api/notifications/inbox/${encodeURIComponent(id)}/read`, {
     method: 'POST',
   });
 }

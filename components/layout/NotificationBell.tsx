@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   loadNotifications,
   type NotificationItem,
@@ -202,6 +203,7 @@ function playNotificationSound() {
 
 export function NotificationBell() {
   const router = useRouter();
+  const { role } = useAuth();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<DisplayNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -281,8 +283,15 @@ export function NotificationBell() {
     // directement son détail. Le bouton "Retour" du dossier patient ramène toujours
     // vers le fil de prescription, peu importe la page depuis laquelle la cloche a
     // été ouverte.
+    // Le médecin voit ces notifications (pour vérifier que le travail du major suit),
+    // mais leur gestion (planification, dossier patient) est le travail du major, pas
+    // le sien — le clic reste possible (marque quand même comme lue ci-dessus) mais ne
+    // navigue nulle part pour lui, pour ne pas le noyer sous des notifications qui ne
+    // le concernent pas directement.
     if (item.entiteRefType?.toLowerCase() === "prescription" && item.entiteRefId) {
-      router.push(`/patient-dossier/${encodeURIComponent(item.entiteRefId)}`);
+      if (role !== "MEDECIN") {
+        router.push(`/patient-dossier/${encodeURIComponent(item.entiteRefId)}`);
+      }
       return;
     }
 
