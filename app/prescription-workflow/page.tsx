@@ -215,6 +215,30 @@ const lastSavedTranscriptionRef = useRef("");
 
           <section className="space-y-5">
             <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
+              {organFields.length > 0 ? (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {organFields.map((field, i) => (
+                    <span
+                      key={field.key}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
+                        i === organIndex
+                          ? "bg-blue-600 text-white"
+                          : i < organIndex
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {i < organIndex && <span className="material-symbols-outlined text-[14px]">check</span>}
+                      {field.label}
+                    </span>
+                  ))}
+                </div>
+              ) : procedure ? (
+                <p className="mb-4 text-xs text-amber-600">
+                  Type d&apos;examen « {procedure} » non reconnu — dictée guidée par organe indisponible pour cette procédure.
+                </p>
+              ) : null}
+
               <div className="mb-6">
                 <VoiceRecorder hideTextArea statusIdleText="Observation durant l'examen" onFinalTranscript={handleFinalTranscript} onAudio={handleAudioReady} exposeControls={setControls} />
               </div>
