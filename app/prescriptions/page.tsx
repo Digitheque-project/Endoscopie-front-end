@@ -871,14 +871,14 @@ function PrescriptionsContent() {
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
                           <td className="px-4 py-2.5">
                             {primary.priority === "STAT" ? (
-                              <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-normal animate-pulse shadow-md">
-                                <span className="material-symbols-outlined text-[11px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                              <span className="inline-flex max-w-full items-center gap-0.5 truncate rounded-full bg-red-600 px-1 py-0.5 text-[8px] font-bold text-white uppercase tracking-normal animate-pulse shadow-md">
+                                <span className="material-symbols-outlined text-[9px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
                                 <span className="truncate">TRES URGENT</span>
                               </span>
                             ) : (
-                              <span className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
+                              <span className={`inline-flex max-w-full items-center gap-0.5 truncate rounded-full px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
                                 {primary.priorityIndicatorIcon ? (
-                                  <span className="material-symbols-outlined text-[11px] shrink-0">{primary.priorityIndicatorIcon}</span>
+                                  <span className="material-symbols-outlined text-[9px] shrink-0">{primary.priorityIndicatorIcon}</span>
                                 ) : null}
                                 {primary.priorityIndicator}
                               </span>
