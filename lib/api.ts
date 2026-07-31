@@ -108,6 +108,14 @@ export async function verifierStatutCpa(dossierId: string) {
   );
 }
 
+/** Renvoi manuel d'une demande CPA au Bloc — quand elle n'a jamais été reçue (blocDemandeId absent). */
+export async function renvoyerCpaAuBloc(dossierId: string) {
+  return apiJson<{ success: boolean; dejaEnvoye: boolean; blocDemandeId: string }>(
+    `/api/dossiers-cpa/${encodeURIComponent(dossierId)}/renvoyer-bloc`,
+    { method: "POST" },
+  );
+}
+
 /**
  * Lit le rôle simulé courant (voir contexts/AuthContext.tsx) pour l'envoyer au backend.
  * Transmet aussi le jeton SSO de l'utilisateur connecté (Authorization: Bearer) — le

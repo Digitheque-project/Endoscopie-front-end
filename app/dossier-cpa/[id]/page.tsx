@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
-import { apiJson, verifierStatutCpa } from "@/lib/api";
+import { apiJson, verifierStatutCpa, renvoyerCpaAuBloc } from "@/lib/api";
 import toast from "react-hot-toast";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
@@ -34,6 +34,7 @@ function DossierCpaContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   const load = async () => {
     setError(null);
@@ -68,6 +69,19 @@ function DossierCpaContent() {
       toast.error(err instanceof Error ? err.message : "Erreur lors de la vérification du statut CPA.");
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleRenvoyer = async () => {
+    setIsResending(true);
+    try {
+      await renvoyerCpaAuBloc(dossierId);
+      toast.success("Demande CPA envoyée au Bloc Opératoire.");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Échec de l'envoi au Bloc Opératoire.");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -174,6 +188,24 @@ function DossierCpaContent() {
                     {dossier.observations || "Aucune observation."}
                   </p>
                 </div>
+
+                {!dossier.blocDemandeId && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-center justify-between gap-4 flex-wrap">
+                    <p className="text-sm text-amber-800 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-lg">warning</span>
+                      Cette demande n&apos;a pas encore été reçue par le Bloc Opératoire.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={isResending}
+                      onClick={handleRenvoyer}
+                      className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-lg">send</span>
+                      {isResending ? "Envoi…" : "Renvoyer au Bloc"}
+                    </button>
+                  </div>
+                )}
 
                 <div className="flex justify-end pt-2">
                   <button
