@@ -544,10 +544,13 @@ function PrescriptionsContent() {
   const priorityRequests = useMemo(
     () =>
       baseFiltered.slice().sort((a, b) => {
-        if (a.priorityRank !== b.priorityRank) return a.priorityRank - b.priorityRank;
-        const dateA = a.dateDemandeRaw ? new Date(a.dateDemandeRaw).getTime() : 0;
-        const dateB = b.dateDemandeRaw ? new Date(b.dateDemandeRaw).getTime() : 0;
-        return dateA - dateB;
+        // Le jour d'abord (du plus ancien au plus récent) — tous les patients d'une
+        // même journée passent avant ceux du lendemain, même si l'un d'eux est plus
+        // urgent. L'urgence ne départage qu'à l'intérieur d'un même jour.
+        const dayA = a.dateDemandeRaw ? new Date(a.dateDemandeRaw).setHours(0, 0, 0, 0) : 0;
+        const dayB = b.dateDemandeRaw ? new Date(b.dateDemandeRaw).setHours(0, 0, 0, 0) : 0;
+        if (dayA !== dayB) return dayA - dayB;
+        return a.priorityRank - b.priorityRank;
       }),
     [baseFiltered],
   );
