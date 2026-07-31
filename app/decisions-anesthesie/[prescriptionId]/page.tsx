@@ -28,7 +28,7 @@ function PlanificationExamenContent() {
   const [error, setError] = useState<string | null>(null);
   const [isDeciding, setIsDeciding] = useState(false);
   const [decisionError, setDecisionError] = useState<string | null>(null);
-  const [selectedAnesthesie, setSelectedAnesthesie] = useState<"Locale" | "Générale" | null>(null);
+  const [selectedAnesthesie, setSelectedAnesthesie] = useState<"Locale" | "Générale" | "Refuser" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,11 +56,44 @@ function PlanificationExamenContent() {
     setIsDeciding(true);
     setDecisionError(null);
     try {
-      const updated = await updateRendezVous(prescription.rendezVous.id, {
-        typeAnesthesie: selectedAnesthesie,
-        statut: "Décision rendue",
-      });
-      setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
+      if (selectedAnesthesie === "Refuser") {
+        const updated = await updateRendezVous(prescription.rendezVous.id, {
+          statut: "Annulé",
+        });
+        setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
+      } else {
+        const updated = await updateRendezVous(prescription.rendezVous.id, {
+          typeAnesthesie: selectedAnesthesie,
+          statut: "Décision rendue",
+        });
+        setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
+
+        // Anesthésie locale : s'applique directement aux autres examens déjà planifiés
+        // de cette même prescription multi-examens (même prescriptionExternalId), pour
+        // éviter une décision séparée examen par examen dans ce cas précis.
+        if (selectedAnesthesie === "Locale" && prescription.prescriptionExternalId) {
+          try {
+            const all = await apiJson<any[]>("/api/prescriptions");
+            const siblings = (Array.isArray(all) ? all : []).filter(
+              (p) =>
+                p.id !== prescription.id &&
+                p.prescriptionExternalId === prescription.prescriptionExternalId &&
+                p.rendezVous &&
+                !p.rendezVous.typeAnesthesie,
+            );
+            await Promise.all(
+              siblings.map((sib) =>
+                updateRendezVous(sib.rendezVous.id, {
+                  typeAnesthesie: "Locale",
+                  statut: "Décision rendue",
+                }).catch(() => undefined),
+              ),
+            );
+          } catch (e) {
+            console.error("Erreur propagation anesthésie locale aux examens liés :", e);
+          }
+        }
+      }
       // Décision rendue pour ce patient — retour au fil de prescription sur "À décider"
       // pour enchaîner directement sur le patient suivant en attente.
       setTimeout(() => {
@@ -168,7 +201,12 @@ function PlanificationExamenContent() {
                 <section className="bg-white rounded-2xl shadow-md border-2 border-primary/20 p-6 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <p className="text-base font-bold uppercase tracking-widest text-on-surface mb-3">Décision d&apos;anesthésie</p>
-                    {prescription.rendezVous.typeAnesthesie ? (
+                    {prescription.rendezVous.statut === "Annulé" ? (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-error-container text-error text-lg font-bold">
+                        <span className="material-symbols-outlined text-xl">cancel</span>
+                        Examen refusé
+                      </span>
+                    ) : prescription.rendezVous.typeAnesthesie ? (
                       <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-lg font-bold">
                         <span className="material-symbols-outlined text-xl">check_circle</span>
                         Anesthésie {prescription.rendezVous.typeAnesthesie}
@@ -178,14 +216,14 @@ function PlanificationExamenContent() {
                     )}
                     {decisionError && <p className="text-sm text-error mt-2">{decisionError}</p>}
                   </div>
-                  {!prescription.rendezVous.typeAnesthesie && (
-                    <div className="flex flex-col gap-4 lg:items-end">
-                      <div className="flex flex-wrap gap-4">
+                  {!prescription.rendezVous.typeAnesthesie && prescription.rendezVous.statut !== "Annulé" && (
+                    <div className="flex flex-col gap-3 lg:items-end">
+                      <div className="flex gap-2">
                         <button
                           type="button"
                           disabled={isDeciding}
                           onClick={() => setSelectedAnesthesie("Locale")}
-                          className={`whitespace-nowrap px-8 py-4 rounded-xl font-bold text-base transition-colors disabled:opacity-50 ${
+                          className={`flex-1 whitespace-nowrap px-4 py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 ${
                             selectedAnesthesie === "Locale"
                               ? "bg-primary text-white shadow-md"
                               : "border-2 border-primary text-primary hover:bg-primary/5"
@@ -197,7 +235,7 @@ function PlanificationExamenContent() {
                           type="button"
                           disabled={isDeciding}
                           onClick={() => setSelectedAnesthesie("Générale")}
-                          className={`whitespace-nowrap px-8 py-4 rounded-xl font-bold text-base transition-colors disabled:opacity-50 ${
+                          className={`flex-1 whitespace-nowrap px-4 py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 ${
                             selectedAnesthesie === "Générale"
                               ? "bg-primary text-white shadow-md"
                               : "border-2 border-primary text-primary hover:bg-primary/5"
@@ -205,14 +243,32 @@ function PlanificationExamenContent() {
                         >
                           Anesthésie générale
                         </button>
+                        <button
+                          type="button"
+                          disabled={isDeciding}
+                          onClick={() => setSelectedAnesthesie("Refuser")}
+                          className={`flex-1 whitespace-nowrap px-4 py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 ${
+                            selectedAnesthesie === "Refuser"
+                              ? "bg-error text-white shadow-md"
+                              : "border-2 border-error text-error hover:bg-error/5"
+                          }`}
+                        >
+                          Refuser
+                        </button>
                       </div>
                       <button
                         type="button"
                         disabled={!selectedAnesthesie || isDeciding}
                         onClick={handleConfirmAnesthesie}
-                        className="w-full lg:w-auto whitespace-nowrap px-8 py-4 rounded-xl bg-emerald-600 text-white font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                        className={`w-full lg:w-auto whitespace-nowrap px-8 py-4 rounded-xl text-white font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed ${
+                          selectedAnesthesie === "Refuser" ? "bg-error" : "bg-emerald-600"
+                        }`}
                       >
-                        {isDeciding ? "Confirmation…" : "Confirmer"}
+                        {isDeciding
+                          ? "Confirmation…"
+                          : selectedAnesthesie === "Refuser"
+                            ? "Confirmer le refus"
+                            : "Confirmer"}
                       </button>
                     </div>
                   )}
