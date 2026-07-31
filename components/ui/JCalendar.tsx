@@ -163,10 +163,12 @@ export function JCalendar({
                 </div>
                 <p className="text-xs text-on-surface-variant truncate mt-0.5">{app.typeExamen}</p>
                 <div className="flex items-center justify-between gap-2 mt-1.5 text-[10px] font-bold text-on-surface-variant">
-                  <span className="flex items-center gap-1 min-w-0 truncate">
-                    <span className="material-symbols-outlined text-[13px] shrink-0">medical_information</span>
-                    <span className="truncate">{app.medecin}</span>
-                  </span>
+                  {app.medecin && app.medecin !== "Médecin non assigné" ? (
+                    <span className="flex items-center gap-1 min-w-0 truncate">
+                      <span className="material-symbols-outlined text-[13px] shrink-0">medical_information</span>
+                      <span className="truncate">{app.medecin}</span>
+                    </span>
+                  ) : <span />}
                   {app.date && (
                     <span className="shrink-0 tabular-nums">
                       {new Date(app.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
@@ -261,10 +263,12 @@ export function JCalendar({
                     </div>
 
                     <div className="flex items-center justify-between gap-1.5 text-[9px] font-bold text-on-surface-variant mt-auto pt-1.5 border-t border-outline-variant/10">
-                      <span className="flex items-center gap-1 min-w-0 truncate">
-                        <span className="material-symbols-outlined text-[12px] shrink-0">medical_information</span>
-                        <span className="truncate">{app.medecin}</span>
-                      </span>
+                      {app.medecin && app.medecin !== "Médecin non assigné" ? (
+                        <span className="flex items-center gap-1 min-w-0 truncate">
+                          <span className="material-symbols-outlined text-[12px] shrink-0">medical_information</span>
+                          <span className="truncate">{app.medecin}</span>
+                        </span>
+                      ) : <span />}
                       <span className="shrink-0 whitespace-nowrap bg-surface-container px-1.5 py-0.5 rounded-md tabular-nums">{app.heureDebut}-{app.heureFin}</span>
                     </div>
 

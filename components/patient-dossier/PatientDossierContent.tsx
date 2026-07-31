@@ -269,18 +269,6 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
             </section>
 
             <section>
-              <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Antécédents médicaux</h4>
-              <p>{patient?.antecedentsMedicaux || "Aucun antécédent renseigné."}</p>
-            </section>
-
-            <section>
-              <div>
-                <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Poids</h4>
-                <p>{patient?.poids != null ? `${patient.poids} kg` : "Non renseigné"}</p>
-              </div>
-            </section>
-
-            <section>
               <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Suivi du dossier</h4>
               <ul className="space-y-1.5">
                 <li className="flex items-center justify-between">

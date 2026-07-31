@@ -12,6 +12,7 @@ import { Suspense, useEffect, useMemo, useState, useRef, type KeyboardEvent } fr
 import { usePatient } from "@/contexts/PatientContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -479,7 +480,7 @@ function PrescriptionsContent() {
           onClick={() => handleEnvoyerConfirmation(req)}
           className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
         >
-          {confirmingId === req.id ? "Envoi…" : "Envoyer la confirmation"}
+          {confirmingId === req.id ? "Envoi…" : "Notifier Prescripteur"}
         </button>
       ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Générale" ? (
         <button
@@ -846,30 +847,22 @@ function PrescriptionsContent() {
                             <div className="flex flex-wrap gap-1">
                               {group.map((r, i) => {
                                 const badgeClass = `inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold ${getExamTypeBadgeClass(r.procedure)}`;
-                                // Examen déjà planifié dans ce groupe multi-examens : cliquable pour
-                                // retrouver immédiatement la date/heure enregistrée (ex. si l'utilisateur
-                                // a oublié le créneau donné pour ce premier examen).
-                                if (r.status !== "A planifier") {
-                                  const rdvLabel = r.rendezVous?.dateHeureDebut
-                                    ? `Planifié le ${new Date(r.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}${r.rendezVous.salle?.nom ? ` — ${r.rendezVous.salle.nom}` : ""}`
-                                    : STATUS_LABELS[r.status] || r.status;
-                                  return (
-                                    <button
-                                      key={i}
-                                      type="button"
-                                      onClick={() => handleDetail(r.id)}
-                                      title={`${r.procedure} — ${rdvLabel}`}
-                                      className={`${badgeClass} hover:brightness-95 hover:ring-2 hover:ring-offset-1 cursor-pointer transition-all`}
-                                    >
-                                      <span className="material-symbols-outlined text-[13px] shrink-0">event_available</span>
-                                      <span className="truncate">{r.procedure}</span>
-                                    </button>
-                                  );
-                                }
+                                // Non cliquable : sert uniquement d'indicateur visuel, la date/heure
+                                // planifiée reste consultable via "Détails".
+                                const rdvLabel = r.rendezVous?.dateHeureDebut
+                                  ? `Planifié le ${new Date(r.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}${r.rendezVous.salle?.nom ? ` — ${r.rendezVous.salle.nom}` : ""}`
+                                  : STATUS_LABELS[r.status] || r.status;
+                                const label = capitalizeFirst(r.procedure);
                                 return (
-                                  <span key={i} className={badgeClass}>
-                                    <span className="material-symbols-outlined text-[13px] shrink-0">medical_services</span>
-                                    <span className="truncate">{r.procedure}</span>
+                                  <span
+                                    key={i}
+                                    title={r.status !== "A planifier" ? `${label} — ${rdvLabel}` : label}
+                                    className={badgeClass}
+                                  >
+                                    <span className="material-symbols-outlined text-[13px] shrink-0">
+                                      {r.status !== "A planifier" ? "event_available" : "medical_services"}
+                                    </span>
+                                    <span className="truncate">{label}</span>
                                   </span>
                                 );
                               })}
@@ -878,14 +871,14 @@ function PrescriptionsContent() {
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
                           <td className="px-4 py-2.5">
                             {primary.priority === "STAT" ? (
-                              <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-red-600 px-2 py-1 text-[10px] font-bold text-white uppercase tracking-normal animate-pulse shadow-md">
-                                <span className="material-symbols-outlined text-[13px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                              <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-normal animate-pulse shadow-md">
+                                <span className="material-symbols-outlined text-[11px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
                                 <span className="truncate">TRES URGENT</span>
                               </span>
                             ) : (
-                              <span className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
+                              <span className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
                                 {primary.priorityIndicatorIcon ? (
-                                  <span className="material-symbols-outlined text-[14px] shrink-0">{primary.priorityIndicatorIcon}</span>
+                                  <span className="material-symbols-outlined text-[11px] shrink-0">{primary.priorityIndicatorIcon}</span>
                                 ) : null}
                                 {primary.priorityIndicator}
                               </span>
