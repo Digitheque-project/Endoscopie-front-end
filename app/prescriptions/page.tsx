@@ -155,11 +155,24 @@ function PrescriptionsContent() {
         const priorityLevel = getPriorityLevel(urgencyScore);
         const indicator = getPriorityIndicator(prioriteUpper);
 
+        // Rang d'urgence strict pour le tri du fil — TRES URGENT doit toujours passer
+        // avant URGENT, qui doit toujours passer avant NORMAL, quelle que soit la date
+        // de la demande (voir priorityRequests ci-dessous, urgencyScore n'est utilisé
+        // que pour le badge "Élevée/Moyenne/Faible", pas pour l'ordre d'affichage).
+        const priorityRank =
+          prioriteUpper === "STAT" || prioriteUpper === "URGENCE VITALE"
+            ? 0
+            : prioriteUpper === "URGENT" || prioriteUpper === "URGENCE"
+              ? 1
+              : 2;
+
         return {
           id: p.id,
           // Regroupe les demandes issues d'une même prescription externe multi-examens
           // (ex: Coloscopie + Fibroscopie pour le même patient) — voir groupedRequests.
           prescriptionExternalId: p.prescriptionExternalId ?? null,
+          priorityRank,
+          dateDemandeRaw: p.dateDemande || null,
           medecinId: p.medecinId,
           patientId: p.patient?.id || p.patientId,
           // Preserve original name (case preserved) for navigation/synchronization,
@@ -529,7 +542,13 @@ function PrescriptionsContent() {
   }, [allRequests, role, medecinTab]);
 
   const priorityRequests = useMemo(
-    () => baseFiltered.slice().sort((a, b) => b.urgencyScore - a.urgencyScore),
+    () =>
+      baseFiltered.slice().sort((a, b) => {
+        if (a.priorityRank !== b.priorityRank) return a.priorityRank - b.priorityRank;
+        const dateA = a.dateDemandeRaw ? new Date(a.dateDemandeRaw).getTime() : 0;
+        const dateB = b.dateDemandeRaw ? new Date(b.dateDemandeRaw).getTime() : 0;
+        return dateA - dateB;
+      }),
     [baseFiltered],
   );
 
