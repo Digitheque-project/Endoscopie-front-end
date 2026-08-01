@@ -592,9 +592,13 @@ function PrescriptionsContent() {
 
   const showStatutColumn = role !== "MEDECIN" || medecinTab === "tous";
 
+  // Ordre : Reçu, Patient, Procédure, Médecin, [Statut], Urgence, Actions — Urgence
+  // n'a plus besoin d'une grande colonne (badge à largeur fixe désormais), l'espace
+  // récupéré agrandit la colonne Médecin pour que le nom du prescripteur ne soit
+  // plus tronqué.
   const columnWidths = showStatutColumn
-    ? ["9%", "16%", "14%", "12%", "16%", "14%", "19%"]
-    : ["10%", "19%", "17%", "15%", "18%", "21%"];
+    ? ["9%", "16%", "14%", "20%", "14%", "8%", "19%"]
+    : ["10%", "19%", "17%", "24%", "9%", "21%"];
 
   return (
     <AppShell>
@@ -801,8 +805,8 @@ function PrescriptionsContent() {
                         <th className="px-4 py-2.5">Patient</th>
                         <th className="px-4 py-2.5">Procédure</th>
                         <th className="px-4 py-2.5">Médecin</th>
-                        <th className="px-4 py-2.5">Urgence</th>
                         {showStatutColumn && <th className="px-4 py-2.5">Statut</th>}
+                        <th className="px-4 py-2.5">Urgence</th>
                         <th className="px-4 py-2.5">Actions</th>
                       </tr>
                     </thead>
@@ -869,21 +873,6 @@ function PrescriptionsContent() {
                             </div>
                           </td>
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
-                          <td className="px-4 py-2.5">
-                            {primary.priority === "STAT" ? (
-                              <span className="inline-flex w-24 justify-center items-center gap-0.5 truncate rounded-full bg-red-600 px-1 py-0.5 text-[7px] font-bold text-white uppercase tracking-wider animate-pulse">
-                                <span className="material-symbols-outlined text-[8px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                                <span className="truncate">TRES URGENT</span>
-                              </span>
-                            ) : (
-                              <span className={`inline-flex w-24 justify-center items-center gap-0.5 truncate rounded-full px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
-                                {primary.priorityIndicatorIcon ? (
-                                  <span className="material-symbols-outlined text-[8px] shrink-0">{primary.priorityIndicatorIcon}</span>
-                                ) : null}
-                                {primary.priorityIndicator}
-                              </span>
-                            )}
-                          </td>
                           {showStatutColumn && (
                             <td className="px-4 py-2.5">
                               {isGrouped ? (
@@ -918,6 +907,21 @@ function PrescriptionsContent() {
                               )}
                             </td>
                           )}
+                          <td className="px-4 py-2.5">
+                            {primary.priority === "STAT" ? (
+                              <span className="inline-flex w-24 justify-center items-center gap-0.5 truncate rounded-full bg-red-600 px-1 py-0.5 text-[7px] font-bold text-white uppercase tracking-wider animate-pulse">
+                                <span className="material-symbols-outlined text-[8px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                                <span className="truncate">TRES URGENT</span>
+                              </span>
+                            ) : (
+                              <span className={`inline-flex w-24 justify-center items-center gap-0.5 truncate rounded-full px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
+                                {primary.priorityIndicatorIcon ? (
+                                  <span className="material-symbols-outlined text-[8px] shrink-0">{primary.priorityIndicatorIcon}</span>
+                                ) : null}
+                                {primary.priorityIndicator}
+                              </span>
+                            )}
+                          </td>
                           <td className="px-4 py-2.5">
                             {renderActions(actionableReq, group)}
                           </td>
