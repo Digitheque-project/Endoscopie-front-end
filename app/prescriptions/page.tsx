@@ -875,12 +875,12 @@ function PrescriptionsContent() {
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
                           <td className="px-4 py-2.5">
                             {primary.priority === "STAT" ? (
-                              <span className="inline-flex w-24 justify-center items-center gap-0.5 truncate rounded-full bg-red-600 px-1 py-0.5 text-[7px] font-bold text-white uppercase tracking-wider animate-pulse">
+                              <span className="inline-flex max-w-full items-center gap-0.5 truncate rounded-full bg-red-600 px-1 py-0.5 text-[7px] font-bold text-white uppercase tracking-wider animate-pulse">
                                 <span className="material-symbols-outlined text-[8px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
                                 <span className="truncate">TRES URGENT</span>
                               </span>
                             ) : (
-                              <span className={`inline-flex w-24 justify-center items-center gap-0.5 truncate rounded-full px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
+                              <span className={`inline-flex max-w-full items-center gap-0.5 truncate rounded-full px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider ${primary.priorityIndicatorClass}`}>
                                 {primary.priorityIndicatorIcon ? (
                                   <span className="material-symbols-outlined text-[8px] shrink-0">{primary.priorityIndicatorIcon}</span>
                                 ) : null}
