@@ -45,6 +45,9 @@ function PlanificationContent() {
     }
   }, [groupExamsParam]);
   const [plannedExamIds, setPlannedExamIds] = useState<Set<string>>(new Set());
+  // Alternative à la planification "un par un" (par défaut, inchangée) : tous les
+  // examens du groupe sont planifiés sur EXACTEMENT le même créneau, en un seul envoi.
+  const [planifierEnsemble, setPlanifierEnsemble] = useState(false);
 
   const switchActiveExam = (exam: { id: string; procedure: string }) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -399,13 +402,10 @@ function PlanificationContent() {
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
       };
 
-      const appointmentData = {
+      const sharedFields = {
         patientId: patientId || null,
         patientName: patientName,
-        prescriptionId: prescriptionId || null,
         medecinId: medecinId || null,
-        procedure: procedureParam,
-        typeExamen: procedureParam,
         salleId: selectedSalleObj?.id || null,
         salle: selectedSalle,
         dateHeureDebut: toNaiveISO(dateTimeDebut),
@@ -414,11 +414,19 @@ function PlanificationContent() {
         notesCliniques: observations || null,
       };
 
-      // Sauvegarde en base de données via l'API
-      const response = await apiFetch('/api/rendezvous', {
+      const ensemble = planifierEnsemble && groupExams.length > 1;
+
+      // Sauvegarde en base de données via l'API — soit tous les examens du groupe sur
+      // le même créneau en un seul envoi, soit uniquement l'examen actif (comportement
+      // existant, inchangé).
+      const response = await apiFetch(ensemble ? '/api/rendezvous/groupe' : '/api/rendezvous', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(appointmentData)
+        body: JSON.stringify(
+          ensemble
+            ? { ...sharedFields, prescriptionIds: groupExams.map((ex) => ex.id) }
+            : { ...sharedFields, prescriptionId: prescriptionId || null, procedure: procedureParam, typeExamen: procedureParam },
+        ),
       });
 
       if (!response.ok) {
@@ -434,6 +442,13 @@ function PlanificationContent() {
       }
 
       setIsSuccess(true);
+
+      if (ensemble) {
+        // Tous les examens du groupe viennent d'être planifiés en une fois : rien à
+        // enchaîner, retour direct à la page d'origine.
+        setTimeout(() => router.push(returnUrl), 1000);
+        return;
+      }
 
       // Prescription multi-examens : reste sur la page pour enchaîner sur le prochain
       // examen non planifié plutôt que de quitter dès le premier rendez-vous confirmé.
@@ -548,36 +563,65 @@ function PlanificationContent() {
       </section>
 
       {groupExams.length > 1 && (
-        <section className="bg-white rounded-xl border border-outline-variant/30 p-6 shadow-sm">
-          <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
-            Prescription multi-examens — {plannedExamIds.size}/{groupExams.length} planifiés
-          </p>
-          <p className="text-xs text-on-surface-variant mb-3">
-            Choisissez l&apos;examen à planifier maintenant, puis passez au suivant une fois le rendez-vous confirmé.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {groupExams.map((exam) => {
-              const isActive = exam.id === prescriptionId;
-              const isPlanned = plannedExamIds.has(exam.id) || (exam.status && exam.status !== "A planifier" && !isActive);
-              return (
-                <button
-                  key={exam.id}
-                  type="button"
-                  onClick={() => switchActiveExam(exam)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
-                    isActive
-                      ? "bg-primary text-white shadow-sm"
-                      : isPlanned
-                      ? "bg-success-container text-success"
-                      : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-                  }`}
-                >
-                  {isPlanned && !isActive && <span className="material-symbols-outlined text-[14px]">check_circle</span>}
-                  {exam.procedure}
-                </button>
-              );
-            })}
+        <section className="bg-white rounded-xl border border-outline-variant/30 p-6 shadow-sm space-y-4">
+          <div>
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
+              Prescription multi-examens — {plannedExamIds.size}/{groupExams.length} planifiés
+            </p>
+            <p className="text-xs text-on-surface-variant">
+              {planifierEnsemble
+                ? "Tous les examens ci-dessous seront planifiés sur le même créneau, en une seule fois."
+                : "Choisissez l'examen à planifier maintenant, puis passez au suivant une fois le rendez-vous confirmé."}
+            </p>
           </div>
+
+          <label className="flex items-center gap-2 text-xs font-bold text-on-surface cursor-pointer">
+            <input
+              type="checkbox"
+              checked={planifierEnsemble}
+              onChange={(e) => setPlanifierEnsemble(e.target.checked)}
+              className="h-4 w-4 rounded border-outline-variant/50 text-primary focus:ring-primary/30"
+            />
+            Planifier tous les examens sur le même créneau (même séance)
+          </label>
+
+          {planifierEnsemble ? (
+            <div className="flex flex-wrap gap-2">
+              {groupExams.map((exam) => (
+                <span
+                  key={exam.id}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1.5 text-xs font-bold"
+                >
+                  <span className="material-symbols-outlined text-[14px]">medical_services</span>
+                  {exam.procedure}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {groupExams.map((exam) => {
+                const isActive = exam.id === prescriptionId;
+                const isPlanned = plannedExamIds.has(exam.id) || (exam.status && exam.status !== "A planifier" && !isActive);
+                return (
+                  <button
+                    key={exam.id}
+                    type="button"
+                    onClick={() => switchActiveExam(exam)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+                      isActive
+                        ? "bg-primary text-white shadow-sm"
+                        : isPlanned
+                        ? "bg-success-container text-success"
+                        : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                    }`}
+                  >
+                    {isPlanned && !isActive && <span className="material-symbols-outlined text-[14px]">check_circle</span>}
+                    {exam.procedure}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
@@ -770,6 +814,8 @@ function PlanificationContent() {
                         <span className="material-symbols-outlined text-[18px]">check_circle</span>
                         Confirmé !
                       </>
+                    ) : planifierEnsemble && groupExams.length > 1 ? (
+                      `Planifier les ${groupExams.length} examens`
                     ) : (
                       "Confirmer le RDV"
                     )}

@@ -15,6 +15,7 @@ import {
   mapProcedureToExamType,
   getConstatationsFields,
 } from "@/lib/examOrgans";
+import { fetchSessionSiblings, nextExamWithoutResultat, type SessionInfo } from "@/lib/exam-session";
 
 // ---------------------------------------------------------------------------
 // Dictée globale des constatations — parser organe → champ
@@ -320,13 +321,28 @@ const initialData: CompteRenduEndoscopie = {
 
 function ResultatEndoscopieContent() {
   const router = useRouter();
-  const { patientId, prescriptionId, patientName, procedure, age, prescriber } = usePatient();
+  const { patientId, prescriptionId, patientName, procedure, age, prescriber, setPatientData } = usePatient();
   const [formData, setFormData] = useState<CompteRenduEndoscopie>(() => ({
     ...initialData,
     typeExamen: mapProcedureToExamType(procedure) ?? initialData.typeExamen,
   }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  // Session groupée (plusieurs examens du même patient sur le même créneau) — permet
+  // d'enchaîner la rédaction du compte-rendu procédure par procédure sans quitter la page.
+  const [session, setSession] = useState<SessionInfo | null>(null);
+
+  useEffect(() => {
+    if (!prescriptionId) {
+      setSession(null);
+      return;
+    }
+    let cancelled = false;
+    fetchSessionSiblings(prescriptionId)
+      .then((s) => { if (!cancelled) setSession(s); })
+      .catch(() => { if (!cancelled) setSession(null); });
+    return () => { cancelled = true; };
+  }, [prescriptionId]);
   // Simple référence de ce qui a été dicté par organe pendant l'opération (à côté du
   // libellé) — n'alimente plus le champ officiel du médecin en dessous, voir loadData.
   const [parsedOrganNotes, setParsedOrganNotes] = useState<Partial<Constatations>>({});
@@ -372,6 +388,11 @@ function ResultatEndoscopieContent() {
   useEffect(() => {
     async function loadData() {
       if (!prescriptionId) return;
+      // Réinitialisation immédiate — en session groupée, évite que les champs de
+      // l'examen précédent restent affichés le temps que la nouvelle requête réponde.
+      setFormData({ ...initialData, typeExamen: mapProcedureToExamType(procedure) ?? initialData.typeExamen });
+      setParsedOrganNotes({});
+      setImages([]);
       try {
         // Charge en parallèle : compte rendu existant, notes d'opération, et prescription (source de vérité du type)
         const [data, opData, prescriptionData] = await Promise.all([
@@ -607,8 +628,17 @@ function ResultatEndoscopieContent() {
         body: JSON.stringify(payload),
       });
       setIsSuccess(true);
+      // Session groupée : s'il reste un examen sans compte-rendu, on enchaîne dessus
+      // au lieu de quitter — un compte-rendu distinct par procédure, même patient.
+      const freshSession = await fetchSessionSiblings(prescriptionId).catch(() => null);
+      const next = freshSession ? nextExamWithoutResultat(freshSession, prescriptionId) : null;
       setTimeout(() => {
-        router.push("/");
+        if (next) {
+          setPatientData({ prescriptionId: next.id, procedure: next.typeExamen });
+          setIsSuccess(false);
+        } else {
+          router.push("/");
+        }
       }, 1200);
     } catch (err) {
       console.error("Erreur lors de la sauvegarde du compte rendu :", err);
@@ -626,6 +656,12 @@ function ResultatEndoscopieContent() {
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">Service d'endoscopie — CHU Fianarantsoa</p>
                 <h1 className="mt-3 text-3xl font-bold text-slate-900">{dynamicTitle}</h1>
+                {session?.sameSlot && (
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    <span className="material-symbols-outlined text-[14px]">layers</span>
+                    Examen {session.exams.findIndex((e) => e.id === prescriptionId) + 1} / {session.exams.length}
+                  </span>
+                )}
               </div>
               <div className="text-right text-sm text-slate-600">
                 <p>Patient : <span className="font-semibold">{patientName || '—'}</span></p>

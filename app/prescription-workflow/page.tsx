@@ -12,11 +12,13 @@ import HistoryModal from "@/components/ui/HistoryModal";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
+import { fetchSessionSiblings, nextExamWithoutOperation, type SessionInfo } from "@/lib/exam-session";
 
 
 function PrescriptionWorkflowContent() {
   const router = useRouter();
-  const { patientId, prescriptionId, patientName, procedure } = usePatient();
+  const { patientId, prescriptionId, patientName, procedure, setPatientData } = usePatient();
+  const [session, setSession] = useState<SessionInfo | null>(null);
   const [medicalNotes, setMedicalNotes] = useState("");
   const [transcriptText, setTranscriptText] = useState("");
   const [savedMedicalNotes, setSavedMedicalNotes] = useState<SavedTranscriptionEntry[]>([]);
@@ -63,6 +65,14 @@ const lastSavedTranscriptionRef = useRef("");
   useEffect(() => {
     async function loadData() {
       if (!prescriptionId) return;
+      // Réinitialisation immédiate — sans ça, en session groupée, le texte du dictée de
+      // l'examen précédent resterait affiché le temps que la nouvelle requête réponde.
+      setTranscriptText("");
+      setMedicalNotes("");
+      setSavedMedicalNotes([]);
+      setPrescriptionPostActe("");
+      organIndexRef.current = 0;
+      setOrganIndex(0);
       try {
         const opData = await apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null);
         if (opData) {
@@ -76,6 +86,21 @@ const lastSavedTranscriptionRef = useRef("");
       }
     }
     loadData();
+  }, [prescriptionId]);
+
+  // Session groupée (plusieurs examens du même patient sur le même créneau, voir
+  // getSameSlotSiblings côté backend) — permet d'enchaîner la dictée procédure par
+  // procédure sans quitter la page opération tant qu'il en reste.
+  useEffect(() => {
+    if (!prescriptionId) {
+      setSession(null);
+      return;
+    }
+    let cancelled = false;
+    fetchSessionSiblings(prescriptionId)
+      .then((s) => { if (!cancelled) setSession(s); })
+      .catch(() => { if (!cancelled) setSession(null); });
+    return () => { cancelled = true; };
   }, [prescriptionId]);
 
   const saveOperation = async (postActeOverride?: string) => {
@@ -195,9 +220,17 @@ const lastSavedTranscriptionRef = useRef("");
             <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-sky-700 px-6 py-6 text-white lg:px-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-3xl space-y-4">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white/90">
-                    <span className="material-symbols-outlined text-[18px]">clinical_notes</span>
-                    Opération Endoscopie
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white/90">
+                      <span className="material-symbols-outlined text-[18px]">clinical_notes</span>
+                      Opération Endoscopie
+                    </div>
+                    {session?.sameSlot && (
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">
+                        <span className="material-symbols-outlined text-[16px]">layers</span>
+                        Examen {session.exams.findIndex((e) => e.id === prescriptionId) + 1} / {session.exams.length}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <p className="max-w-2xl text-sm leading-6 text-blue-50/90 lg:text-base">
@@ -386,11 +419,21 @@ const lastSavedTranscriptionRef = useRef("");
           <button
             onClick={async () => {
               await saveOperation();
+              // Session groupée : s'il reste un examen sans dictée enregistrée, on
+              // enchaîne dessus au lieu de quitter la page opération.
+              const freshSession = prescriptionId ? await fetchSessionSiblings(prescriptionId).catch(() => null) : null;
+              const next = freshSession && prescriptionId ? nextExamWithoutOperation(freshSession, prescriptionId) : null;
+              if (next) {
+                setPatientData({ prescriptionId: next.id, procedure: next.typeExamen });
+                return;
+              }
               router.push('/checklists/apres');
             }}
             className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90"
           >
-            Passer Check-list Après
+            {session?.sameSlot && nextExamWithoutOperation(session, prescriptionId || "")
+              ? "Examen suivant"
+              : "Passer Check-list Après"}
             <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
           </button>
         </div>

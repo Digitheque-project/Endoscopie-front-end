@@ -6,6 +6,7 @@ import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson, updateRendezVous } from "@/lib/api";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -29,6 +30,21 @@ function PlanificationExamenContent() {
   const [isDeciding, setIsDeciding] = useState(false);
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [selectedAnesthesie, setSelectedAnesthesie] = useState<"Locale" | "Générale" | "Refuser" | null>(null);
+  // Session groupée (plusieurs examens du même patient sur le même créneau) — la
+  // décision d'anesthésie prise ici s'applique à toute la séance, pas qu'à cet examen.
+  const [session, setSession] = useState<SessionInfo | null>(null);
+
+  useEffect(() => {
+    if (!prescriptionId) {
+      setSession(null);
+      return;
+    }
+    let cancelled = false;
+    fetchSessionSiblings(prescriptionId)
+      .then((s) => { if (!cancelled) setSession(s); })
+      .catch(() => { if (!cancelled) setSession(null); });
+    return () => { cancelled = true; };
+  }, [prescriptionId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -139,8 +155,13 @@ function PlanificationExamenContent() {
                     })()}
                   </p>
                   <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-secondary-container text-secondary text-[10px] font-bold uppercase tracking-wider">
-                    {prescription.typeExamen}
+                    {session?.sameSlot ? session.exams.map((e) => e.typeExamen).join(" + ") : prescription.typeExamen}
                   </span>
+                  {session?.sameSlot && (
+                    <p className="mt-1.5 text-[10px] font-semibold text-amber-600">
+                      Session groupée — la décision s&apos;appliquera aux {session.exams.length} examens de cette séance.
+                    </p>
+                  )}
                 </div>
                 <button
                   type="button"

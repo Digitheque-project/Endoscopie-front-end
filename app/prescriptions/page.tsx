@@ -831,6 +831,14 @@ function PrescriptionsContent() {
                             const primary = group[0];
                             const isGrouped = group.length > 1;
                             const combinedProcedure = group.map((r) => r.procedure).join(" + ");
+                            // Tous les rendez-vous du groupe partagent exactement la même date/heure
+                            // de début : ces examens se font en une seule séance (donnée déjà
+                            // disponible localement, pas de nouvel appel réseau).
+                            const isSameSlot =
+                              isGrouped &&
+                              group.every(
+                                (r) => r.rendezVous?.dateHeureDebut && r.rendezVous.dateHeureDebut === group[0].rendezVous?.dateHeureDebut,
+                              );
                             // L'examen qui a le plus besoin d'une action, pour que le bouton
                             // unique de la ligne groupée ne masque pas un examen encore en
                             // attente juste parce que le premier de la liste est déjà traité.
@@ -870,6 +878,15 @@ function PrescriptionsContent() {
                                   </span>
                                 );
                               })}
+                              {isSameSlot && (
+                                <span
+                                  title="Ces examens sont planifiés sur le même créneau (une seule séance)"
+                                  className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700"
+                                >
+                                  <span className="material-symbols-outlined text-[12px]">layers</span>
+                                  Même créneau
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.prescriber}>{primary.prescriber}</td>
