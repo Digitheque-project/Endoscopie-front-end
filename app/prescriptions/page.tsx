@@ -597,8 +597,8 @@ function PrescriptionsContent() {
   // l'espace récupéré agrandit la colonne Médecin pour que le nom du prescripteur ne
   // soit plus tronqué.
   const columnWidths = showStatutColumn
-    ? ["9%", "16%", "14%", "20%", "8%", "14%", "19%"]
-    : ["10%", "19%", "17%", "24%", "9%", "21%"];
+    ? ["9%", "16%", "14%", "15%", "13%", "14%", "19%"]
+    : ["10%", "19%", "17%", "18%", "15%", "21%"];
 
   return (
     <AppShell>
