@@ -28,7 +28,6 @@ function ChecklistApresContent() {
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [remarques, setRemarques] = useState("");
-  const [showChoice, setShowChoice] = useState(false);
 
   const titleToDbKey: Record<string, string> = {
     "Confirmation & Étiquetage": "confirmationEtiquetage",
@@ -116,38 +115,12 @@ function ChecklistApresContent() {
 
   const handleValiderEtTerminer = async () => {
     await saveChecklist(answers, remarques);
-    setShowChoice(true);
+    // Le patient apparaît désormais automatiquement dans "Comptes rendus" (voir
+    // getPendingReports côté backend, déjà basé sur la checklist après validée) — plus
+    // besoin de choisir ici, on retourne directement au tableau de bord pour enchaîner
+    // sur les autres patients.
+    router.push('/');
   };
-
-  if (showChoice) {
-    return (
-      <RequireRole role="MEDECIN">
-        <div className="bg-surface text-on-surface min-h-[60vh] flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center space-y-5">
-            <span className="material-symbols-outlined text-5xl text-emerald-600">task_alt</span>
-            <div>
-              <h2 className="font-headline text-xl text-on-surface">Check-list après-endoscopie enregistrée</h2>
-              <p className="text-sm text-on-surface-variant mt-1">Que souhaitez-vous faire maintenant ?</p>
-            </div>
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => router.push('/resultat-endoscopie')}
-                className="px-6 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold transition-all duration-200 hover:scale-105 hover:opacity-90"
-              >
-                Écrire le compte-rendu maintenant
-              </button>
-              <button
-                onClick={() => router.push('/prescriptions?tab=pret')}
-                className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold transition-all duration-200 hover:bg-slate-50"
-              >
-                Traiter un autre patient
-              </button>
-            </div>
-          </div>
-        </div>
-      </RequireRole>
-    );
-  }
 
   return (
     <RequireRole role="MEDECIN">

@@ -65,14 +65,10 @@ const lastSavedTranscriptionRef = useRef("");
   useEffect(() => {
     async function loadData() {
       if (!prescriptionId) return;
-      // Réinitialisation immédiate — sans ça, en session groupée, le texte du dictée de
-      // l'examen précédent resterait affiché le temps que la nouvelle requête réponde.
-      setTranscriptText("");
-      setMedicalNotes("");
-      setSavedMedicalNotes([]);
-      setPrescriptionPostActe("");
-      organIndexRef.current = 0;
-      setOrganIndex(0);
+      // Pas de reset ici : l'effet d'écriture automatique de l'organe (ci-dessus)
+      // dépend de currentOrgan et s'exécute dans le même rendu quand on change
+      // d'examen (voir handleNextExam) — remettre transcriptText à "" ici, après lui,
+      // écraserait le libellé du premier organe qu'il vient d'écrire.
       try {
         const opData = await apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null);
         if (opData) {
@@ -424,6 +420,15 @@ const lastSavedTranscriptionRef = useRef("");
               const freshSession = prescriptionId ? await fetchSessionSiblings(prescriptionId).catch(() => null) : null;
               const next = freshSession && prescriptionId ? nextExamWithoutOperation(freshSession, prescriptionId) : null;
               if (next) {
+                // Reset synchrone AVANT de changer d'examen : l'effet d'écriture automatique
+                // de l'organe (dépend de currentOrgan) doit repartir d'un champ vide, pas
+                // continuer à ajouter à la suite du texte de l'examen précédent.
+                setTranscriptText("");
+                setMedicalNotes("");
+                setSavedMedicalNotes([]);
+                setPrescriptionPostActe("");
+                organIndexRef.current = 0;
+                setOrganIndex(0);
                 setPatientData({ prescriptionId: next.id, procedure: next.typeExamen });
                 return;
               }
