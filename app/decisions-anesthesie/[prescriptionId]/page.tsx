@@ -182,13 +182,9 @@ function PlanificationExamenContent() {
                     <p className="text-sm text-on-surface-variant">{prescription.motif || "Aucun motif renseigné."}</p>
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Antécédents médicaux</h4>
-                    <p className="text-sm text-on-surface-variant">{prescription.patient?.antecedentsMedicaux || "Aucun antécédent renseigné."}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Poids</h4>
+                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Examen demandé</h4>
                     <p className="text-sm text-on-surface-variant">
-                      {prescription.patient?.poids != null ? `${prescription.patient.poids} kg` : "Non renseigné"}
+                      {session?.sameSlot ? session.exams.map((e) => e.typeExamen).join(" + ") : prescription.typeExamen}
                     </p>
                   </div>
                 </div>
