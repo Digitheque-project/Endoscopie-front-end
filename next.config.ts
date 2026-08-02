@@ -8,6 +8,9 @@ const backendUrl =
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  // Sortie autonome (server.js + node_modules minimaux) pour une image Docker légère —
+  // voir Dockerfile.
+  output: "standalone",
   turbopack: {
     root: __dirname,
   },
