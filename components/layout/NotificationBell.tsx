@@ -267,7 +267,16 @@ export function NotificationBell() {
   const unreadCount = unreadItems.length;
 
   const handleOpenItem = async (item: DisplayNotification) => {
-    if (!item.readAt) {
+    // Le médecin voit les notifications de nouvelles prescriptions pour surveiller le
+    // travail du major, mais leur gestion ne le concerne pas — son clic ne doit ni
+    // naviguer, ni marquer la notification comme lue (sans quoi elle disparaîtrait de
+    // sa liste avant même que le major ait traité la prescription, lui faisant perdre
+    // le fil de la surveillance). Seule l'action du major (voir markRead côté backend)
+    // la fait disparaître pour lui aussi.
+    const isMedecinPrescriptionNotif =
+      role === "MEDECIN" && item.entiteRefType?.toLowerCase() === "prescription";
+
+    if (!item.readAt && !isMedecinPrescriptionNotif) {
       if (item.isLocal) {
         await markInboxNotificationRead(item.id).catch(() => undefined);
       }
@@ -279,19 +288,14 @@ export function NotificationBell() {
     }
     setOpen(false);
 
+    if (isMedecinPrescriptionNotif) return;
+
     // La notification référence une prescription (ex. nouvelle demande) : on ouvre
     // directement son détail. Le bouton "Retour" du dossier patient ramène toujours
     // vers le fil de prescription, peu importe la page depuis laquelle la cloche a
     // été ouverte.
-    // Le médecin voit ces notifications (pour vérifier que le travail du major suit),
-    // mais leur gestion (planification, dossier patient) est le travail du major, pas
-    // le sien — le clic reste possible (marque quand même comme lue ci-dessus) mais ne
-    // navigue nulle part pour lui, pour ne pas le noyer sous des notifications qui ne
-    // le concernent pas directement.
     if (item.entiteRefType?.toLowerCase() === "prescription" && item.entiteRefId) {
-      if (role !== "MEDECIN") {
-        router.push(`/patient-dossier/${encodeURIComponent(item.entiteRefId)}`);
-      }
+      router.push(`/patient-dossier/${encodeURIComponent(item.entiteRefId)}`);
       return;
     }
 
