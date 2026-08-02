@@ -254,6 +254,19 @@ function PlanificationContent() {
   const SLOT_CHECK_TIMEOUT_MS = 20000;
 
   /**
+   * Équivalent de AbortSignal.timeout(ms), mais reposant uniquement sur AbortController
+   * (disponible depuis 2018, bien avant AbortSignal.timeout qui date de 2022). Sur les
+   * postes du CHU tournant sur un navigateur plus ancien, AbortSignal.timeout n'existe
+   * pas du tout : l'appeler levait une TypeError immédiate à chaque tentative, prise à
+   * tort pour une vraie erreur réseau ("Impossible de vérifier la disponibilité...").
+   */
+  const timeoutSignal = (ms: number): AbortSignal => {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), ms);
+    return controller.signal;
+  };
+
+  /**
    * Vérifie à la fois la disponibilité de la salle ET du médecin sur le créneau —
    * le serveur valide aussi les deux (voir createRendezVous), mais sans ce
    * pré-contrôle côté médecin, un conflit médecin ne remontait qu'à la soumission
@@ -264,7 +277,7 @@ function PlanificationContent() {
     // les rendez-vous de ce jour-là (au lieu de la table entière, qui grossit avec le
     // temps) pour que cette vérification reste rapide même quand la base est sollicitée.
     const appointments = await apiJson<any[]>(`/api/rendezvous/jour/${date}`, {
-      signal: AbortSignal.timeout(SLOT_CHECK_TIMEOUT_MS),
+      signal: timeoutSignal(SLOT_CHECK_TIMEOUT_MS),
     });
     const overlapsSlot = (app: any) => {
       // Un rendez-vous annulé ou terminé ne bloque pas le créneau, et on ignore
