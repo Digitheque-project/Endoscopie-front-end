@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
-import { RequireRole } from "@/components/auth/RequireRole";
+import { useAuth } from "@/contexts/AuthContext";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
@@ -52,7 +52,15 @@ function Field({ label, value }: { label: string; value?: string | null }) {
 function DossierSeanceContent() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const { role } = useAuth();
   const { setPatientData } = usePatient();
+  // D'où l'utilisateur est arrivé — pour que "Retour" le ramène là plutôt que sur une
+  // page par défaut qui ne correspond pas forcément à son parcours (archives, liste des
+  // comptes rendus en attente...).
+  const from = searchParams.get("from");
+  const backHref = from === "archives" ? "/archives" : "/comptes-rendus-en-attente";
+  const backLabel = from === "archives" ? "Retour aux archives" : "Retour à la liste";
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,12 +103,10 @@ function DossierSeanceContent() {
     return (
       <AppShell>
         <div className={PAGE_CONTENT_CLASS}>
-          <RequireRole role="MEDECIN">
-            <div className="bg-white rounded-2xl p-8 animate-pulse space-y-4">
-              <div className="h-6 w-48 bg-surface-container rounded" />
-              <div className="h-4 w-72 bg-surface-container rounded" />
-            </div>
-          </RequireRole>
+          <div className="bg-white rounded-2xl p-8 animate-pulse space-y-4">
+            <div className="h-6 w-48 bg-surface-container rounded" />
+            <div className="h-4 w-72 bg-surface-container rounded" />
+          </div>
         </div>
       </AppShell>
     );
@@ -110,9 +116,7 @@ function DossierSeanceContent() {
     return (
       <AppShell>
         <div className={PAGE_CONTENT_CLASS}>
-          <RequireRole role="MEDECIN">
-            <div className="bg-white rounded-2xl p-8 text-center text-on-surface-variant">{error || "Dossier introuvable."}</div>
-          </RequireRole>
+          <div className="bg-white rounded-2xl p-8 text-center text-on-surface-variant">{error || "Dossier introuvable."}</div>
         </div>
       </AppShell>
     );
@@ -153,7 +157,6 @@ function DossierSeanceContent() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-        <RequireRole role="MEDECIN">
           {/* En-tête patient */}
           <div className="bg-white rounded-2xl border border-outline-variant/15 shadow-sm p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -300,13 +303,13 @@ function DossierSeanceContent() {
           {/* Actions */}
           <div className="flex items-center justify-between">
             <a
-              href="/comptes-rendus-en-attente"
+              href={backHref}
               className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-5 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all"
             >
               <span className="material-symbols-outlined text-lg">arrow_back</span>
-              Retour à la liste
+              {backLabel}
             </a>
-            {!prescription.resultatEndoscopie && (
+            {role === "MEDECIN" && !prescription.resultatEndoscopie && (
               <button
                 type="button"
                 onClick={handleRediger}
@@ -323,12 +326,15 @@ function DossierSeanceContent() {
               </span>
             )}
           </div>
-        </RequireRole>
       </div>
     </AppShell>
   );
 }
 
 export default function DossierSeancePage() {
-  return <DossierSeanceContent />;
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+      <DossierSeanceContent />
+    </Suspense>
+  );
 }

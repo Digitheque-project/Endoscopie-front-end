@@ -232,7 +232,13 @@ export default function ArchivesPage() {
                   {rows.map((row) => (
                     <tr
                       key={row.prescriptionId}
-                      onClick={() => router.push(`/patient-dossier/${row.prescriptionId}`)}
+                      onClick={() =>
+                        router.push(
+                          row.resultatDisponible
+                            ? `/dossier-seance/${row.prescriptionId}?from=archives`
+                            : `/patient-dossier/${row.prescriptionId}`,
+                        )
+                      }
                       className={`hover:bg-surface-container-low transition-colors cursor-pointer ${priseEnChargeStripeClass(!!row.priseEnChargeId)}`}
                     >
                       <td className="px-4 py-3 text-sm">{new Date(row.dateDemande).toLocaleDateString("fr-FR")}</td>
