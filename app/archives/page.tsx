@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiJson } from "@/lib/api";
+import { usePatient } from "@/contexts/PatientContext";
 import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
 
 interface ArchiveRow {
@@ -56,6 +57,7 @@ const EMPTY_FILTERS = { nom: "", dateFrom: "", dateTo: "", typeExamen: "", typeA
 
 export default function ArchivesPage() {
   const router = useRouter();
+  const { setPatientData } = usePatient();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [rows, setRows] = useState<ArchiveRow[]>([]);
   const [examTypes, setExamTypes] = useState<string[]>([]);
@@ -232,13 +234,24 @@ export default function ArchivesPage() {
                   {rows.map((row) => (
                     <tr
                       key={row.prescriptionId}
-                      onClick={() =>
-                        router.push(
-                          row.resultatDisponible
-                            ? `/dossier-seance/${row.prescriptionId}?from=archives`
-                            : `/patient-dossier/${row.prescriptionId}`,
-                        )
-                      }
+                      onClick={() => {
+                        if (row.resultatDisponible) {
+                          // Le compte rendu officiel complet (mêmes sections que celles
+                          // remplies par le médecin) — pas un simple résumé — utile pour
+                          // les services externes. La page le charge déjà depuis
+                          // /api/resultats/:id dès que prescriptionId est en contexte.
+                          setPatientData({
+                            patientId: row.patientId,
+                            prescriptionId: row.prescriptionId,
+                            patientName: `${row.patientNom} ${row.patientPrenom}`.trim(),
+                            procedure: row.typeExamen,
+                            prescriber: row.prescripteur || "",
+                          });
+                          router.push("/resultat-endoscopie");
+                        } else {
+                          router.push(`/patient-dossier/${row.prescriptionId}`);
+                        }
+                      }}
                       className={`hover:bg-surface-container-low transition-colors cursor-pointer ${priseEnChargeStripeClass(!!row.priseEnChargeId)}`}
                     >
                       <td className="px-4 py-3 text-sm">{new Date(row.dateDemande).toLocaleDateString("fr-FR")}</td>
