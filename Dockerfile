@@ -43,9 +43,15 @@ RUN npm run build
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# Render attend par défaut le port 10000 pour un service Docker (voir sa doc) — le
+# serveur standalone de Next.js écoute sur process.env.PORT (3000 par défaut), d'où un
+# 502 permanent sans ceci : Render ne parvenait jamais à joindre le conteneur. Une
+# variable PORT fournie par la plateforme au démarrage écraserait quand même cette
+# valeur par défaut si besoin.
+ENV PORT=10000
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-EXPOSE 3000
+EXPOSE 10000
 CMD ["node", "server.js"]
