@@ -10,6 +10,9 @@ COPY . .
 # .env.local fournit les variables NEXT_PUBLIC_* — Next.js les lit et les inline dans
 # le bundle client pendant `next build` ; elles ne peuvent plus être changées après coup
 # (contrairement à BACKEND_URL, lu côté serveur au démarrage du conteneur, voir docker-compose.yml).
+# DOCKER_BUILD active `output: "standalone"` (voir next.config.ts) — seul ce build en a
+# besoin ; le déploiement Render (`next start`) ne doit pas l'activer.
+ENV DOCKER_BUILD=1
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runner

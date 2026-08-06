@@ -9,8 +9,10 @@ const backendUrl =
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   // Sortie autonome (server.js + node_modules minimaux) pour une image Docker légère —
-  // voir Dockerfile.
-  output: "standalone",
+  // voir Dockerfile, qui seul positionne DOCKER_BUILD. Render déploie avec `next start`
+  // (voir render.yaml), qui affiche un avertissement et ne fonctionne pas correctement
+  // avec `output: "standalone"` — ce mode ne doit donc s'activer que pour Docker.
+  ...(process.env.DOCKER_BUILD ? { output: "standalone" as const } : {}),
   turbopack: {
     root: __dirname,
   },
