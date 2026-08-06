@@ -7,11 +7,36 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# .env.local fournit les variables NEXT_PUBLIC_* — Next.js les lit et les inline dans
-# le bundle client pendant `next build` ; elles ne peuvent plus être changées après coup
-# (contrairement à BACKEND_URL, lu côté serveur au démarrage du conteneur, voir docker-compose.yml).
+# NEXT_PUBLIC_* sont inlinées dans le bundle client pendant `next build` — elles ne
+# peuvent plus être changées après coup (contrairement à BACKEND_URL, lu côté serveur au
+# démarrage du conteneur, voir docker-compose.yml). Si un .env.local est présent dans le
+# contexte de build (cas d'un `docker compose build` local), Next.js le lit directement.
+# Sinon (cas d'un build depuis un dépôt Git qui ne committe jamais .env.local, ex. Render),
+# ces ARG — remplies par Render depuis les variables d'environnement du service, à
+# condition qu'elles y soient définies sous le même nom — prennent le relais : une
+# variable déjà présente dans process.env n'est jamais écrasée par .env.local.
+ARG NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID
+ARG NEXT_PUBLIC_ENDOSCOPIE_CHU_ID
+ARG NEXT_PUBLIC_CHU_API_URL
+ARG NEXT_PUBLIC_ACCUEIL_API_URL
+ARG NEXT_PUBLIC_NOTIFICATION_API_URL
+ARG NEXT_PUBLIC_AUTH_GATEWAY_URL
+ARG NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID
+ARG NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID=$NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID \
+    NEXT_PUBLIC_ENDOSCOPIE_CHU_ID=$NEXT_PUBLIC_ENDOSCOPIE_CHU_ID \
+    NEXT_PUBLIC_CHU_API_URL=$NEXT_PUBLIC_CHU_API_URL \
+    NEXT_PUBLIC_ACCUEIL_API_URL=$NEXT_PUBLIC_ACCUEIL_API_URL \
+    NEXT_PUBLIC_NOTIFICATION_API_URL=$NEXT_PUBLIC_NOTIFICATION_API_URL \
+    NEXT_PUBLIC_AUTH_GATEWAY_URL=$NEXT_PUBLIC_AUTH_GATEWAY_URL \
+    NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID=$NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID \
+    NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL=$NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL \
+    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 # DOCKER_BUILD active `output: "standalone"` (voir next.config.ts) — seul ce build en a
-# besoin ; le déploiement Render (`next start`) ne doit pas l'activer.
+# besoin ; le déploiement Render en runtime Node (`next start`) ne doit pas l'activer.
 ENV DOCKER_BUILD=1
 RUN npm run build
 
