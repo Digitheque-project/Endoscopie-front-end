@@ -54,4 +54,13 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 10000
-CMD ["node", "server.js"]
+# Le serveur standalone de Next.js lit HOSTNAME pour savoir sur quelle interface écouter
+# (défaut "0.0.0.0" si absent — voir .next/standalone/server.js généré). Or Render (et la
+# plupart des plateformes conteneurisées) injecte sa propre variable HOSTNAME égale au nom
+# du conteneur, qui écraserait notre "0.0.0.0" si on la définissait seulement via ENV plus
+# haut (une variable fournie à l'exécution par la plateforme gagne toujours sur un ENV de
+# l'image). Conséquence observée : le process démarre et se dit "Ready", mais n'écoute que
+# sur le nom du conteneur, injoignable depuis l'extérieur — 502 permanent malgré un service
+# qui se déclare "live". On force donc HOSTNAME juste avant de lancer node, pour la seule
+# durée de cette commande, quoi que la plateforme ait mis dans l'environnement du conteneur.
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 node server.js"]
