@@ -9,16 +9,23 @@ function PatientDossierInfoPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const prescriptionId = params?.id ? decodeURIComponent(params.id as string) : "";
-  // Venu du bouton "Voir le dossier patient complet" de la page de décision d'anesthésie :
-  // le retour doit y ramener directement, pas passer par le dossier patient résumé
-  // intermédiaire (sans intérêt ici, l'utilisateur n'a pas fini de décider).
+  // Venu du bouton "Voir le dossier patient" de la page de décision d'anesthésie ou de
+  // l'opération endoscopie : le retour doit y ramener directement, pas passer par le
+  // dossier patient résumé intermédiaire (sans intérêt dans ces deux parcours).
   const from = searchParams.get("from");
   const tab = searchParams.get("tab");
   const returnUrl =
     from === "decision"
       ? `/decisions-anesthesie/${encodeURIComponent(prescriptionId)}${tab ? `?tab=${encodeURIComponent(tab)}` : ""}`
+      : from === "operation"
+      ? "/prescription-workflow"
       : `/patient-dossier/${encodeURIComponent(prescriptionId)}`;
-  const returnLabel = from === "decision" ? "Retour à la planification de l'examen" : "Retour au dossier patient";
+  const returnLabel =
+    from === "decision"
+      ? "Retour à la planification de l'examen"
+      : from === "operation"
+      ? "Retour à l'opération endoscopie"
+      : "Retour au dossier patient";
 
   return (
     <AppShell>

@@ -29,6 +29,9 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeDossierTab, setActiveDossierTab] = useState<DossierTabKey>("observation");
+  const [examensComplementaires, setExamensComplementaires] = useState("");
+  const [isSavingExamens, setIsSavingExamens] = useState(false);
+  const [saveExamensStatus, setSaveExamensStatus] = useState<"idle" | "success" | "error">("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -37,7 +40,10 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
       setError(null);
       try {
         const data = await apiJson<any>(`/api/prescriptions/${prescriptionId}`);
-        if (!cancelled) setPrescription(data);
+        if (!cancelled) {
+          setPrescription(data);
+          setExamensComplementaires(data?.examensComplementaires || "");
+        }
       } catch (err) {
         if (!cancelled) setError("Impossible de charger ce dossier.");
         console.error("Erreur chargement dossier patient :", err);
@@ -50,6 +56,26 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
       cancelled = true;
     };
   }, [prescriptionId]);
+
+  const handleSaveExamensComplementaires = async () => {
+    if (!prescription?.id) return;
+    setIsSavingExamens(true);
+    setSaveExamensStatus("idle");
+    try {
+      await apiJson(`/api/prescriptions/${prescription.id}/examens-complementaires`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ examensComplementaires }),
+      });
+      setSaveExamensStatus("success");
+      setTimeout(() => setSaveExamensStatus("idle"), 2500);
+    } catch (e) {
+      console.error("Erreur enregistrement examens complémentaires :", e);
+      setSaveExamensStatus("error");
+    } finally {
+      setIsSavingExamens(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -113,6 +139,38 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
           {activeDossierTab === "resultats" && <ResultatsParacliniquesTab patientId={patient.id} />}
         </>
       )}
+
+      <section className="pt-2 border-t border-outline-variant/10">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
+          Demande d&apos;examens complémentaires
+        </p>
+        <p className="text-[11px] text-on-surface-variant mb-2">
+          Propre à Endoscopie — à distinguer du dossier CHU ci-dessus, qui reste en lecture seule.
+        </p>
+        <textarea
+          value={examensComplementaires}
+          onChange={(e) => setExamensComplementaires(e.target.value)}
+          placeholder="Ex. Bilan de coagulation, ECG, consultation cardiologique..."
+          rows={3}
+          className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
+        />
+        <div className="flex items-center justify-end gap-3 mt-2">
+          {saveExamensStatus === "success" && (
+            <span className="text-[11px] font-semibold text-success">Enregistré</span>
+          )}
+          {saveExamensStatus === "error" && (
+            <span className="text-[11px] font-semibold text-error">Échec de l&apos;enregistrement</span>
+          )}
+          <button
+            type="button"
+            onClick={handleSaveExamensComplementaires}
+            disabled={isSavingExamens}
+            className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSavingExamens ? "Enregistrement…" : "Enregistrer"}
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

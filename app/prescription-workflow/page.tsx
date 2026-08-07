@@ -237,7 +237,7 @@ const lastSavedTranscriptionRef = useRef("");
 
                 <button
                   type="button"
-                  onClick={() => router.push(`/patient-dossier/${encodeURIComponent(prescriptionId)}/informations`)}
+                  onClick={() => router.push(`/patient-dossier/${encodeURIComponent(prescriptionId)}/informations?from=operation`)}
                   title="Voir le dossier patient"
                   aria-label="Voir le dossier patient"
                   className="flex items-center justify-center w-11 h-11 rounded-xl border border-white/30 bg-white/15 text-white hover:bg-white/25 transition-colors shrink-0"
