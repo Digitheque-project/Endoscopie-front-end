@@ -28,27 +28,14 @@ export function ResultatsParacliniquesTab({ patientId }: ResultatsParacliniquesT
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState("");
 
-  const load = () => {
+  useEffect(() => {
     setIsLoading(true);
     apiJson<any[]>(`/api/dossier-patient/${encodeURIComponent(patientId)}/resultats`)
       .then((data) => setResultats(Array.isArray(data) ? data : []))
       .catch(() => setResultats([]))
       .finally(() => setIsLoading(false));
-  };
-
-  useEffect(() => {
-    load();
     setFilterType("");
   }, [patientId]);
-
-  const handleMarkLu = async (resultatId: string) => {
-    try {
-      await apiJson(`/api/dossier-patient/${encodeURIComponent(patientId)}/resultats/${encodeURIComponent(resultatId)}/lu`, { method: "PATCH" });
-      load();
-    } catch (e) {
-      console.error("Erreur marquage résultat comme lu :", e);
-    }
-  };
 
   const types = resultats ? Array.from(new Set(resultats.map((r) => (r.type || "").toLowerCase()).filter(Boolean))) : [];
   const filtered = resultats ? (filterType ? resultats.filter((r) => (r.type || "").toLowerCase() === filterType) : resultats) : [];
@@ -88,11 +75,6 @@ export function ResultatsParacliniquesTab({ patientId }: ResultatsParacliniquesT
                   </div>
                   {r.date && <p className="text-on-surface-variant">{new Date(r.date).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}</p>}
                   {r.description && <p className="text-on-surface-variant">{r.description}</p>}
-                  {statut === "disponible" && r.id && (
-                    <button type="button" onClick={() => handleMarkLu(r.id)} className="mt-1 text-[11px] font-bold text-primary hover:underline">
-                      Marquer comme lu
-                    </button>
-                  )}
                 </li>
               );
             })}
