@@ -235,7 +235,15 @@ const lastSavedTranscriptionRef = useRef("");
                   </div>
                 </div>
 
-
+                <button
+                  type="button"
+                  onClick={() => router.push(`/patient-dossier/${encodeURIComponent(prescriptionId)}/informations`)}
+                  title="Voir le dossier patient"
+                  aria-label="Voir le dossier patient"
+                  className="flex items-center justify-center w-11 h-11 rounded-xl border border-white/30 bg-white/15 text-white hover:bg-white/25 transition-colors shrink-0"
+                >
+                  <span className="material-symbols-outlined text-2xl">contact_page</span>
+                </button>
               </div>
             </div>
           </section>
