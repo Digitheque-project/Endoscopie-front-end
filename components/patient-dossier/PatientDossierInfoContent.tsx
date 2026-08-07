@@ -4,6 +4,22 @@ import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import { ObservationTab } from "@/components/patient-dossier/dossier-tabs/ObservationTab";
+import { DiagnosticTab } from "@/components/patient-dossier/dossier-tabs/DiagnosticTab";
+import { SuiviTab } from "@/components/patient-dossier/dossier-tabs/SuiviTab";
+import { ParametresTab } from "@/components/patient-dossier/dossier-tabs/ParametresTab";
+import { HistoriqueTab } from "@/components/patient-dossier/dossier-tabs/HistoriqueTab";
+import { ResultatsParacliniquesTab } from "@/components/patient-dossier/dossier-tabs/ResultatsParacliniquesTab";
+
+const DOSSIER_TABS = [
+  { key: "observation", label: "Observation médicale", icon: "stethoscope" },
+  { key: "diagnostic", label: "Diagnostic", icon: "monitor_heart" },
+  { key: "suivi", label: "Suivi", icon: "timeline" },
+  { key: "parametres", label: "Paramètres", icon: "speed" },
+  { key: "historique", label: "Historique", icon: "history" },
+  { key: "resultats", label: "Résultats paracliniques", icon: "biotech" },
+] as const;
+type DossierTabKey = (typeof DOSSIER_TABS)[number]["key"];
 
 interface PatientDossierInfoContentProps {
   prescriptionId: string;
@@ -30,12 +46,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
   const [error, setError] = useState<string | null>(null);
   const [patientHistory, setPatientHistory] = useState<any[] | null>(null);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  const [traceability, setTraceability] = useState<{
-    available: boolean;
-    suivis: any[];
-    diagnostics: any[];
-  } | null>(null);
-  const [isTraceabilityLoading, setIsTraceabilityLoading] = useState(false);
+  const [activeDossierTab, setActiveDossierTab] = useState<DossierTabKey>("observation");
   const [examensComplementaires, setExamensComplementaires] = useState("");
   const [isSavingExamens, setIsSavingExamens] = useState(false);
   const [saveExamensStatus, setSaveExamensStatus] = useState<"idle" | "success" | "error">("idle");
@@ -86,17 +97,6 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
         setPatientHistory([]);
       })
       .finally(() => setIsHistoryLoading(false));
-
-    setIsTraceabilityLoading(true);
-    apiJson<{ available: boolean; suivis: any[]; diagnostics: any[] }>(
-      `/api/patients/${prescription.patientId}/parcours-medical`,
-    )
-      .then((data) => setTraceability(data))
-      .catch((e) => {
-        console.error("Erreur chargement parcours médical CHU :", e);
-        setTraceability({ available: false, suivis: [], diagnostics: [] });
-      })
-      .finally(() => setIsTraceabilityLoading(false));
 
     setIsResultatsExternesLoading(true);
     apiJson<any[]>(`/api/resultats-externes?patientId=${encodeURIComponent(prescription.patientId)}`)
@@ -194,7 +194,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
     : null;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-6 max-w-2xl">
+    <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-6 max-w-4xl">
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
           <span className="material-symbols-outlined text-2xl">contact_page</span>
@@ -302,52 +302,36 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
       </section>
 
       <section>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
-          Parcours médical CHU (autres services)
+        <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+          Dossier médical CHU (autres services)
         </p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {DOSSIER_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveDossierTab(tab.key)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+                activeDossierTab === tab.key
+                  ? "bg-primary text-white shadow-sm"
+                  : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        {isTraceabilityLoading ? (
-          <p className="text-xs text-on-surface-variant">Chargement du parcours médical…</p>
-        ) : !traceability || !traceability.available ? (
-          <p className="text-[11px] text-on-surface-variant">
-            Pas encore disponible — cette fonctionnalité sera activée automatiquement dès que le
-            service Dossier Patient CHU sera prêt.
-          </p>
-        ) : traceability.suivis.length === 0 && traceability.diagnostics.length === 0 ? (
-          <p className="text-xs text-on-surface-variant">
-            Aucun suivi ou diagnostic enregistré pour ce patient dans les autres services.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {traceability.suivis.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">
-                  Suivis
-                </p>
-                <ul className="space-y-1.5">
-                  {traceability.suivis.map((s: any, i: number) => (
-                    <li key={s.id ?? i} className="text-xs text-on-surface-variant rounded-lg border border-outline-variant/20 p-2">
-                      {JSON.stringify(s)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {traceability.diagnostics.length > 0 && (
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">
-                  Diagnostics
-                </p>
-                <ul className="space-y-1.5">
-                  {traceability.diagnostics.map((d: any, i: number) => (
-                    <li key={d.id ?? i} className="text-xs text-on-surface-variant rounded-lg border border-outline-variant/20 p-2">
-                      {JSON.stringify(d)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+        {prescription.patientId && (
+          <>
+            {activeDossierTab === "observation" && <ObservationTab patientId={prescription.patientId} />}
+            {activeDossierTab === "diagnostic" && <DiagnosticTab patientId={prescription.patientId} />}
+            {activeDossierTab === "suivi" && <SuiviTab patientId={prescription.patientId} />}
+            {activeDossierTab === "parametres" && <ParametresTab patientId={prescription.patientId} />}
+            {activeDossierTab === "historique" && <HistoriqueTab patientId={prescription.patientId} />}
+            {activeDossierTab === "resultats" && <ResultatsParacliniquesTab patientId={prescription.patientId} />}
+          </>
         )}
       </section>
 
