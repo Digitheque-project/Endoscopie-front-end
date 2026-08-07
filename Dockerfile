@@ -25,6 +25,15 @@ ARG NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID
 ARG NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+# BACKEND_URL n'est pas une NEXT_PUBLIC_* (elle n'a jamais besoin d'être inlinée dans le
+# bundle client), mais `next.config.ts` la lit au niveau module pour construire la cible du
+# rewrite `/api/*` — cette lecture se produit dès `next build` (génération du
+# routes-manifest), pas seulement au démarrage du serveur. Fournie uniquement comme variable
+# d'environnement du service (donc seulement disponible à l'exécution du conteneur, jamais
+# pendant le build), elle est restée figée sur la valeur de secours 127.0.0.1:3333 quoi
+# qu'on mette ensuite dans le dashboard Render — d'où le besoin du même traitement ARG que
+# les NEXT_PUBLIC_* ci-dessus.
+ARG BACKEND_URL
 ENV NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID=$NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID \
     NEXT_PUBLIC_ENDOSCOPIE_CHU_ID=$NEXT_PUBLIC_ENDOSCOPIE_CHU_ID \
     NEXT_PUBLIC_CHU_API_URL=$NEXT_PUBLIC_CHU_API_URL \
@@ -34,7 +43,8 @@ ENV NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID=$NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID \
     NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID=$NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID \
     NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL=$NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL \
     NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    BACKEND_URL=$BACKEND_URL
 # DOCKER_BUILD active `output: "standalone"` (voir next.config.ts) — seul ce build en a
 # besoin ; le déploiement Render en runtime Node (`next start`) ne doit pas l'activer.
 ENV DOCKER_BUILD=1
@@ -49,6 +59,12 @@ ENV NODE_ENV=production
 # variable PORT fournie par la plateforme au démarrage écraserait quand même cette
 # valeur par défaut si besoin.
 ENV PORT=10000
+# Reporté depuis l'étage builder (voir ARG BACKEND_URL plus haut) — filet de sécurité au
+# cas où une variable d'environnement fournie par la plateforme au démarrage du conteneur
+# ne serait pas prise en compte de façon fiable pour ce service (observé sur Render). Une
+# variable d'environnement réellement injectée à l'exécution écraserait quand même celle-ci.
+ARG BACKEND_URL
+ENV BACKEND_URL=$BACKEND_URL
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
