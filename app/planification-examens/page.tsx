@@ -44,7 +44,12 @@ function PlanificationContent() {
       return [];
     }
   }, [groupExamsParam]);
-  const [plannedExamIds, setPlannedExamIds] = useState<Set<string>>(new Set());
+  // Initialisé depuis le statut réel de chaque examen du groupe (pas juste vide) — sinon
+  // "0/N planifiés" s'affichait à tort au premier chargement de la page si l'utilisateur
+  // avait déjà planifié un examen puis quitté avant d'enchaîner sur les autres.
+  const [plannedExamIds, setPlannedExamIds] = useState<Set<string>>(
+    () => new Set(groupExams.filter((ex) => ex.status !== "A planifier").map((ex) => ex.id)),
+  );
   // Alternative à la planification "un par un" (par défaut, inchangée) : tous les
   // examens du groupe sont planifiés sur EXACTEMENT le même créneau, en un seul envoi.
   const [planifierEnsemble, setPlanifierEnsemble] = useState(false);
@@ -199,6 +204,44 @@ function PlanificationContent() {
     if (rdv.salleId) setSelectedSalleId(rdv.salleId);
     if (rdv.notesCliniques) setObservations(rdv.notesCliniques);
   }, [prescriptionData, prescriptionId]);
+
+  // Cet examen n'a pas encore de rendez-vous, mais un autre examen du même groupe en a déjà
+  // un (cas : l'utilisateur a planifié puis quitté avant d'enchaîner sur celui-ci) — on
+  // propose par défaut le créneau juste après celui-ci, dans la même salle, plutôt qu'un
+  // formulaire vierge à 9h par défaut. Enchaîné (pas identique) pour éviter un conflit de
+  // salle immédiat avec le créneau qu'on vient de recopier.
+  useEffect(() => {
+    if (groupExams.length <= 1) return;
+    const rdv = prescriptionData?.rendezVous;
+    if (!prescriptionData || prescriptionData.id !== prescriptionId || rdv?.dateHeureDebut) return;
+
+    const plannedSibling = groupExams.find((ex) => ex.id !== prescriptionId && ex.status !== "A planifier");
+    if (!plannedSibling) return;
+
+    let cancelled = false;
+    apiJson<any>(`/api/prescriptions/${plannedSibling.id}`)
+      .then((sibling) => {
+        if (cancelled) return;
+        const sibRdv = sibling?.rendezVous;
+        if (!sibRdv?.dateHeureDebut || !sibRdv?.dateHeureFin) return;
+        const sibDebut = fromNaiveIso(sibRdv.dateHeureDebut);
+        const sibFin = fromNaiveIso(sibRdv.dateHeureFin);
+        const addMinutes = (time: string, minutes: number) => {
+          const [h, m] = time.split(":").map(Number);
+          const total = ((h * 60 + m + minutes) % 1440 + 1440) % 1440;
+          return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+        };
+        setDate(sibDebut.date);
+        setHeureDebut(sibFin.time);
+        setHeureFin(addMinutes(sibFin.time, 60));
+        if (sibRdv.salleId) setSelectedSalleId(sibRdv.salleId);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prescriptionData, prescriptionId, groupExams]);
 
   const priorityIndicator = useMemo(() => {
     const rawPriority = (prescriptionData?.priorite || searchParams.get("priority") || patientContext.priority || "NORMAL").toUpperCase();
