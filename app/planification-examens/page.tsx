@@ -570,7 +570,7 @@ function PlanificationContent() {
         </div>
       )}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 bg-white rounded-xl border border-outline-variant/30 p-6 flex gap-6 items-start shadow-sm">
+        <div className="lg:col-span-8 bg-white rounded-xl border border-outline-variant/30 border-l-4 border-l-blue-300 p-6 flex gap-6 items-start shadow-sm">
           <div className="w-20 h-20 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-3xl text-primary">person</span>
@@ -601,7 +601,7 @@ function PlanificationContent() {
           </div>
         </div>
 
-        <div className="lg:col-span-4 bg-secondary-fixed p-6 rounded-xl flex flex-col justify-between border border-outline-variant/10 shadow-sm">
+        <div className="lg:col-span-4 bg-secondary-fixed p-6 rounded-xl flex flex-col justify-between border border-outline-variant/10 border-l-4 border-l-violet-300 shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">MÉDECIN PRESCRIPTEUR</p>
             <p className="font-headline font-bold text-on-secondary-fixed text-lg">
@@ -624,11 +624,11 @@ function PlanificationContent() {
             <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
               Prescription multi-examens — {plannedExamIds.size}/{groupExams.length} planifiés
             </p>
-            <p className="text-xs text-on-surface-variant">
-              {planifierEnsemble
-                ? "Tous les examens ci-dessous seront planifiés sur le même créneau, en une seule fois."
-                : "Choisissez l'examen à planifier maintenant, puis passez au suivant une fois le rendez-vous confirmé."}
-            </p>
+            {planifierEnsemble && (
+              <p className="text-xs text-on-surface-variant">
+                Tous les examens ci-dessous seront planifiés sur le même créneau, en une seule fois.
+              </p>
+            )}
           </div>
 
           <label className="flex items-center gap-2 text-xs font-bold text-on-surface cursor-pointer">
@@ -702,8 +702,14 @@ function PlanificationContent() {
             </div>
 
             <div className="grid grid-cols-1 gap-8">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider px-1">SALLE D'OPÉRATION</label>
+              <div className="space-y-2 rounded-3xl border border-outline-variant/20 border-l-4 border-l-violet-300 bg-surface-container-low p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="material-symbols-outlined text-primary">meeting_room</span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Salle</p>
+                    <p className="text-sm font-semibold text-on-surface">Sélectionnez la salle d&apos;opération</p>
+                  </div>
+                </div>
                 {(() => {
                   const sallesDisponibles = salles.filter((s: any) => s.estActive !== false);
                   if (sallesDisponibles.length === 0) {
@@ -750,7 +756,7 @@ function PlanificationContent() {
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-6">
-                <div className="rounded-3xl border border-outline-variant/20 bg-surface-container-low p-6 shadow-sm">
+                <div className="rounded-3xl border border-outline-variant/20 border-l-4 border-l-blue-300 bg-surface-container-low p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="material-symbols-outlined text-primary">calendar_month</span>
                     <div>
@@ -772,7 +778,7 @@ function PlanificationContent() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-outline-variant/20 bg-surface-container-low p-6 shadow-sm">
+                <div className="rounded-3xl border border-outline-variant/20 border-l-4 border-l-amber-300 bg-surface-container-low p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="material-symbols-outlined text-primary">schedule</span>
                     <div>
@@ -828,7 +834,7 @@ function PlanificationContent() {
               </div>
             </div>
 
-            <div className="p-6 rounded-xl bg-surface border border-dashed border-outline-variant/40 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="p-6 rounded-xl bg-surface border border-dashed border-outline-variant/40 border-l-4 border-l-emerald-300 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg">
                   <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
