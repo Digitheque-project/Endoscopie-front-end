@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
+import { AccordionSection } from "./AccordionSection";
 
 interface ParametresTabProps {
   patientId: string;
@@ -18,10 +19,10 @@ const initialForm = {
 export function ParametresTab({ patientId }: ParametresTabProps) {
   const [parametres, setParametres] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const load = () => {
     setIsLoading(true);
@@ -33,8 +34,8 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
 
   useEffect(() => {
     load();
-    setShowForm(false);
     setForm(initialForm);
+    setSaveSuccess(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
@@ -58,14 +59,10 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
       await apiJson(`/api/dossier-patient/${encodeURIComponent(patientId)}/parametres`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mesureAt: new Date().toISOString(),
-          valeurs,
-          note: form.note || undefined,
-        }),
+        body: JSON.stringify({ mesureAt: new Date().toISOString(), valeurs, note: form.note || undefined }),
       });
       setForm(initialForm);
-      setShowForm(false);
+      setSaveSuccess(true);
       load();
     } catch (e) {
       console.error("Erreur création relevé de paramètres :", e);
@@ -80,10 +77,9 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {showForm ? (
-        <div className="rounded-xl border border-outline-variant/20 p-4 space-y-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Relevé manuel — {new Date().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}</p>
+    <div className="space-y-3">
+      <AccordionSection number="01" title="Nouveau relevé manuel" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
+        <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Température (°C)</label>
@@ -112,55 +108,48 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
               rows={2} className="w-full rounded-lg border border-outline-variant/30 bg-surface-container-lowest px-3 py-2 text-sm outline-none resize-none" />
           </div>
           {saveError && <p className="text-[11px] font-semibold text-error">{saveError}</p>}
-          <div className="flex items-center justify-end gap-2">
-            <button type="button" onClick={() => { setShowForm(false); setForm(initialForm); setSaveError(null); }}
-              className="px-4 py-1.5 rounded-lg border border-outline-variant/30 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-all">
-              Annuler
-            </button>
+          {saveSuccess && <p className="text-[11px] font-semibold text-success">Relevé enregistré.</p>}
+          <div className="flex items-center justify-end">
             <button type="button" onClick={handleSave} disabled={isSaving}
-              className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50">
-              {isSaving ? "Enregistrement…" : "Enregistrer"}
+              className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50">
+              {isSaving ? "Enregistrement…" : "Enregistrer le relevé"}
             </button>
           </div>
         </div>
-      ) : (
-        <button type="button" onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-all">
-          <span className="material-symbols-outlined text-[16px]">add</span>
-          Nouveau relevé
-        </button>
-      )}
+      </AccordionSection>
 
-      {sorted.length === 0 ? (
-        <p className="text-xs text-on-surface-variant">Aucun paramètre relevé pour ce patient.</p>
-      ) : (
-        <table className="w-full text-xs border-collapse">
-          <thead>
-            <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/20">
-              <th className="py-2 pr-2">Date</th>
-              <th className="py-2 pr-2">Origine</th>
-              <th className="py-2 pr-2">Valeurs</th>
-              <th className="py-2">Note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((p, i) => (
-              <tr key={p.id ?? i} className="border-b border-outline-variant/10">
-                <td className="py-2 pr-2 whitespace-nowrap">
-                  {p.mesureAt ? new Date(p.mesureAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—"}
-                </td>
-                <td className="py-2 pr-2 text-on-surface-variant">{p.origine === "RELEVE_MANUEL" ? "Manuel" : p.origine || "—"}</td>
-                <td className="py-2 pr-2">
-                  {p.valeurs && typeof p.valeurs === "object"
-                    ? Object.entries(p.valeurs).map(([k, v]) => `${k}: ${v}`).join(" · ")
-                    : "—"}
-                </td>
-                <td className="py-2 text-on-surface-variant">{p.note || "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <AccordionSection number="02" title="Historique des relevés" subtitle="Cliquez pour ouvrir" isComplete={false}>
+        {sorted.length === 0 ? (
+          <p className="text-xs text-on-surface-variant">Aucun paramètre relevé pour ce patient.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/20">
+                  <th className="py-2 pr-2">Date</th>
+                  <th className="py-2 pr-2">Origine</th>
+                  <th className="py-2 pr-2">Valeurs</th>
+                  <th className="py-2">Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((p, i) => (
+                  <tr key={p.id ?? i} className="border-b border-outline-variant/10">
+                    <td className="py-2 pr-2 whitespace-nowrap">
+                      {p.mesureAt ? new Date(p.mesureAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—"}
+                    </td>
+                    <td className="py-2 pr-2 text-on-surface-variant">{p.origine === "RELEVE_MANUEL" ? "Manuel" : p.origine || "—"}</td>
+                    <td className="py-2 pr-2">
+                      {p.valeurs && typeof p.valeurs === "object" ? Object.entries(p.valeurs).map(([k, v]) => `${k}: ${v}`).join(" · ") : "—"}
+                    </td>
+                    <td className="py-2 text-on-surface-variant">{p.note || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </AccordionSection>
     </div>
   );
 }

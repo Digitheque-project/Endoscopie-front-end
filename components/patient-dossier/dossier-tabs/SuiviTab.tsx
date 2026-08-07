@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { AccordionSection } from "./AccordionSection";
 
 interface SuiviTabProps {
   patientId: string;
@@ -26,10 +27,10 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
   const { role, medecinName } = useAuth();
   const [suivis, setSuivis] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const load = () => {
     setIsLoading(true);
@@ -41,8 +42,8 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
 
   useEffect(() => {
     load();
-    setShowForm(false);
     setForm(initialForm);
+    setSaveSuccess(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
@@ -73,7 +74,7 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
         }),
       });
       setForm(initialForm);
-      setShowForm(false);
+      setSaveSuccess(true);
       load();
     } catch (e) {
       console.error("Erreur création suivi :", e);
@@ -88,9 +89,9 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {showForm ? (
-        <div className="rounded-xl border border-outline-variant/20 p-4 space-y-4">
+    <div className="space-y-3">
+      <AccordionSection number="01" title="Nouveau suivi" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
+        <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Température (°C)</label>
@@ -129,8 +130,7 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">État général</label>
-              <input value={form.etatGeneral} onChange={(e) => setForm((p) => ({ ...p, etatGeneral: e.target.value }))}
-                placeholder="Stable"
+              <input value={form.etatGeneral} onChange={(e) => setForm((p) => ({ ...p, etatGeneral: e.target.value }))} placeholder="Stable"
                 className="w-full rounded-lg border border-outline-variant/30 bg-surface-container-lowest px-3 py-2 text-sm outline-none" />
             </div>
           </div>
@@ -150,53 +150,46 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
             Signes d&apos;alerte détectés
           </label>
           {saveError && <p className="text-[11px] font-semibold text-error">{saveError}</p>}
-          <div className="flex items-center justify-end gap-2">
-            <button type="button" onClick={() => { setShowForm(false); setForm(initialForm); setSaveError(null); }}
-              className="px-4 py-1.5 rounded-lg border border-outline-variant/30 text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-all">
-              Annuler
-            </button>
+          {saveSuccess && <p className="text-[11px] font-semibold text-success">Suivi enregistré.</p>}
+          <div className="flex items-center justify-end">
             <button type="button" onClick={handleSave} disabled={isSaving}
-              className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50">
-              {isSaving ? "Enregistrement…" : "Enregistrer"}
+              className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50">
+              {isSaving ? "Enregistrement…" : "Enregistrer le suivi"}
             </button>
           </div>
         </div>
-      ) : (
-        <button type="button" onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-all">
-          <span className="material-symbols-outlined text-[16px]">add</span>
-          Ajouter un suivi
-        </button>
-      )}
+      </AccordionSection>
 
-      {sorted.length === 0 ? (
-        <p className="text-xs text-on-surface-variant">Aucun suivi enregistré pour ce patient.</p>
-      ) : (
-        <ul className="space-y-2">
-          {sorted.map((s, i) => (
-            <li key={s.id ?? i} className={`rounded-lg border p-3 text-xs ${s.signesAlerte ? "border-error/40 bg-error-container/10" : "border-outline-variant/20"}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-on-surface">{s.jourHospitalisation || `Suivi ${i + 1}`} — {s.auteur || "Auteur inconnu"}</span>
-                <span className="text-on-surface-variant">{s.createdAt ? new Date(s.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : ""}</span>
-              </div>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-on-surface-variant">
-                {s.temperature != null && <span>Temp : {s.temperature}°C</span>}
-                {(s.taSystolique || s.taDiastolique) && <span>TA : {s.taSystolique ?? "?"}/{s.taDiastolique ?? "?"}</span>}
-                {s.frequenceCardiaque && <span>FC : {s.frequenceCardiaque}</span>}
-                {s.evaDouleur != null && <span>EVA : {s.evaDouleur}/10</span>}
-                {s.etatGeneral && <span>État : {s.etatGeneral}</span>}
-              </div>
-              {s.evolution && <p className="mt-1 text-on-surface-variant">{s.evolution}</p>}
-              {s.signesAlerte && (
-                <p className="mt-1 font-bold text-error flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">warning</span>
-                  Signes d&apos;alerte
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <AccordionSection number="02" title="Historique des suivis" subtitle="Cliquez pour ouvrir" isComplete={false}>
+        {sorted.length === 0 ? (
+          <p className="text-xs text-on-surface-variant">Aucun suivi enregistré pour ce patient.</p>
+        ) : (
+          <ul className="space-y-2">
+            {sorted.map((s, i) => (
+              <li key={s.id ?? i} className={`rounded-lg border p-3 text-xs ${s.signesAlerte ? "border-error/40 bg-error-container/10" : "border-outline-variant/20"}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-on-surface">{s.jourHospitalisation || `Suivi ${i + 1}`} — {s.auteur || "Auteur inconnu"}</span>
+                  <span className="text-on-surface-variant">{s.createdAt ? new Date(s.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : ""}</span>
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-on-surface-variant">
+                  {s.temperature != null && <span>Temp : {s.temperature}°C</span>}
+                  {(s.taSystolique || s.taDiastolique) && <span>TA : {s.taSystolique ?? "?"}/{s.taDiastolique ?? "?"}</span>}
+                  {s.frequenceCardiaque && <span>FC : {s.frequenceCardiaque}</span>}
+                  {s.evaDouleur != null && <span>EVA : {s.evaDouleur}/10</span>}
+                  {s.etatGeneral && <span>État : {s.etatGeneral}</span>}
+                </div>
+                {s.evolution && <p className="mt-1 text-on-surface-variant">{s.evolution}</p>}
+                {s.signesAlerte && (
+                  <p className="mt-1 font-bold text-error flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">warning</span>
+                    Signes d&apos;alerte
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </AccordionSection>
     </div>
   );
 }
