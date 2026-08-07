@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson, updateRendezVous } from "@/lib/api";
@@ -23,7 +23,11 @@ function computeAge(dateNaissance?: string | null): number | null {
 function PlanificationExamenContent() {
   const router = useRouter();
   const params = useParams<{ prescriptionId: string }>();
+  const searchParams = useSearchParams();
   const prescriptionId = params.prescriptionId;
+  // Onglet médecin d'où l'on vient (voir le bouton "Décider" du Fil de prescription) —
+  // par défaut "à décider" puisque c'est la seule origine possible pour cette page.
+  const medecinTab = searchParams.get("tab") || "a-decider";
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,10 +114,10 @@ function PlanificationExamenContent() {
           }
         }
       }
-      // Décision rendue pour ce patient — retour au fil de prescription sur "À décider"
-      // pour enchaîner directement sur le patient suivant en attente.
+      // Décision rendue pour ce patient — retour au fil de prescription sur l'onglet
+      // d'origine pour enchaîner directement sur le patient suivant en attente.
       setTimeout(() => {
-        router.push("/prescriptions?tab=a-decider");
+        router.push(`/prescriptions?tab=${encodeURIComponent(medecinTab)}`);
       }, 1000);
     } catch (err) {
       setDecisionError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement de la décision.");
@@ -126,6 +130,14 @@ function PlanificationExamenContent() {
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
         <RequireRole role="MEDECIN">
+          <button
+            type="button"
+            onClick={() => router.push(`/prescriptions?tab=${encodeURIComponent(medecinTab)}`)}
+            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-5 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all self-start"
+          >
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            Retour au fil de prescription
+          </button>
           <h1 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">
             Planification de l&apos;examen
           </h1>
@@ -165,7 +177,11 @@ function PlanificationExamenContent() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => router.push(`/patient-dossier/${encodeURIComponent(prescriptionId)}/informations`)}
+                  onClick={() =>
+                    router.push(
+                      `/patient-dossier/${encodeURIComponent(prescriptionId)}/informations?from=decision&tab=${encodeURIComponent(medecinTab)}`,
+                    )
+                  }
                   title="Voir le dossier patient complet"
                   aria-label="Voir le dossier patient complet"
                   className="flex items-center justify-center w-11 h-11 rounded-xl border border-outline-variant/20 text-primary hover:bg-primary/10 transition-colors shrink-0"
