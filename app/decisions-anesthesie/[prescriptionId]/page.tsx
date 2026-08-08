@@ -56,6 +56,11 @@ function PlanificationExamenContent() {
     async function load() {
       setIsLoading(true);
       setError(null);
+      // Nouvel examen (enchaînement multi-examens, voir handleConfirmAnesthesie) : repart
+      // d'un choix vierge plutôt que de garder la sélection de l'examen précédent.
+      setSelectedAnesthesie(null);
+      setMotifRefus("");
+      setDecisionError(null);
       try {
         const data = await apiJson<any>(`/api/prescriptions/${prescriptionId}`);
         if (!cancelled) setPrescription(data);
@@ -117,10 +122,35 @@ function PlanificationExamenContent() {
           }
         }
       }
-      // Décision rendue pour ce patient — retour au fil de prescription sur l'onglet
-      // d'origine pour enchaîner directement sur le patient suivant en attente.
+      // Prescription multi-examens sur des jours différents (pas la même séance, donc
+      // pas couverte par la propagation "Locale" ci-dessus) : enchaîne sur le prochain
+      // examen du même groupe encore sans décision, plutôt que de retourner directement
+      // au fil de prescription en laissant les autres examens en attente indéfiniment.
+      let nextSibling: any = null;
+      if (prescription.prescriptionExternalId) {
+        try {
+          const all = await apiJson<any[]>("/api/prescriptions");
+          nextSibling = (Array.isArray(all) ? all : []).find(
+            (p) =>
+              p.id !== prescription.id &&
+              p.prescriptionExternalId === prescription.prescriptionExternalId &&
+              p.rendezVous &&
+              !p.rendezVous.typeAnesthesie &&
+              p.rendezVous.statut !== "Annulé",
+          ) ?? null;
+        } catch (e) {
+          console.error("Erreur recherche du prochain examen à décider :", e);
+        }
+      }
+
       setTimeout(() => {
-        router.push(`/prescriptions?tab=${encodeURIComponent(medecinTab)}`);
+        if (nextSibling) {
+          router.push(`/decisions-anesthesie/${encodeURIComponent(nextSibling.id)}?tab=${encodeURIComponent(medecinTab)}`);
+        } else {
+          // Plus aucun examen du groupe en attente — retour au fil de prescription sur
+          // l'onglet d'origine pour enchaîner directement sur le patient suivant.
+          router.push(`/prescriptions?tab=${encodeURIComponent(medecinTab)}`);
+        }
       }, 1000);
     } catch (err) {
       setDecisionError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement de la décision.");
