@@ -20,14 +20,16 @@ interface JCalendarProps {
   dailyCounts?: Record<string, number>;
   onSlotClick?: (date: Date, time: string) => void;
   onAppointmentClick?: (app: JCalendarAppointment) => void;
+  onDeleteClick?: (app: JCalendarAppointment) => void;
   viewMode?: "day" | "week" | "month";
   currentDate?: Date;
 }
 
-export function JCalendar({ 
-  appointments, 
-  onSlotClick, 
+export function JCalendar({
+  appointments,
+  onSlotClick,
   onAppointmentClick,
+  onDeleteClick,
   dailyCounts = {} as Record<string, number>,
   viewMode = "day",
   currentDate = new Date()
@@ -136,11 +138,10 @@ export function JCalendar({
           <p className="p-6 text-center text-sm text-on-surface-variant">Aucun rendez-vous sur cette période.</p>
         ) : (
           sortedForMobile.map((app) => (
-            <button
+            <div
               key={app.id}
-              type="button"
               onClick={() => onAppointmentClick?.(app)}
-              className={`w-full text-left p-4 border-l-4 flex items-start gap-3 hover:bg-surface-container-low/60 transition-colors ${mobileStatutClass(app.statut)}`}
+              className={`relative w-full text-left p-4 border-l-4 flex items-start gap-3 hover:bg-surface-container-low/60 transition-colors cursor-pointer ${mobileStatutClass(app.statut)}`}
             >
               <div className="w-11 h-11 shrink-0 rounded-xl bg-surface-container flex flex-col items-center justify-center text-primary">
                 <span className="text-[11px] font-black leading-none tabular-nums">{app.heureDebut}</span>
@@ -176,7 +177,21 @@ export function JCalendar({
                   )}
                 </div>
               </div>
-            </button>
+              {onDeleteClick && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteClick(app);
+                  }}
+                  title="Supprimer ce rendez-vous"
+                  aria-label="Supprimer ce rendez-vous"
+                  className="shrink-0 w-7 h-7 rounded-full border border-error/30 text-error flex items-center justify-center hover:bg-error hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[15px]">delete</span>
+                </button>
+              )}
+            </div>
           ))
         )}
       </div>
@@ -229,7 +244,7 @@ export function JCalendar({
                     key={app.id}
                     onClick={() => onAppointmentClick?.(app)}
                     title={`${app.typeExamen} — ${app.patient} — ${app.medecin}`}
-                    className={`absolute rounded-xl p-2.5 shadow-lg border-l-4 group cursor-pointer transition-all hover:scale-[1.02] hover:z-50 hover:shadow-2xl overflow-hidden flex flex-col min-h-[72px] ${
+                    className={`absolute rounded-xl p-2.5 shadow-lg border-l-4 group cursor-pointer transition-all hover:scale-[1.02] hover:z-50 hover:shadow-2xl overflow-hidden flex flex-col min-h-[96px] ${
                       app.statut.toUpperCase() === 'URGENT' || app.statut.toUpperCase() === 'PRIORITÉ'
                         ? 'border-tertiary bg-tertiary-fixed/40 animate-pulse' :
                       app.statut.toUpperCase() === 'CONFIRMÉ'
@@ -271,6 +286,22 @@ export function JCalendar({
                       ) : <span />}
                       <span className="shrink-0 whitespace-nowrap bg-surface-container px-1.5 py-0.5 rounded-md tabular-nums">{app.heureDebut}-{app.heureFin}</span>
                     </div>
+
+                    {onDeleteClick && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteClick(app);
+                        }}
+                        title="Supprimer ce rendez-vous"
+                        aria-label="Supprimer ce rendez-vous"
+                        className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg border border-error/30 text-error text-[9px] font-bold py-1 hover:bg-error hover:text-white transition-colors z-20 relative"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">delete</span>
+                        Supprimer
+                      </button>
+                    )}
 
                     {/* Interactive background effect */}
                     <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/[0.02] transition-colors pointer-events-none" />
@@ -315,6 +346,21 @@ export function JCalendar({
                              className="bg-surface-container-low/50 hover:bg-white border-l-2 border-primary p-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] min-w-0">
                           <p className="text-[10px] font-extrabold truncate text-on-surface">{app.patient}</p>
                           <p className="text-[9px] font-bold text-primary/70 tabular-nums">{app.heureDebut}</p>
+                          {onDeleteClick && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteClick(app);
+                              }}
+                              title="Supprimer ce rendez-vous"
+                              aria-label="Supprimer ce rendez-vous"
+                              className="mt-1 w-full flex items-center justify-center gap-0.5 rounded-md border border-error/30 text-error text-[8px] font-bold py-0.5 hover:bg-error hover:text-white transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[10px]">delete</span>
+                              Supprimer
+                            </button>
+                          )}
                         </div>
                       ))}
                   </div>

@@ -197,7 +197,9 @@ export default function AgendaPage() {
       refreshRDV();
     } catch (e) {
       console.error("Erreur suppression rendez-vous :", e);
-      setDeleteError(e instanceof Error ? e.message : "Échec de la suppression du rendez-vous.");
+      const message = e instanceof Error ? e.message : "Échec de la suppression du rendez-vous.";
+      setDeleteError(message);
+      window.alert(message);
     } finally {
       setIsDeleting(false);
     }
@@ -367,6 +369,14 @@ export default function AgendaPage() {
                 setCurrentDate(date);
                 setViewMode("day");
               }}
+              onDeleteClick={
+                role === "MAJOR"
+                  ? (app) => {
+                      const full = visibleAppointments.find((a) => a.id === app.id);
+                      if (full) handleDelete(full);
+                    }
+                  : undefined
+              }
             />
           )}
         </div>

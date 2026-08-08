@@ -2,9 +2,10 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
-import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson, verifierStatutCpa, renvoyerCpaAuBloc } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 
@@ -28,6 +29,7 @@ const DECISION_STYLES: Record<string, { label: string; className: string; icon: 
 
 function DossierCpaContent() {
   const router = useRouter();
+  const { role } = useAuth();
   const params = useParams<{ id: string }>();
   const dossierId = params.id;
   const [dossier, setDossier] = useState<any>(null);
@@ -87,10 +89,29 @@ function DossierCpaContent() {
 
   const decision = dossier?.decisionCpa ? DECISION_STYLES[dossier.decisionCpa] : null;
 
+  if (role !== "MAJOR" && role !== "MEDECIN") {
+    return (
+      <AppShell>
+        <div className={PAGE_CONTENT_CLASS}>
+          <div className="bg-white p-10 rounded-2xl border border-outline-variant/20 shadow-sm text-center space-y-4">
+            <span className="material-symbols-outlined text-4xl text-error">block</span>
+            <h3 className="text-xl font-bold text-on-surface">Accès non autorisé</h3>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary/90 transition-all"
+            >
+              Retour au tableau de bord
+            </Link>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-        <RequireRole role="MAJOR">
+        <>
           <div className="flex items-center justify-between gap-4">
             <h1 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">
               Résultat de la CPA
@@ -189,7 +210,7 @@ function DossierCpaContent() {
                   </p>
                 </div>
 
-                {!dossier.blocDemandeId && (
+                {role === "MAJOR" && !dossier.blocDemandeId && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-center justify-between gap-4 flex-wrap">
                     <p className="text-sm text-amber-800 flex items-center gap-2">
                       <span className="material-symbols-outlined text-lg">warning</span>
@@ -207,21 +228,23 @@ function DossierCpaContent() {
                   </div>
                 )}
 
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="button"
-                    disabled={isVerifying}
-                    onClick={handleVerifier}
-                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-lg">refresh</span>
-                    {isVerifying ? "Vérification…" : "Vérifier à nouveau auprès du Bloc"}
-                  </button>
-                </div>
+                {role === "MAJOR" && (
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      disabled={isVerifying}
+                      onClick={handleVerifier}
+                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-lg">refresh</span>
+                      {isVerifying ? "Vérification…" : "Vérifier à nouveau auprès du Bloc"}
+                    </button>
+                  </div>
+                )}
               </section>
             </>
           )}
-        </RequireRole>
+        </>
       </div>
     </AppShell>
   );

@@ -453,6 +453,14 @@ function PrescriptionsContent() {
               <span className="material-symbols-outlined text-[14px]">block</span>
               {req.dossierCPA?.decisionCpa === "REPORT" ? "CPA reportée" : "CPA défavorable"}
             </span>
+            {req.dossierCPA?.id && (
+              <button
+                onClick={() => router.push(`/dossier-cpa/${encodeURIComponent(req.dossierCPA.id)}`)}
+                className="rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-primary/10"
+              >
+                Voir la CPA
+              </button>
+            )}
             <button
               onClick={() => handleDetail(req.id)}
               className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
@@ -518,12 +526,23 @@ function PrescriptionsContent() {
       ) : (
         // Planifié / Confirmé : déjà pris en charge,
         // le patient reste visible mais sans action de planification.
-        <button
-          onClick={() => handleDetail(req.id)}
-          className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
-        >
-          Détails
-        </button>
+        <>
+          {req.dossierCPA?.decisionCpa && (
+            <button
+              onClick={() => router.push(`/dossier-cpa/${encodeURIComponent(req.dossierCPA.id)}`)}
+              title="Revoir la décision du Bloc Opératoire pour cette CPA"
+              className="rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-primary/10"
+            >
+              Voir la CPA
+            </button>
+          )}
+          <button
+            onClick={() => handleDetail(req.id)}
+            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+          >
+            Détails
+          </button>
+        </>
       )}
     </div>
   );
