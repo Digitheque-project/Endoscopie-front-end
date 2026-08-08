@@ -151,7 +151,7 @@ export function JCalendar({
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-extrabold text-on-surface truncate">{app.patient}</p>
                   <span
-                    className={`shrink-0 whitespace-nowrap text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
+                    className={`shrink-0 whitespace-nowrap text-[8px] font-bold px-1 py-0.5 rounded-full uppercase tracking-tight leading-none ${
                       app.statut.toUpperCase() === "URGENT"
                         ? "bg-tertiary text-white"
                         : app.statut.toUpperCase() === "CONFIRMÉ"
@@ -261,7 +261,7 @@ export function JCalendar({
                   >
                     <div className="flex justify-between items-start gap-1.5">
                       <h4 className="text-xs font-extrabold text-on-surface leading-tight truncate min-w-0 flex-1 group-hover:text-primary transition-colors">{app.typeExamen}</h4>
-                      <span className={`shrink-0 whitespace-nowrap text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm ${
+                      <span className={`shrink-0 whitespace-nowrap text-[7px] font-bold px-1 py-0.5 rounded-full uppercase tracking-tight leading-none shadow-sm ${
                         app.statut.toUpperCase() === 'URGENT' ? 'bg-tertiary text-white' :
                         app.statut.toUpperCase() === 'CONFIRMÉ' ? 'bg-primary text-white' :
                         'bg-surface-container-highest text-on-surface-variant'

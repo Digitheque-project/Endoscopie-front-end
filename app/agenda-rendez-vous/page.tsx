@@ -377,6 +377,7 @@ export default function AgendaPage() {
               onDeleteClick={
                 role === "MAJOR"
                   ? (app) => {
+                      if (isDeleting) return;
                       const full = visibleAppointments.find((a) => a.id === app.id);
                       if (full) handleDelete(full);
                     }
