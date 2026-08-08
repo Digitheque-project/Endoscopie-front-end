@@ -171,6 +171,24 @@ export async function updateRendezVous(
   return resp.json();
 }
 
+/** Supprime définitivement un rendez-vous (réservé au rôle Major). */
+export async function deleteRendezVous(id: string) {
+  const resp = await apiFetch(`/api/rendezvous/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    let message = text;
+    try {
+      message = (JSON.parse(text) as { message?: string }).message || text;
+    } catch {
+      // texte brut, on le garde tel quel
+    }
+    throw new Error(message || `Erreur API rendezvous (${resp.status})`);
+  }
+  return resp.json();
+}
+
 /**
  * Statuts transitoires typiques d'un service Render en train de se réveiller après
  * hibernation (plan gratuit) : 429 "hibernate-rate-limited" quand plusieurs requêtes

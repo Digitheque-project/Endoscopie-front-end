@@ -2,7 +2,7 @@
 
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
-import { apiJson } from "@/lib/api";
+import { apiJson, deleteRendezVous } from "@/lib/api";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { JCalendar } from "@/components/ui/JCalendar";
@@ -44,6 +44,8 @@ export default function AgendaPage() {
   const [mounted, setMounted] = useState(false);
   const [successNotification, setSuccessNotification] = useState<string | null>(null);
   const [selected, setSelected] = useState<Appointment | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [doctorNames, setDoctorNames] = useState<string[]>([]);
   const [examTypes, setExamTypes] = useState<{ id: string; name: string }[]>([]);
   const [filters, setFilters] = useState({ nom: "", procedure: "", medecin: "" });
@@ -182,6 +184,24 @@ export default function AgendaPage() {
 
   const isReady = (app: Appointment) =>
     !!app.typeAnesthesie && !EXCLUDED_RDV_STATUTS.has(app.statut);
+
+  const handleDelete = async (app: Appointment) => {
+    if (!window.confirm(`Supprimer définitivement le rendez-vous de ${app.patient} ? Cette action est irréversible.`)) {
+      return;
+    }
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteRendezVous(app.id);
+      setSelected(null);
+      refreshRDV();
+    } catch (e) {
+      console.error("Erreur suppression rendez-vous :", e);
+      setDeleteError(e instanceof Error ? e.message : "Échec de la suppression du rendez-vous.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <AppShell>
@@ -341,6 +361,7 @@ export default function AgendaPage() {
               onAppointmentClick={(app) => {
                 const full = visibleAppointments.find((a) => a.id === app.id) || null;
                 setSelected(full);
+                setDeleteError(null);
               }}
             />
           )}
@@ -364,7 +385,19 @@ export default function AgendaPage() {
                 <div className="flex justify-between"><span className="text-on-surface-variant">Horaire</span><span className="font-semibold">{selected.heureDebut} – {selected.heureFin}</span></div>
                 <div className="flex justify-between"><span className="text-on-surface-variant">Statut</span><span className="font-semibold">{selected.statut}{selected.typeAnesthesie ? ` — ${selected.typeAnesthesie}` : ""}</span></div>
               </div>
+              {deleteError && (
+                <p className="px-5 pb-2 text-xs font-semibold text-error">{deleteError}</p>
+              )}
               <footer className="flex flex-wrap justify-end gap-2 p-5 pt-0">
+                {role === "MAJOR" && (
+                  <button
+                    onClick={() => handleDelete(selected)}
+                    disabled={isDeleting}
+                    className="px-4 py-2 rounded-lg border border-error/30 text-error text-xs font-bold hover:bg-error-container/20 transition-colors disabled:opacity-50"
+                  >
+                    {isDeleting ? "Suppression…" : "Supprimer"}
+                  </button>
+                )}
                 {role === "MAJOR" && selected.prescriptionId && (
                   <button
                     onClick={() => handleReplanifier(selected)}
