@@ -34,6 +34,7 @@ function PlanificationExamenContent() {
   const [isDeciding, setIsDeciding] = useState(false);
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [selectedAnesthesie, setSelectedAnesthesie] = useState<"Locale" | "Générale" | "Refuser" | null>(null);
+  const [motifRefus, setMotifRefus] = useState("");
   // Session groupée (plusieurs examens du même patient sur le même créneau) — la
   // décision d'anesthésie prise ici s'applique à toute la séance, pas qu'à cet examen.
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -73,12 +74,14 @@ function PlanificationExamenContent() {
 
   const handleConfirmAnesthesie = async () => {
     if (!prescription?.rendezVous || !selectedAnesthesie) return;
+    if (selectedAnesthesie === "Refuser" && !motifRefus.trim()) return;
     setIsDeciding(true);
     setDecisionError(null);
     try {
       if (selectedAnesthesie === "Refuser") {
         const updated = await updateRendezVous(prescription.rendezVous.id, {
           statut: "Annulé",
+          motifRefus: motifRefus.trim(),
         });
         setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
       } else {
@@ -235,10 +238,17 @@ function PlanificationExamenContent() {
                   <div>
                     <p className="text-base font-bold uppercase tracking-widest text-on-surface mb-3">Décision d&apos;anesthésie</p>
                     {prescription.rendezVous.statut === "Annulé" ? (
-                      <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-error-container text-error text-lg font-bold">
-                        <span className="material-symbols-outlined text-xl">cancel</span>
-                        Examen refusé
-                      </span>
+                      <div className="space-y-2">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-error-container text-error text-lg font-bold">
+                          <span className="material-symbols-outlined text-xl">cancel</span>
+                          Examen refusé
+                        </span>
+                        {prescription.motifRefus && (
+                          <p className="text-sm text-on-surface-variant">
+                            <span className="font-bold">Motif :</span> {prescription.motifRefus}
+                          </p>
+                        )}
+                      </div>
                     ) : prescription.rendezVous.typeAnesthesie ? (
                       <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-lg font-bold">
                         <span className="material-symbols-outlined text-xl">check_circle</span>
@@ -289,9 +299,19 @@ function PlanificationExamenContent() {
                           Refuser
                         </button>
                       </div>
+                      {selectedAnesthesie === "Refuser" && (
+                        <textarea
+                          value={motifRefus}
+                          onChange={(e) => setMotifRefus(e.target.value)}
+                          placeholder="Motif du refus (obligatoire) — sera transmis au service demandeur"
+                          rows={3}
+                          disabled={isDeciding}
+                          className="w-full rounded-xl border border-error/30 bg-error-container/10 px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-error/20 focus:border-error/40 outline-none resize-none disabled:opacity-50"
+                        />
+                      )}
                       <button
                         type="button"
-                        disabled={!selectedAnesthesie || isDeciding}
+                        disabled={!selectedAnesthesie || isDeciding || (selectedAnesthesie === "Refuser" && !motifRefus.trim())}
                         onClick={handleConfirmAnesthesie}
                         className={`w-full lg:w-auto whitespace-nowrap px-8 py-4 rounded-xl text-white font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed ${
                           selectedAnesthesie === "Refuser" ? "bg-error" : "bg-emerald-600"

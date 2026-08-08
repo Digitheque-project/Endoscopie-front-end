@@ -21,6 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
   "CPA demandée": "En attente CPA",
   "CPA Défavorable": "CPA défavorable — parcours bloqué",
   "CPA Reportée": "CPA reportée — à redemander",
+  "Annulé": "Refusé",
 };
 
 const EXCLUDED_RDV_STATUTS = new Set(["Annulé", "Terminé"]);
@@ -32,6 +33,7 @@ const MAJOR_TRACKED_STATUTS = new Set([
   "CPA demandée",
   "CPA Défavorable",
   "CPA Reportée",
+  "Annulé",
 ]);
 
 type MedecinTab = "a-decider" | "pret" | "tous";
@@ -45,8 +47,9 @@ const MEDECIN_TABS: { key: MedecinTab; label: string }[] = [
 // considérer le patient prêt pour l'examen — sécurité patient.
 const BLOCKING_CPA_DECISIONS = new Set(["INAPTE", "REPORT"]);
 
-function medecinRowState(req: any): MedecinTab | "autre" | "cpa-bloquee" {
+function medecinRowState(req: any): MedecinTab | "autre" | "cpa-bloquee" | "refusee" {
   if (!req.rendezVous) return "autre";
+  if (req.rendezVous.statut === "Annulé") return "refusee";
   if (!req.rendezVous.typeAnesthesie) return "a-decider";
   if (EXCLUDED_RDV_STATUTS.has(req.rendezVous.statut)) return "autre";
   if (req.checklistApresValide) return "autre";
@@ -196,6 +199,7 @@ function PrescriptionsContent() {
           checklistApresValide: !!p.checklistApres?.estValide,
           dossierCPA: p.dossierCPA || null,
           priseEnChargeId: p.patient?.priseEnChargeId || null,
+          motifRefus: p.motifRefus || null,
         };
       });
 
@@ -368,6 +372,10 @@ function PrescriptionsContent() {
   const [isDecisionSaving, setIsDecisionSaving] = useState(false);
   const [decisionError, setDecisionError] = useState<string | null>(null);
 
+  // Petite modale en lecture seule ouverte en cliquant sur le badge "Refusé" —
+  // affiche simplement le motif écrit par le médecin au moment du refus.
+  const [refusReq, setRefusReq] = useState<any | null>(null);
+
   const openDecisionModal = (req: any) => {
     setDecisionReq(req);
     setDecisionMode("choix");
@@ -468,6 +476,14 @@ function PrescriptionsContent() {
               Détails
             </button>
           </>
+        ) : medecinRowState(req) === "refusee" ? (
+          <button
+            onClick={() => setRefusReq(req)}
+            className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error transition-all duration-200 hover:opacity-90"
+          >
+            <span className="material-symbols-outlined text-[14px]">cancel</span>
+            Refusé
+          </button>
         ) : (
           <button
             onClick={() => handleDetail(req.id)}
@@ -476,6 +492,14 @@ function PrescriptionsContent() {
             Détails
           </button>
         )
+      ) : req.status === "Annulé" ? (
+        <button
+          onClick={() => setRefusReq(req)}
+          className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error transition-all duration-200 hover:opacity-90"
+        >
+          <span className="material-symbols-outlined text-[14px]">cancel</span>
+          Refusé
+        </button>
       ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Locale" ? (
         <button
           disabled={confirmingId === req.id}
@@ -1057,6 +1081,34 @@ function PrescriptionsContent() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {refusReq && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setRefusReq(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-error">Demande refusée</p>
+                <h3 className="text-lg font-black text-on-surface mt-0.5">{refusReq.originalName || refusReq.name}</h3>
+                <p className="text-sm text-on-surface-variant mt-0.5">{refusReq.procedure}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRefusReq(null)}
+                className="text-on-surface-variant hover:text-on-surface shrink-0"
+                aria-label="Fermer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Motif du refus</p>
+              <p className="text-sm text-on-surface whitespace-pre-wrap">
+                {refusReq.motifRefus || "Aucun motif renseigné."}
+              </p>
+            </div>
           </div>
         </div>
       )}

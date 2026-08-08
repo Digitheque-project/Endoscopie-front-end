@@ -151,6 +151,7 @@ export async function updateRendezVous(
     notesCliniques?: string;
     dateHeureDebut?: string;
     dateHeureFin?: string;
+    motifRefus?: string;
   },
 ) {
   const resp = await apiFetch(`/api/rendezvous/${encodeURIComponent(id)}`, {
