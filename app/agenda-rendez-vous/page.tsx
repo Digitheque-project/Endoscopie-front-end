@@ -363,6 +363,10 @@ export default function AgendaPage() {
                 setSelected(full);
                 setDeleteError(null);
               }}
+              onSlotClick={(date) => {
+                setCurrentDate(date);
+                setViewMode("day");
+              }}
             />
           )}
         </div>
