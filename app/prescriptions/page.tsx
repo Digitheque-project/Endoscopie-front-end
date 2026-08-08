@@ -21,6 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
   "CPA demandée": "En attente CPA",
   "CPA Défavorable": "CPA défavorable — parcours bloqué",
   "CPA Reportée": "CPA reportée — à redemander",
+  "CONFIRME_RDV": "RDV_CONFIRME",
 };
 
 const EXCLUDED_RDV_STATUTS = new Set(["Annulé", "Terminé"]);
