@@ -206,10 +206,9 @@ function PlanificationContent() {
   }, [prescriptionData, prescriptionId]);
 
   // Cet examen n'a pas encore de rendez-vous, mais un autre examen du même groupe en a déjà
-  // un (cas : l'utilisateur a planifié puis quitté avant d'enchaîner sur celui-ci) — on
-  // propose par défaut le créneau juste après celui-ci, dans la même salle, plutôt qu'un
-  // formulaire vierge à 9h par défaut. Enchaîné (pas identique) pour éviter un conflit de
-  // salle immédiat avec le créneau qu'on vient de recopier.
+  // un (cas : examens du même patient sur des jours différents) — on reprend la date et
+  // l'heure de ce créneau comme référence de départ (le major garde la main pour ajuster,
+  // typiquement la date vers un autre jour), plutôt qu'un formulaire vierge à 9h par défaut.
   useEffect(() => {
     if (groupExams.length <= 1) return;
     const rdv = prescriptionData?.rendezVous;
@@ -226,14 +225,9 @@ function PlanificationContent() {
         if (!sibRdv?.dateHeureDebut || !sibRdv?.dateHeureFin) return;
         const sibDebut = fromNaiveIso(sibRdv.dateHeureDebut);
         const sibFin = fromNaiveIso(sibRdv.dateHeureFin);
-        const addMinutes = (time: string, minutes: number) => {
-          const [h, m] = time.split(":").map(Number);
-          const total = ((h * 60 + m + minutes) % 1440 + 1440) % 1440;
-          return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-        };
         setDate(sibDebut.date);
-        setHeureDebut(sibFin.time);
-        setHeureFin(addMinutes(sibFin.time, 60));
+        setHeureDebut(sibDebut.time);
+        setHeureFin(sibFin.time);
         if (sibRdv.salleId) setSelectedSalleId(sibRdv.salleId);
       })
       .catch(() => undefined);
