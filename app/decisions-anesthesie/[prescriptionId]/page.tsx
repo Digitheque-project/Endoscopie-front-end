@@ -96,18 +96,19 @@ function PlanificationExamenContent() {
         });
         setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
 
-        // Anesthésie locale : s'applique directement aux autres examens déjà planifiés
-        // de cette même prescription multi-examens (même prescriptionExternalId), pour
-        // éviter une décision séparée examen par examen dans ce cas précis.
-        if (selectedAnesthesie === "Locale" && prescription.prescriptionExternalId) {
+        // Anesthésie locale : s'applique directement aux autres examens de la MÊME séance
+        // (planifiés ensemble sur exactement le même créneau, voir session.sameSlot) —
+        // jamais aux autres examens de la prescription multi-examens en général, qui
+        // peuvent être de tout autre type et sur un jour différent, donc exiger chacun
+        // leur propre décision.
+        if (selectedAnesthesie === "Locale" && session?.sameSlot) {
           try {
+            const siblingIds = session.exams
+              .filter((ex) => ex.id !== prescription.id)
+              .map((ex) => ex.id);
             const all = await apiJson<any[]>("/api/prescriptions");
             const siblings = (Array.isArray(all) ? all : []).filter(
-              (p) =>
-                p.id !== prescription.id &&
-                p.prescriptionExternalId === prescription.prescriptionExternalId &&
-                p.rendezVous &&
-                !p.rendezVous.typeAnesthesie,
+              (p) => siblingIds.includes(p.id) && p.rendezVous && !p.rendezVous.typeAnesthesie,
             );
             await Promise.all(
               siblings.map((sib) =>
