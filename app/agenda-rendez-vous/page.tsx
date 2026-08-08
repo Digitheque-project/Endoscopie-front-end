@@ -119,9 +119,14 @@ export default function AgendaPage() {
       };
     });
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     const filtered = convertedApps.filter(a => {
       const s = a.statut?.toString().toUpperCase() || "";
-      if (s.includes("TERMINE") || s.includes("DONE")) return false;
+      // Masquer les rendez-vous terminés seulement pour aujourd'hui (planning du jour
+      // épuré) — les jours passés doivent rester consultables tels quels, y compris
+      // leurs rendez-vous déjà terminés.
+      if (a.date === todayStr && (s.includes("TERMINE") || s.includes("DONE"))) return false;
 
       if (!a.date) return true;
       const selectedDateStr = currentDate.toISOString().split('T')[0];
