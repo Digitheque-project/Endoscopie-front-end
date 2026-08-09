@@ -72,9 +72,13 @@ function PrescriptionsContent() {
   const [error, setError] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
-  const initialTab = (searchParams.get("tab") as MedecinTab) || "tous";
+  // Par défaut sur "À décider" (pas "Tous") pour que le médecin voie d'emblée les
+  // examens qui attendent une action de sa part, plutôt que de risquer d'en manquer
+  // un noyé dans la liste complète — le paramètre ?tab= (retour depuis une autre page)
+  // garde toujours la priorité.
+  const initialTab = (searchParams.get("tab") as MedecinTab) || "a-decider";
   const [medecinTab, setMedecinTab] = useState<MedecinTab>(
-    MEDECIN_TABS.some((t) => t.key === initialTab) ? initialTab : "tous",
+    MEDECIN_TABS.some((t) => t.key === initialTab) ? initialTab : "a-decider",
   );
   const [filters, setFilters] = useState({
     nom: "",
@@ -536,8 +540,9 @@ function PrescriptionsContent() {
             disabled={verifyingCpaId === req.id}
             onClick={() => handleVerifierStatutCpa(req)}
             title="Interroger le Bloc Opératoire (filet de sécurité si la notification automatique n'est pas arrivée)"
-            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-surface-container-high disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-surface-container-high disabled:opacity-50"
           >
+            <span className="material-symbols-outlined text-[13px]">sync</span>
             {verifyingCpaId === req.id ? "Vérification…" : "Vérifier statut CPA"}
           </button>
           <button

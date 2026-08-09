@@ -119,6 +119,7 @@ export default function RapportPage() {
                 <h3 className="text-4xl font-headline font-bold">
                   {isLoading ? "…" : stats?.totalPatients ?? 0}
                 </h3>
+                <p className="text-[10px] opacity-70 mt-1">Examens terminés (checklist après validée) sur la période</p>
               </div>
 
               <div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-outline-variant/5 flex flex-col justify-between">
