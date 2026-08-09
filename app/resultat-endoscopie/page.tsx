@@ -412,8 +412,10 @@ function ResultatEndoscopieContent() {
         }
 
         // Ce qui a été dicté organe par organe pendant l'opération — affiché en simple
-        // référence à côté de chaque champ, ne pré-remplit plus le champ officiel.
-        if (opData?.observationNotes) {
+        // référence à côté de chaque champ pendant la rédaction du compte rendu. Une
+        // fois le compte rendu enregistré (consultation depuis les Archives), ces notes
+        // de dictée n'ont plus lieu d'être affichées à côté du résultat final.
+        if (opData?.observationNotes && !data) {
           setParsedOrganNotes(parseConstatationsText(opData.observationNotes));
         }
 
