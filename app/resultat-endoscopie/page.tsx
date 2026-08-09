@@ -1428,7 +1428,13 @@ function ResultatEndoscopieContent() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className={
+              hasExistingResult
+                // Seule action de ce footer (consultation d'un compte rendu existant) :
+                // reprend la place et le style bien visible du bouton Enregistrer retiré.
+                ? "inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary-dark"
+                : "inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            }
           >
             Retour
           </button>
