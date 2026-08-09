@@ -231,59 +231,76 @@ export default function ArchivesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/10">
-                  {rows.map((row) => (
-                    <tr
-                      key={row.prescriptionId}
-                      onClick={() => {
-                        if (row.resultatDisponible) {
-                          // Le compte rendu officiel complet (mêmes sections que celles
-                          // remplies par le médecin) — pas un simple résumé — utile pour
-                          // les services externes. La page le charge déjà depuis
-                          // /api/resultats/:id dès que prescriptionId est en contexte.
-                          setPatientData({
-                            patientId: row.patientId,
-                            prescriptionId: row.prescriptionId,
-                            patientName: `${row.patientNom} ${row.patientPrenom}`.trim(),
-                            procedure: row.typeExamen,
-                            prescriber: row.prescripteur || "",
-                          });
-                          router.push("/resultat-endoscopie");
-                        } else {
-                          router.push(`/patient-dossier/${row.prescriptionId}`);
-                        }
-                      }}
-                      className={`hover:bg-surface-container-low transition-colors cursor-pointer ${priseEnChargeStripeClass(!!row.priseEnChargeId)}`}
-                    >
-                      <td className="px-4 py-3 text-sm">{new Date(row.dateDemande).toLocaleDateString("fr-FR")}</td>
-                      <td className="px-4 py-3 text-sm font-semibold">
-                        <div>{row.patientNom} {row.patientPrenom}</div>
-                        <PriseEnChargeBadge priseEnChargeId={row.priseEnChargeId} className="mt-0.5" />
-                      </td>
-                      <td className="px-4 py-3 text-sm">{row.typeExamen}</td>
-                      <td className="px-4 py-3 text-sm text-on-surface-variant">{row.typeAnesthesie || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-on-surface-variant">{row.prescripteur || "—"}</td>
-                      <td className="px-4 py-3 text-sm">{row.cpaStatut || "Non demandé"}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className={row.checklistAvantValide ? "text-emerald-600" : "text-on-surface-variant"}>Avant</span>
-                        {" / "}
-                        <span className={row.checklistApresValide ? "text-emerald-600" : "text-on-surface-variant"}>Après</span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">{row.resultatDisponible ? "Disponible" : "En attente"}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-1 rounded-full text-[11px] font-bold ${
-                            row.statutGlobal === "Complet"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : row.statutGlobal === "Annulé"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-amber-100 text-amber-700"
-                          }`}
-                        >
-                          {row.statutGlobal}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {rows.map((row) => {
+                    const openResultat = () => {
+                      if (row.resultatDisponible) {
+                        // Le compte rendu officiel complet (mêmes sections que celles
+                        // remplies par le médecin) — pas un simple résumé — utile pour
+                        // les services externes. La page le charge déjà depuis
+                        // /api/resultats/:id dès que prescriptionId est en contexte.
+                        setPatientData({
+                          patientId: row.patientId,
+                          prescriptionId: row.prescriptionId,
+                          patientName: `${row.patientNom} ${row.patientPrenom}`.trim(),
+                          procedure: row.typeExamen,
+                          prescriber: row.prescripteur || "",
+                        });
+                        router.push("/resultat-endoscopie");
+                      } else {
+                        router.push(`/patient-dossier/${row.prescriptionId}`);
+                      }
+                    };
+                    return (
+                      <tr
+                        key={row.prescriptionId}
+                        className={priseEnChargeStripeClass(!!row.priseEnChargeId)}
+                      >
+                        <td className="px-4 py-3 text-sm">{new Date(row.dateDemande).toLocaleDateString("fr-FR")}</td>
+                        <td className="px-4 py-3 text-sm font-semibold">
+                          <div>{row.patientNom} {row.patientPrenom}</div>
+                          <PriseEnChargeBadge priseEnChargeId={row.priseEnChargeId} className="mt-0.5" />
+                        </td>
+                        <td className="px-4 py-3 text-sm">{row.typeExamen}</td>
+                        <td className="px-4 py-3 text-sm text-on-surface-variant">{row.typeAnesthesie || "—"}</td>
+                        <td className="px-4 py-3 text-sm text-on-surface-variant">{row.prescripteur || "—"}</td>
+                        <td className="px-4 py-3 text-sm">{row.cpaStatut || "Non demandé"}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={row.checklistAvantValide ? "text-emerald-600" : "text-on-surface-variant"}>Avant</span>
+                          {" / "}
+                          <span className={row.checklistApresValide ? "text-emerald-600" : "text-on-surface-variant"}>Après</span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {/* Seul indicateur cliquable de la ligne : c'est lui qui dit
+                              précisément si le compte rendu existe et mène à sa consultation. */}
+                          <button
+                            type="button"
+                            onClick={openResultat}
+                            title={row.resultatDisponible ? "Consulter le compte rendu" : "Voir le dossier patient"}
+                            className={`px-2 py-1 rounded-full text-[11px] font-bold transition-colors ${
+                              row.resultatDisponible
+                                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                            }`}
+                          >
+                            {row.resultatDisponible ? "Disponible" : "En attente"}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-1 rounded-full text-[11px] font-bold ${
+                              row.statutGlobal === "Complet"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : row.statutGlobal === "Annulé"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}
+                          >
+                            {row.statutGlobal}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
