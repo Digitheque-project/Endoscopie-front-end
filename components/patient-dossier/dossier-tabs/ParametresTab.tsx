@@ -11,12 +11,17 @@ interface ParametresTabProps {
 export function ParametresTab({ patientId }: ParametresTabProps) {
   const [parametres, setParametres] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     apiJson<any[]>(`/api/dossier-patient/${encodeURIComponent(patientId)}/parametres`)
       .then((data) => setParametres(Array.isArray(data) ? data : []))
-      .catch(() => setParametres([]))
+      .catch(() => {
+        setHasError(true);
+        setParametres([]);
+      })
       .finally(() => setIsLoading(false));
   }, [patientId]);
 
@@ -29,7 +34,13 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
   }
 
   return (
-    <AccordionSection number="01" title="Relevés de paramètres" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
+    <>
+      {hasError && (
+        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+          Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
+        </p>
+      )}
+      <AccordionSection number="01" title="Relevés de paramètres" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
       {sorted.length === 0 ? (
         <p className="text-xs text-on-surface-variant">Aucun paramètre relevé pour ce patient.</p>
       ) : (
@@ -60,6 +71,7 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
           </table>
         </div>
       )}
-    </AccordionSection>
+      </AccordionSection>
+    </>
   );
 }

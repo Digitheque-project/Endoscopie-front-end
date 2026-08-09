@@ -11,12 +11,17 @@ interface SuiviTabProps {
 export function SuiviTab({ patientId }: SuiviTabProps) {
   const [suivis, setSuivis] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     apiJson<any[]>(`/api/dossier-patient/${encodeURIComponent(patientId)}/suivis`)
       .then((data) => setSuivis(Array.isArray(data) ? data : []))
-      .catch(() => setSuivis([]))
+      .catch(() => {
+        setHasError(true);
+        setSuivis([]);
+      })
       .finally(() => setIsLoading(false));
   }, [patientId]);
 
@@ -27,7 +32,13 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
   }
 
   return (
-    <AccordionSection number="01" title="Suivis / Évolution" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
+    <>
+      {hasError && (
+        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+          Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
+        </p>
+      )}
+      <AccordionSection number="01" title="Suivis / Évolution" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
       {sorted.length === 0 ? (
         <p className="text-xs text-on-surface-variant">Aucun suivi enregistré pour ce patient.</p>
       ) : (
@@ -56,6 +67,7 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
           ))}
         </ul>
       )}
-    </AccordionSection>
+      </AccordionSection>
+    </>
   );
 }

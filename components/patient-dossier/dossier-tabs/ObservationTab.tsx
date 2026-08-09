@@ -52,13 +52,18 @@ function Field({ label, value }: { label: string; value?: string | number | null
 export function ObservationTab({ patientId, patient }: ObservationTabProps) {
   const [observations, setObservations] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [view, setView] = useState<"latest" | "history">("latest");
 
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     apiJson<any[]>(`/api/dossier-patient/${encodeURIComponent(patientId)}/observations`)
       .then((data) => setObservations(Array.isArray(data) ? data : []))
-      .catch(() => setObservations([]))
+      .catch(() => {
+        setHasError(true);
+        setObservations([]);
+      })
       .finally(() => setIsLoading(false));
     setView("latest");
   }, [patientId]);
@@ -73,6 +78,11 @@ export function ObservationTab({ patientId, patient }: ObservationTabProps) {
 
   return (
     <div className="space-y-4">
+      {hasError && (
+        <p className="rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+          Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         <button
           type="button"

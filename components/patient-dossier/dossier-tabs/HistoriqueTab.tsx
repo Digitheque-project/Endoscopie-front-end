@@ -20,17 +20,28 @@ const MODULE_ICONS: Record<string, string> = {
 export function HistoriqueTab({ patientId }: HistoriqueTabProps) {
   const [historique, setHistorique] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     apiJson<any[]>(`/api/dossier-patient/${encodeURIComponent(patientId)}/historique`)
       .then((data) => setHistorique(Array.isArray(data) ? data : []))
-      .catch(() => setHistorique([]))
+      .catch(() => {
+        setHasError(true);
+        setHistorique([]);
+      })
       .finally(() => setIsLoading(false));
   }, [patientId]);
 
   return (
-    <AccordionSection number="01" title="Historique complet du dossier" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
+    <>
+      {hasError && (
+        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+          Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
+        </p>
+      )}
+      <AccordionSection number="01" title="Historique complet du dossier" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
       {isLoading ? (
         <p className="text-xs text-on-surface-variant">Chargement de l&apos;historique…</p>
       ) : !historique || historique.length === 0 ? (
@@ -58,6 +69,7 @@ export function HistoriqueTab({ patientId }: HistoriqueTabProps) {
           })}
         </ul>
       )}
-    </AccordionSection>
+      </AccordionSection>
+    </>
   );
 }

@@ -535,7 +535,7 @@ function PlanificationContent() {
   };
 
   const handleCancel = () => {
-    setDate("2024-05-24");
+    setDate(getTodayLocal());
     setHeureDebut("09:00");
     setHeureFin("10:00");
     setObservations("");

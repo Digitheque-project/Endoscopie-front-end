@@ -17,12 +17,17 @@ function pickActive(diagnostics: any[]): any | null {
 export function DiagnosticTab({ patientId }: DiagnosticTabProps) {
   const [diagnostics, setDiagnostics] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     apiJson<any[]>(`/api/dossier-patient/${encodeURIComponent(patientId)}/diagnostics`)
       .then((data) => setDiagnostics(Array.isArray(data) ? data : []))
-      .catch(() => setDiagnostics([]))
+      .catch(() => {
+        setHasError(true);
+        setDiagnostics([]);
+      })
       .finally(() => setIsLoading(false));
   }, [patientId]);
 
@@ -34,6 +39,11 @@ export function DiagnosticTab({ patientId }: DiagnosticTabProps) {
 
   return (
     <div className="space-y-3">
+      {hasError && (
+        <p className="rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+          Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
+        </p>
+      )}
       <AccordionSection number="01" title="Diagnostic actuel" subtitle="Cliquez pour ouvrir" isComplete={!!active} defaultOpen>
         {active ? (
           <div className="space-y-1.5 text-sm">

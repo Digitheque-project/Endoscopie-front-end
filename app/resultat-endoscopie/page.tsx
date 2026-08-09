@@ -684,7 +684,14 @@ function ResultatEndoscopieContent() {
             </div>
           )}
 
-          <div className="space-y-5">
+          {hasExistingResult && (
+            <div className="mb-6 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 p-4 text-slate-700 shadow-sm">
+              <span className="material-symbols-outlined text-lg">lock</span>
+              Compte rendu déjà enregistré — lecture seule.
+            </div>
+          )}
+
+          <fieldset disabled={hasExistingResult} className="space-y-5 border-0 p-0 m-0 min-w-0">
 
             <div className="grid gap-5 lg:grid-cols-2">
             <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -1419,7 +1426,7 @@ function ResultatEndoscopieContent() {
                 />
               </section>
             )}
-          </div>
+          </fieldset>
 
         </div>
       </div>

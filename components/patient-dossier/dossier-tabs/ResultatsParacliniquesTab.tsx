@@ -26,13 +26,18 @@ const STATUT_COLORS: Record<string, string> = {
 export function ResultatsParacliniquesTab({ patientId }: ResultatsParacliniquesTabProps) {
   const [resultats, setResultats] = useState<any[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [filterType, setFilterType] = useState("");
 
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     apiJson<any[]>(`/api/dossier-patient/${encodeURIComponent(patientId)}/resultats`)
       .then((data) => setResultats(Array.isArray(data) ? data : []))
-      .catch(() => setResultats([]))
+      .catch(() => {
+        setHasError(true);
+        setResultats([]);
+      })
       .finally(() => setIsLoading(false));
     setFilterType("");
   }, [patientId]);
@@ -41,7 +46,13 @@ export function ResultatsParacliniquesTab({ patientId }: ResultatsParacliniquesT
   const filtered = resultats ? (filterType ? resultats.filter((r) => (r.type || "").toLowerCase() === filterType) : resultats) : [];
 
   return (
-    <AccordionSection number="01" title="Résultats paracliniques" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
+    <>
+      {hasError && (
+        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+          Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
+        </p>
+      )}
+      <AccordionSection number="01" title="Résultats paracliniques" subtitle="Cliquez pour ouvrir" isComplete={false} defaultOpen>
       {isLoading ? (
         <p className="text-xs text-on-surface-variant">Chargement des résultats…</p>
       ) : !resultats || resultats.length === 0 ? (
@@ -81,6 +92,7 @@ export function ResultatsParacliniquesTab({ patientId }: ResultatsParacliniquesT
           </ul>
         </div>
       )}
-    </AccordionSection>
+      </AccordionSection>
+    </>
   );
 }

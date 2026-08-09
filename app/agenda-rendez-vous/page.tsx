@@ -46,6 +46,7 @@ export default function AgendaPage() {
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [appToConfirmDelete, setAppToConfirmDelete] = useState<Appointment | null>(null);
   const [doctorNames, setDoctorNames] = useState<string[]>([]);
   const [examTypes, setExamTypes] = useState<{ id: string; name: string }[]>([]);
   const [filters, setFilters] = useState({ nom: "", procedure: "", medecin: "" });
@@ -190,10 +191,14 @@ export default function AgendaPage() {
   const isReady = (app: Appointment) =>
     !!app.typeAnesthesie && !EXCLUDED_RDV_STATUTS.has(app.statut);
 
-  const handleDelete = async (app: Appointment) => {
-    if (!window.confirm(`Supprimer définitivement le rendez-vous de ${app.patient} ? Cette action est irréversible.`)) {
-      return;
-    }
+  const handleDelete = (app: Appointment) => {
+    setAppToConfirmDelete(app);
+  };
+
+  const confirmDelete = async () => {
+    const app = appToConfirmDelete;
+    if (!app) return;
+    setAppToConfirmDelete(null);
     setIsDeleting(true);
     setDeleteError(null);
     try {
@@ -445,6 +450,42 @@ export default function AgendaPage() {
                   />
                 )}
               </footer>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation de suppression — remplace window.confirm() par une modale plus
+            visible, le bouton Supprimer étant désormais toujours affiché sur chaque
+            carte (donc plus exposé à un clic accidentel qu'avant). */}
+        {appToConfirmDelete && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm p-4" onClick={() => setAppToConfirmDelete(null)}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-outline-variant/20" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error shrink-0">
+                  <span className="material-symbols-outlined">warning</span>
+                </div>
+                <h2 className="text-lg font-headline font-bold">Supprimer ce rendez-vous ?</h2>
+              </div>
+              <p className="text-sm text-on-surface-variant mb-6">
+                Le rendez-vous de <span className="font-bold text-on-surface">{appToConfirmDelete.patient}</span> ({appToConfirmDelete.typeExamen}, {appToConfirmDelete.heureDebut}–{appToConfirmDelete.heureFin}) sera supprimé définitivement. Cette action est irréversible.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAppToConfirmDelete(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 rounded-lg bg-error text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {isDeleting ? "Suppression…" : "Oui, supprimer"}
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -92,7 +92,7 @@ export default function Home() {
       setApiError(null);
     } catch (e) {
       console.error("Error fetching appointments", e);
-      setApiError("Impossible de joindre l'API. Démarrez le backend (npm run start:dev dans endoscopie-back).");
+      setApiError("Service temporairement indisponible. Veuillez réessayer dans un instant.");
     }
   };
 
@@ -131,7 +131,7 @@ export default function Home() {
       setApiError(null);
     } catch (e) {
       console.error("Error fetching salles", e);
-      setApiError("Impossible de joindre l'API. Démarrez le backend (npm run start:dev dans endoscopie-back).");
+      setApiError("Service temporairement indisponible. Veuillez réessayer dans un instant.");
     } finally {
       if (showLoading) setIsRefreshing(false);
     }
