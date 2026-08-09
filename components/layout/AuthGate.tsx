@@ -11,6 +11,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isProcessingToken, setIsProcessingToken] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // Force logout on app startup - require fresh login every session
   useEffect(() => {
@@ -32,9 +33,15 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     if (!token) return;
 
     setIsProcessingToken(true);
+    setLoginError(null);
     loginWithToken(token)
       .catch((err) => {
         console.error("Échec de connexion via le jeton SSO:", err);
+        setLoginError(
+          err instanceof Error
+            ? err.message
+            : "Impossible de vous connecter. Contactez l'administrateur si le problème persiste.",
+        );
       })
       .finally(() => {
         params.delete("accessToken");
@@ -57,8 +64,22 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (PUBLIC_PATHS.has(pathname)) {
     return <>{children}</>;
   }
-  if (!isLoaded || isProcessingToken || !role) {
+  if (!isLoaded || isProcessingToken) {
     return null;
+  }
+  if (!role) {
+    // Redirection en cours vers /connexion (voir l'effet ci-dessus) — un écran vide
+    // sans texte laissait croire à une page bloquée/plantée.
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-container-lowest px-4">
+        <div className="text-center space-y-2">
+          <p className="text-sm font-semibold text-on-surface-variant">Redirection vers la connexion…</p>
+          {loginError && (
+            <p className="text-sm font-semibold text-error max-w-sm">{loginError}</p>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

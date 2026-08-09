@@ -205,6 +205,9 @@ export function NotificationBell() {
   const router = useRouter();
   const { role } = useAuth();
   const [open, setOpen] = useState(false);
+  // Une notification lue disparaissait définitivement du panneau, sans aucun moyen de
+  // la retrouver — cet onglet garde un historique consultable des notifications déjà lues.
+  const [showRead, setShowRead] = useState(false);
   const [items, setItems] = useState<DisplayNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<DisplayNotification | null>(null);
@@ -264,7 +267,9 @@ export function NotificationBell() {
   // Une fois lue (cliquée), une notification disparaît du panneau — seules les non-lues
   // y restent affichées ; le badge de comptage suit donc la même liste.
   const unreadItems = items.filter((n) => !n.readAt);
+  const readItems = items.filter((n) => !!n.readAt);
   const unreadCount = unreadItems.length;
+  const visibleItems = showRead ? readItems : unreadItems;
 
   const handleOpenItem = async (item: DisplayNotification) => {
     // Le médecin voit les notifications de nouvelles prescriptions pour surveiller le
@@ -395,12 +400,34 @@ export function NotificationBell() {
                 Actualiser
               </button>
             </div>
+            <div className="px-4 pt-2 flex items-center gap-2 border-b border-slate-100 pb-2">
+              <button
+                type="button"
+                onClick={() => setShowRead(false)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
+                  !showRead ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                Non lues{unreadCount > 0 ? ` (${unreadCount})` : ""}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRead(true)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
+                  showRead ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                Déjà lues
+              </button>
+            </div>
             {error && <p className="px-4 py-3 text-xs text-red-600">{error}</p>}
-            {!error && unreadItems.length === 0 && (
-              <p className="px-4 py-3 text-xs text-slate-500">Aucune notification.</p>
+            {!error && visibleItems.length === 0 && (
+              <p className="px-4 py-3 text-xs text-slate-500">
+                {showRead ? "Aucune notification déjà lue." : "Aucune notification."}
+              </p>
             )}
             {!error &&
-              unreadItems.map((n) => (
+              visibleItems.map((n) => (
                 <button
                   key={n.id}
                   type="button"

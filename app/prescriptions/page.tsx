@@ -960,14 +960,17 @@ function PrescriptionsContent() {
                                   type="button"
                                   onClick={() => openDecisionModal(primary)}
                                   title="Cliquer pour maintenir ou décaler la date prévue"
-                                  className="flex w-full flex-col items-start gap-0.5 rounded-lg bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                                  className="flex w-full items-center justify-between gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
                                 >
-                                  <span className="text-[9px] font-bold uppercase tracking-wide leading-tight">
-                                    Décision rendue
+                                  <span className="flex flex-col items-start gap-0.5 min-w-0">
+                                    <span className="text-[9px] font-bold uppercase tracking-wide leading-tight underline decoration-primary/40 underline-offset-2">
+                                      Décision rendue
+                                    </span>
+                                    <span className="text-[9px] font-semibold uppercase tracking-wide leading-tight opacity-80">
+                                      Anesthésie {primary.rendezVous?.typeAnesthesie || "?"}
+                                    </span>
                                   </span>
-                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-tight opacity-80">
-                                    Anesthésie {primary.rendezVous?.typeAnesthesie || "?"}
-                                  </span>
+                                  <span className="material-symbols-outlined text-[16px] shrink-0">touch_app</span>
                                 </button>
                               ) : (
                                 <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-on-surface-variant" title={STATUS_LABELS[primary.status] || primary.status}>

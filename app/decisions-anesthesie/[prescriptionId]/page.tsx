@@ -35,6 +35,9 @@ function PlanificationExamenContent() {
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [selectedAnesthesie, setSelectedAnesthesie] = useState<"Locale" | "Générale" | "Refuser" | null>(null);
   const [motifRefus, setMotifRefus] = useState("");
+  const [showRefusConfirm, setShowRefusConfirm] = useState(false);
+  const [chainingMessage, setChainingMessage] = useState<string | null>(null);
+  const [propagationMessage, setPropagationMessage] = useState<string | null>(null);
   // Session groupée (plusieurs examens du même patient sur le même créneau) — la
   // décision d'anesthésie prise ici s'applique à toute la séance, pas qu'à cet examen.
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -61,6 +64,8 @@ function PlanificationExamenContent() {
       setSelectedAnesthesie(null);
       setMotifRefus("");
       setDecisionError(null);
+      setChainingMessage(null);
+      setPropagationMessage(null);
       try {
         const data = await apiJson<any>(`/api/prescriptions/${prescriptionId}`);
         if (!cancelled) setPrescription(data);
@@ -118,6 +123,11 @@ function PlanificationExamenContent() {
                 }).catch(() => undefined),
               ),
             );
+            if (siblings.length > 0) {
+              setPropagationMessage(
+                `Anesthésie locale appliquée automatiquement à ${siblings.length} autre${siblings.length > 1 ? "s" : ""} examen${siblings.length > 1 ? "s" : ""} de cette même séance.`,
+              );
+            }
           } catch (e) {
             console.error("Erreur propagation anesthésie locale aux examens liés :", e);
           }
@@ -144,6 +154,11 @@ function PlanificationExamenContent() {
         }
       }
 
+      setChainingMessage(
+        nextSibling
+          ? `Décision enregistrée. Passage à l'examen suivant : ${nextSibling.typeExamen || "examen suivant"}…`
+          : "Décision enregistrée. Retour au fil de prescription…",
+      );
       setTimeout(() => {
         if (nextSibling) {
           router.push(`/decisions-anesthesie/${encodeURIComponent(nextSibling.id)}?tab=${encodeURIComponent(medecinTab)}`);
@@ -152,7 +167,7 @@ function PlanificationExamenContent() {
           // l'onglet d'origine pour enchaîner directement sur le patient suivant.
           router.push(`/prescriptions?tab=${encodeURIComponent(medecinTab)}`);
         }
-      }, 1000);
+      }, 1200);
     } catch (err) {
       setDecisionError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement de la décision.");
     } finally {
@@ -289,10 +304,22 @@ function PlanificationExamenContent() {
                       <p className="text-base font-semibold text-amber-600">En attente de décision médicale.</p>
                     )}
                     {decisionError && <p className="text-sm text-error mt-2">{decisionError}</p>}
+                    {chainingMessage && (
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-primary mt-2">
+                        <span className="material-symbols-outlined text-lg">check_circle</span>
+                        {chainingMessage}
+                      </p>
+                    )}
+                    {propagationMessage && (
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-primary mt-2">
+                        <span className="material-symbols-outlined text-lg">layers</span>
+                        {propagationMessage}
+                      </p>
+                    )}
                   </div>
                   {!prescription.rendezVous.typeAnesthesie && prescription.rendezVous.statut !== "Annulé" && (
                     <div className="flex flex-col gap-3 lg:items-end">
-                      <div className="flex gap-2">
+                      <div className="flex items-stretch gap-2">
                         <button
                           type="button"
                           disabled={isDeciding}
@@ -317,6 +344,9 @@ function PlanificationExamenContent() {
                         >
                           Anesthésie générale
                         </button>
+                        {/* Séparateur visuel : Refuser a des conséquences différentes des deux
+                            choix d'anesthésie ci-dessus, pas juste une 3ème option équivalente. */}
+                        <div className="w-px bg-outline-variant/30 my-1" aria-hidden="true" />
                         <button
                           type="button"
                           disabled={isDeciding}
@@ -331,19 +361,31 @@ function PlanificationExamenContent() {
                         </button>
                       </div>
                       {selectedAnesthesie === "Refuser" && (
-                        <textarea
-                          value={motifRefus}
-                          onChange={(e) => setMotifRefus(e.target.value)}
-                          placeholder="Motif du refus (obligatoire) — sera transmis au service demandeur"
-                          rows={3}
-                          disabled={isDeciding}
-                          className="w-full rounded-xl border border-error/30 bg-error-container/10 px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-error/20 focus:border-error/40 outline-none resize-none disabled:opacity-50"
-                        />
+                        <div className="w-full space-y-1.5">
+                          <textarea
+                            value={motifRefus}
+                            onChange={(e) => setMotifRefus(e.target.value)}
+                            placeholder="Motif du refus (obligatoire)"
+                            rows={3}
+                            disabled={isDeciding}
+                            className="w-full rounded-xl border border-error/30 bg-error-container/10 px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-error/20 focus:border-error/40 outline-none resize-none disabled:opacity-50"
+                          />
+                          <p className="flex items-center gap-1.5 text-xs font-semibold text-error">
+                            <span className="material-symbols-outlined text-sm">info</span>
+                            Ce motif sera transmis au service qui a demandé l&apos;examen.
+                          </p>
+                        </div>
                       )}
                       <button
                         type="button"
                         disabled={!selectedAnesthesie || isDeciding || (selectedAnesthesie === "Refuser" && !motifRefus.trim())}
-                        onClick={handleConfirmAnesthesie}
+                        onClick={() => {
+                          if (selectedAnesthesie === "Refuser") {
+                            setShowRefusConfirm(true);
+                          } else {
+                            handleConfirmAnesthesie();
+                          }
+                        }}
                         className={`w-full lg:w-auto whitespace-nowrap px-8 py-4 rounded-xl text-white font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed ${
                           selectedAnesthesie === "Refuser" ? "bg-error" : "bg-emerald-600"
                         }`}
@@ -362,6 +404,42 @@ function PlanificationExamenContent() {
           )}
         </RequireRole>
       </div>
+
+      {showRefusConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm p-4" onClick={() => setShowRefusConfirm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-outline-variant/20" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error shrink-0">
+                <span className="material-symbols-outlined">warning</span>
+              </div>
+              <h2 className="text-lg font-headline font-bold">Confirmer le refus ?</h2>
+            </div>
+            <p className="text-sm text-on-surface-variant mb-6">
+              Cet examen sera annulé et <span className="font-bold text-on-surface">le service qui l&apos;a demandé recevra une notification</span> avec le motif écrit. Cette action ne peut pas être annulée depuis cet écran.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRefusConfirm(false)}
+                className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={isDeciding}
+                onClick={() => {
+                  setShowRefusConfirm(false);
+                  handleConfirmAnesthesie();
+                }}
+                className="px-4 py-2 rounded-lg bg-error text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                Oui, refuser
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

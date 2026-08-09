@@ -68,6 +68,7 @@ function PlanificationContent() {
     setSlotError(null);
     setSubmitError(null);
     setIsSuccess(false);
+    setChainMessage(null);
   };
 
   const [medecinInfo, setMedecinInfo] = useState<any | null>(null);
@@ -78,6 +79,7 @@ function PlanificationContent() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [chainMessage, setChainMessage] = useState<string | null>(null);
 
   const patientReal = prescriptionData?.patient || null;
 
@@ -496,7 +498,8 @@ function PlanificationContent() {
       if (ensemble) {
         // Tous les examens du groupe viennent d'être planifiés en une fois : rien à
         // enchaîner, retour direct à la page d'origine.
-        setTimeout(() => router.push(returnUrl), 1000);
+        setChainMessage("Tous les examens ont été planifiés. Retour…");
+        setTimeout(() => router.push(returnUrl), 1200);
         return;
       }
 
@@ -514,13 +517,18 @@ function PlanificationContent() {
         (ex) => ex.id !== justPlannedId && ex.status === "A planifier" && !updatedPlanned.has(ex.id),
       );
 
+      setChainMessage(
+        nextExam
+          ? `Rendez-vous confirmé. Passage à l'examen suivant : ${nextExam.procedure}…`
+          : "Rendez-vous confirmé. Retour…",
+      );
       setTimeout(() => {
         if (nextExam) {
           switchActiveExam(nextExam);
         } else {
           router.push(returnUrl);
         }
-      }, 1000);
+      }, 1200);
     } catch (error: any) {
       console.error("Erreur lors de la synchronisation du rendez-vous:", error);
       const isTimeout = error?.name === "TimeoutError" || error?.name === "AbortError";
@@ -692,6 +700,12 @@ function PlanificationContent() {
                     Aujourd'hui
                   </button>
                 </div>
+                {isSuccess && chainMessage && (
+                  <p className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    {chainMessage}
+                  </p>
+                )}
               </div>
             </div>
 

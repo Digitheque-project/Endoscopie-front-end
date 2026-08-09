@@ -386,6 +386,9 @@ function ResultatEndoscopieContent() {
     conclusion:                                 nextN(),
     recommandations:    !isRectosigmoidoscopie ? nextN() : 0,
   };
+  // Nombre total de sections du formulaire (varie selon le type d'examen) — affiché en
+  // repère au médecin, ce long formulaire n'ayant sinon aucune indication de progression.
+  const totalSections = _n;
 
 
   useEffect(() => {
@@ -664,12 +667,20 @@ function ResultatEndoscopieContent() {
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">Service d'endoscopie — CHU Fianarantsoa</p>
                 <h1 className="mt-3 text-3xl font-bold text-slate-900">{dynamicTitle}</h1>
-                {session?.sameSlot && (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                    <span className="material-symbols-outlined text-[14px]">layers</span>
-                    Examen {session.exams.findIndex((e) => e.id === prescriptionId) + 1} / {session.exams.length}
-                  </span>
-                )}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {session?.sameSlot && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                      <span className="material-symbols-outlined text-[14px]">layers</span>
+                      Examen {session.exams.findIndex((e) => e.id === prescriptionId) + 1} / {session.exams.length}
+                    </span>
+                  )}
+                  {!hasExistingResult && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                      <span className="material-symbols-outlined text-[14px]">format_list_numbered</span>
+                      Formulaire en {totalSections} sections
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="text-right text-sm text-slate-600">
                 <p>Patient : <span className="font-semibold">{patientName || '—'}</span></p>
@@ -1045,15 +1056,18 @@ function ResultatEndoscopieContent() {
                             </span>
                           )}
                         </div>
-                        <MicButton
-                          onFinalTranscript={(text, meta) =>
-                            updateNested(
-                              "constatations",
-                              item.key,
-                              appendFinalSegment(formData.constatations[item.key], text, Boolean(meta?.startsAfterPause)),
-                            )
-                          }
-                        />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] font-semibold text-slate-500">Dicter à l&apos;oral</span>
+                          <MicButton
+                            onFinalTranscript={(text, meta) =>
+                              updateNested(
+                                "constatations",
+                                item.key,
+                                appendFinalSegment(formData.constatations[item.key], text, Boolean(meta?.startsAfterPause)),
+                              )
+                            }
+                          />
+                        </div>
                       </div>
                       <textarea
                         value={formData.constatations[item.key]}
