@@ -328,6 +328,9 @@ function ResultatEndoscopieContent() {
   }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  // Un compte rendu existe déjà pour cet examen (consultation depuis les Archives) :
+  // simple lecture, le bouton d'enregistrement n'a plus lieu d'être.
+  const [hasExistingResult, setHasExistingResult] = useState(false);
   // Session groupée (plusieurs examens du même patient sur le même créneau) — permet
   // d'enchaîner la rédaction du compte-rendu procédure par procédure sans quitter la page.
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -393,6 +396,7 @@ function ResultatEndoscopieContent() {
       setFormData({ ...initialData, typeExamen: mapProcedureToExamType(procedure) ?? initialData.typeExamen });
       setParsedOrganNotes({});
       setImages([]);
+      setHasExistingResult(false);
       try {
         // Charge en parallèle : compte rendu existant, notes d'opération, et prescription (source de vérité du type)
         const [data, opData, prescriptionData] = await Promise.all([
@@ -429,10 +433,12 @@ function ResultatEndoscopieContent() {
         }
 
         if (data) {
+          setHasExistingResult(true);
           setFormData((prev) => ({
             ...prev,
             // Si compte rendu vide, pré-remplit depuis les Notes complémentaires de l'opération
             observations: data.observations || (opData?.medicalNotes ?? prev.observations),
+            conclusion: data.conclusion || prev.conclusion,
             recommandations: data.recommandations || (opData?.medicalNotes ?? prev.recommandations),
             typeExamen: detectedType || (data.details?.typeExamen as TypeExamen | undefined) || prev.typeExamen,
             responsable: {
@@ -1426,14 +1432,16 @@ function ResultatEndoscopieContent() {
           >
             Retour
           </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? "Enregistrement..." : "Enregistrer le compte rendu"}
-          </button>
+          {!hasExistingResult && (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Enregistrement..." : "Enregistrer le compte rendu"}
+            </button>
+          )}
         </div>
       </div>
     </div>
