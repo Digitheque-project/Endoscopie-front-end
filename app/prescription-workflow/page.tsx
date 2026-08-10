@@ -46,6 +46,12 @@ const lastSavedTranscriptionRef = useRef("");
   organIndexRef.current = organIndex;
   const organFieldsRef = useRef(organFields);
   organFieldsRef.current = organFields;
+  // Avancement automatique vers l'organe suivant, mais seulement après un silence
+  // VRAIMENT prolongé (pas la simple pause de réflexion en pleine phrase) : on
+  // programme l'avancement après chaque segment final, et on l'annule si le médecin
+  // recommence à parler (voir handleObservationActivity) avant l'échéance.
+  const organAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ORGAN_AUTO_ADVANCE_SILENCE_MS = 4500;
 
   // Écrit automatiquement le nom de l'organe directement dans le champ "Observation
   // durant l'examen" dès que c'est son tour — le médecin n'a plus qu'à dicter
@@ -140,27 +146,55 @@ const lastSavedTranscriptionRef = useRef("");
 
     if (organ) {
       // Dictée guidée : le nom de l'organe est déjà écrit dans le champ (voir l'effet
-      // ci-dessus) — on complète la ligne avec l'observation dictée. Ne PAS avancer
-      // vers l'organe suivant ici : le micro finalise un segment dès la moindre pause
-      // naturelle (même en pleine phrase), donc avancer automatiquement à chaque
-      // segment coupait la description en plein milieu — voir advanceToNextOrgan,
-      // déclenché uniquement par le bouton "Organe suivant".
+      // ci-dessus) — on complète la ligne avec l'observation dictée. Le micro finalise
+      // un segment dès la moindre pause naturelle (même en pleine phrase) : on
+      // n'avance donc PAS immédiatement vers l'organe suivant ici, on programme
+      // l'avancement après un vrai silence prolongé (voir scheduleOrganAdvance) —
+      // annulé si le médecin recommence à parler avant l'échéance.
       const answer = capitalizeFirst(normalized);
       setTranscriptText((cur) => (cur.endsWith(' ') || !cur ? cur + answer : `${cur} ${answer}`));
+      scheduleOrganAdvance();
       return;
     }
 
     setTranscriptText((cur) => appendFinalSegment(cur, normalized, Boolean(meta?.startsAfterPause)));
   };
 
-  // Déclenché par le bouton "Organe suivant" — seul point d'avancement de la dictée
-  // guidée désormais (voir handleFinalTranscript).
+  const clearOrganAdvanceTimer = () => {
+    if (organAdvanceTimerRef.current) {
+      clearTimeout(organAdvanceTimerRef.current);
+      organAdvanceTimerRef.current = null;
+    }
+  };
+
+  // Avance vers l'organe suivant — appelé automatiquement après un silence prolongé
+  // (scheduleOrganAdvance) ou immédiatement via le bouton "Organe suivant".
   const advanceToNextOrgan = () => {
+    clearOrganAdvanceTimer();
     const fields = organFieldsRef.current;
     const nextIndex = Math.min(organIndexRef.current + 1, fields.length);
     organIndexRef.current = nextIndex;
     setOrganIndex(nextIndex);
   };
+
+  const scheduleOrganAdvance = () => {
+    clearOrganAdvanceTimer();
+    organAdvanceTimerRef.current = setTimeout(() => {
+      organAdvanceTimerRef.current = null;
+      advanceToNextOrgan();
+    }, ORGAN_AUTO_ADVANCE_SILENCE_MS);
+  };
+
+  // Le médecin recommence à parler (résultat intermédiaire non vide) avant la fin du
+  // délai de silence : il n'a pas fini de décrire l'organe en cours, on annule
+  // l'avancement programmé plutôt que de couper sa phrase.
+  const handleObservationActivity = (data: { final?: string; interim?: string }) => {
+    if (data.interim && data.interim.trim()) {
+      clearOrganAdvanceTimer();
+    }
+  };
+
+  useEffect(() => clearOrganAdvanceTimer, []);
 
   const handleAudioReady = (_blob: Blob) => {
     // audio blob ready for upload if needed
@@ -300,7 +334,15 @@ const lastSavedTranscriptionRef = useRef("");
               ) : null}
 
               <div className="mb-6">
-                <VoiceRecorder hideTextArea statusIdleText="Observation durant l'examen" onFinalTranscript={handleFinalTranscript} onAudio={handleAudioReady} exposeControls={setControls} />
+                <VoiceRecorder
+                  hideTextArea
+                  statusIdleText="Observation durant l'examen"
+                  onFinalTranscript={handleFinalTranscript}
+                  onTranscriptChange={handleObservationActivity}
+                  onManualPause={clearOrganAdvanceTimer}
+                  onAudio={handleAudioReady}
+                  exposeControls={setControls}
+                />
               </div>
 
               <textarea
