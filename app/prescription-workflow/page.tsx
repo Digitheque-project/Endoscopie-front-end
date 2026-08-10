@@ -140,16 +140,26 @@ const lastSavedTranscriptionRef = useRef("");
 
     if (organ) {
       // Dictée guidée : le nom de l'organe est déjà écrit dans le champ (voir l'effet
-      // ci-dessus) — on complète simplement la ligne avec l'observation dictée.
+      // ci-dessus) — on complète la ligne avec l'observation dictée. Ne PAS avancer
+      // vers l'organe suivant ici : le micro finalise un segment dès la moindre pause
+      // naturelle (même en pleine phrase), donc avancer automatiquement à chaque
+      // segment coupait la description en plein milieu — voir advanceToNextOrgan,
+      // déclenché uniquement par le bouton "Organe suivant".
       const answer = capitalizeFirst(normalized);
       setTranscriptText((cur) => (cur.endsWith(' ') || !cur ? cur + answer : `${cur} ${answer}`));
-      const nextIndex = Math.min(organIndexRef.current + 1, fields.length);
-      organIndexRef.current = nextIndex;
-      setOrganIndex(nextIndex);
       return;
     }
 
     setTranscriptText((cur) => appendFinalSegment(cur, normalized, Boolean(meta?.startsAfterPause)));
+  };
+
+  // Déclenché par le bouton "Organe suivant" — seul point d'avancement de la dictée
+  // guidée désormais (voir handleFinalTranscript).
+  const advanceToNextOrgan = () => {
+    const fields = organFieldsRef.current;
+    const nextIndex = Math.min(organIndexRef.current + 1, fields.length);
+    organIndexRef.current = nextIndex;
+    setOrganIndex(nextIndex);
   };
 
   const handleAudioReady = (_blob: Blob) => {
@@ -253,22 +263,35 @@ const lastSavedTranscriptionRef = useRef("");
           <section className="space-y-5">
             <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
               {organFields.length > 0 ? (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {organFields.map((field, i) => (
-                    <span
-                      key={field.key}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
-                        i === organIndex
-                          ? "bg-blue-600 text-white"
-                          : i < organIndex
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-100 text-slate-500"
-                      }`}
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    {organFields.map((field, i) => (
+                      <span
+                        key={field.key}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
+                          i === organIndex
+                            ? "bg-blue-600 text-white"
+                            : i < organIndex
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {i < organIndex && <span className="material-symbols-outlined text-[14px]">check</span>}
+                        {field.label}
+                      </span>
+                    ))}
+                  </div>
+                  {currentOrgan && (
+                    <button
+                      type="button"
+                      onClick={advanceToNextOrgan}
+                      title="Passer à l'organe suivant — dictez librement, avec toutes les pauses nécessaires, puis cliquez ici quand vous avez fini de décrire cet organe"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors shrink-0"
                     >
-                      {i < organIndex && <span className="material-symbols-outlined text-[14px]">check</span>}
-                      {field.label}
-                    </span>
-                  ))}
+                      Organe suivant
+                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    </button>
+                  )}
                 </div>
               ) : procedure ? (
                 <p className="mb-4 text-xs text-amber-600">

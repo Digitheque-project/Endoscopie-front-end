@@ -284,14 +284,6 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
 
         <div className="flex items-center gap-2">
           <button
-            onClick={restart}
-            type="button"
-            title="Effacer le texte et repartir de zéro"
-            className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-          >
-            Recommencer
-          </button>
-          <button
             onClick={() => start(true)}
             type="button"
             disabled={isRecording}
