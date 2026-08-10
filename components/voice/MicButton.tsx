@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   onFinalTranscript: (text: string, meta?: { startsAfterPause?: boolean }) => void;
@@ -20,6 +20,9 @@ export default function MicButton({ onFinalTranscript, lang = "fr-FR", className
   const recognitionRef = useRef<any>(null);
   const forceBreakRef = useRef(false);
   const lastFinalRef = useRef("");
+  // Intention de l'utilisateur — distingue un arrêt volontaire d'un arrêt inattendu du
+  // moteur de reconnaissance (silence prolongé, limite navigateur), à relancer seul.
+  const shouldListenRef = useRef(false);
 
   const start = () => {
     if (!isSupported) return;
@@ -42,9 +45,26 @@ export default function MicButton({ onFinalTranscript, lang = "fr-FR", className
       }
     };
 
-    recognition.onerror = () => setIsRecording(false);
+    recognition.onerror = (event: any) => {
+      // "no-speech" (silence normal) et "aborted" sont récupérables — onend s'en
+      // charge (redémarrage automatique) plutôt que de couper la dictée pour ça.
+      if (event?.error === "no-speech" || event?.error === "aborted") return;
+      shouldListenRef.current = false;
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      if (shouldListenRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {}
+      }
+      setIsRecording(false);
+    };
 
     recognitionRef.current = recognition;
+    shouldListenRef.current = true;
     try {
       recognition.start();
       setIsRecording(true);
@@ -52,12 +72,24 @@ export default function MicButton({ onFinalTranscript, lang = "fr-FR", className
   };
 
   const stop = () => {
+    shouldListenRef.current = false;
     try {
       recognitionRef.current?.stop();
     } catch {}
     setIsRecording(false);
     forceBreakRef.current = true;
   };
+
+  // Relâche le micro si le composant est démonté en cours de dictée (ex. changement
+  // d'onglet du compte rendu) plutôt que de laisser le flux audio ouvert pour rien.
+  useEffect(() => {
+    return () => {
+      shouldListenRef.current = false;
+      try {
+        recognitionRef.current?.stop();
+      } catch {}
+    };
+  }, []);
 
   const toggle = () => (isRecording ? stop() : start());
 

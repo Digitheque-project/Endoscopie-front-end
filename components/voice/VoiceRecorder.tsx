@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { handleManualPause } from "./formatTranscript";
+import { buildFinalDisplay, handleManualPause } from "./formatTranscript";
 
 type Props = {
   onTranscriptChange?: (data: { final?: string; interim?: string }) => void;
@@ -35,9 +35,29 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
   const finalSegmentsRef = useRef<string[]>([]);
   const finalBreaksRef = useRef<boolean[]>([]);
   const forceBreakBeforeNextFinalRef = useRef(false);
+  // Intention de l'utilisateur (toujours en train d'écouter) — sert à distinguer un
+  // arrêt volontaire (pause/stop) d'un arrêt inattendu du moteur de reconnaissance
+  // (silence prolongé, limite navigateur), qu'il faut alors relancer automatiquement.
+  const shouldListenRef = useRef(false);
   
 
   
+
+  // Relâche le micro si le composant est démonté pendant un enregistrement (ex.
+  // navigation vers une autre page) — sans ça, le flux audio restait ouvert et le
+  // micro affiché comme actif par le navigateur alors que personne ne l'utilise plus.
+  useEffect(() => {
+    return () => {
+      shouldListenRef.current = false;
+      try {
+        recognitionRef.current?.stop();
+      } catch {}
+      try {
+        mediaRecorderRef.current?.stop();
+      } catch {}
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
 
   useEffect(() => {
     if (isRecording) {
@@ -58,7 +78,10 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
   }, [isRecording]);
 
   const start = async (continuePrevious = true) => {
-    if (!isSupported) return;
+    // Sans ce garde-fou, cliquer sur "Reprendre" (ou le micro) alors qu'un
+    // enregistrement est déjà en cours démarrait une SECONDE reconnaissance en
+    // parallèle sans arrêter la première — micro fantôme et texte en double.
+    if (!isSupported || isRecording) return;
     try {
       setStatus("permission-request");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -116,22 +139,14 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
           }
         }
 
-        // build a formatted final display using breaks
-        // lazy-format here to include newlines and punctuation for the live "Prise vocale" field
-        try {
-          // import locally to avoid circulars; dynamic require-like import
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          const { buildFinalDisplay } = require("./formatTranscript");
-          const finalCombined = buildFinalDisplay(finalSegmentsRef.current, finalBreaksRef.current);
-          const display = (finalCombined + (interim.trim() ? " " + interim.trim() : "")).trim();
-          setTranscript(display);
-          onTranscriptChange?.({ final: finalCombined, interim });
-        } catch (e) {
-          const finalCombined = finalSegmentsRef.current.join(" ").trim();
-          const display = (finalCombined + (interim.trim() ? " " + interim.trim() : "")).trim();
-          setTranscript(display);
-          onTranscriptChange?.({ final: finalCombined, interim });
-        }
+        // Formatage (ponctuation/retours à la ligne) du texte final affiché en direct
+        // dans le champ "Prise vocale" — appelé à chaque résultat (plusieurs fois par
+        // seconde pendant la dictée), donc importé statiquement une seule fois plutôt
+        // que résolu dynamiquement à chaque événement.
+        const finalCombined = buildFinalDisplay(finalSegmentsRef.current, finalBreaksRef.current);
+        const display = (finalCombined + (interim.trim() ? " " + interim.trim() : "")).trim();
+        setTranscript(display);
+        onTranscriptChange?.({ final: finalCombined, interim });
 
         // emit only new final segments
         for (const seg of newFinals) {
@@ -139,15 +154,30 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
         }
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (event: any) => {
+        // "no-speech" (silence normal) et "aborted" sont fréquents et récupérables —
+        // onend s'en charge (redémarrage automatique), pas la peine d'afficher une
+        // erreur ni de couper la dictée pour ça.
+        if (event?.error === "no-speech" || event?.error === "aborted") return;
+        shouldListenRef.current = false;
         setStatus("error");
       };
 
       recognition.onend = () => {
-        // do not auto-append here; final segments already emitted in onresult
+        // Le moteur s'arrête parfois de lui-même même en mode continu (silence
+        // prolongé, limite navigateur) — on relance automatiquement tant que
+        // l'utilisateur n'a pas explicitement mis en pause/arrêté, pour que le micro
+        // ne semble pas "planté" alors qu'il a juste cessé d'écouter en silence.
+        if (shouldListenRef.current) {
+          try {
+            recognition.start();
+            return;
+          } catch {}
+        }
       };
 
       recognitionRef.current = recognition;
+      shouldListenRef.current = true;
       try {
         recognition.start();
       } catch (e) {
@@ -167,6 +197,7 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
 
   const pause = () => {
     if (!mediaRecorderRef.current || !recognitionRef.current) return;
+    shouldListenRef.current = false;
     try {
       mediaRecorderRef.current.pause?.();
     } catch {}
@@ -191,6 +222,7 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
   };
 
   const stop = () => {
+    shouldListenRef.current = false;
     try {
       recognitionRef.current?.stop();
     } catch {}
@@ -251,9 +283,32 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={restart} type="button" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">Recommencer</button>
-          <button onClick={() => start(true)} type="button" className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">Reprendre</button>
-          <button onClick={stop} type="button" className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">Arrêter</button>
+          <button
+            onClick={restart}
+            type="button"
+            title="Effacer le texte et repartir de zéro"
+            className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          >
+            Recommencer
+          </button>
+          <button
+            onClick={() => start(true)}
+            type="button"
+            disabled={isRecording}
+            title={isRecording ? "Déjà en cours d'enregistrement" : "Reprendre la dictée en gardant le texte déjà écrit"}
+            className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          >
+            Reprendre
+          </button>
+          <button
+            onClick={stop}
+            type="button"
+            disabled={!isRecording && !isPaused}
+            title={!isRecording && !isPaused ? "Rien à arrêter pour l'instant" : "Arrêter définitivement et libérer le micro"}
+            className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-50"
+          >
+            Arrêter
+          </button>
         </div>
       </div>
 
