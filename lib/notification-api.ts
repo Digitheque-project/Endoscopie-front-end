@@ -31,11 +31,18 @@ type NotificationListResponse = {
 };
 
 function normalizeNotification(raw: RawNotification): NotificationItem {
-  const payload = raw.payload as Record<string, unknown> | undefined;
+  // Le service notification renvoie le détail métier dans `data` (pas `payload`), et le
+  // texte lui-même dans `message` au niveau racine — `motif` n'existe qu'en repli, imbriqué
+  // dans `data.motif` pour les notifications émises par notre propre backend.
+  const payload = (raw.data ?? raw.payload) as Record<string, unknown> | undefined;
   return {
     id: (raw.id as string) ?? undefined,
     type: (raw.type as string) ?? undefined,
-    motif: (raw.motif as string) ?? undefined,
+    motif:
+      (raw.motif as string) ??
+      (payload?.motif as string) ??
+      (raw.message as string) ??
+      undefined,
     urgence: typeof raw.urgence === 'number' ? raw.urgence : undefined,
     status: (raw.statut as string) ?? (raw.status as string) ?? undefined,
     createdAt:

@@ -28,6 +28,11 @@ const TYPE_LABELS: Record<string, string> = {
 
 type DisplayNotification = {
   id: string;
+  // Id du service notification externe — le même événement peut nous arriver via la boîte
+  // locale (id = UUID généré chez nous) ET via l'appel direct de secours au service externe
+  // (id = celui du service externe) : dédupliquer sur ce champ, commun aux deux sources,
+  // plutôt que sur `id` évite d'afficher deux fois la même prescription (voir mergeNotifications).
+  externalId?: string;
   type: string;
   motif: string;
   emitterName?: string;
@@ -127,6 +132,8 @@ function formatTime(iso: string): string {
 function fromRemote(n: NotificationItem): DisplayNotification {
   return {
     id: n.id ?? `remote-${n.createdAt ?? Date.now()}`,
+    // Vient directement du service externe : son propre id EST l'externalId.
+    externalId: n.id,
     type: n.type ?? "Alerte",
     motif: n.motif ?? "—",
     emitterName: n.emitterName,
@@ -141,6 +148,7 @@ function fromRemote(n: NotificationItem): DisplayNotification {
 function fromInbox(n: InboxNotification): DisplayNotification {
   return {
     id: n.id,
+    externalId: n.externalId,
     type: n.type,
     motif: n.motif,
     emitterName: n.emitterName,
@@ -157,8 +165,11 @@ function mergeNotifications(
   local: DisplayNotification[],
 ): DisplayNotification[] {
   const byKey = new Map<string, DisplayNotification>();
+  // `local` en premier : en cas de doublon (même externalId), on garde la version de la
+  // boîte locale — motif toujours correctement rempli — plutôt que celle du secours direct
+  // au service externe, dont le mapping peut laisser motif vide (voir normalizeNotification).
   for (const n of [...local, ...remote]) {
-    const key = n.id;
+    const key = n.externalId ?? n.id;
     if (!byKey.has(key)) byKey.set(key, n);
   }
   return [...byKey.values()].sort(
@@ -224,8 +235,9 @@ export function NotificationBell() {
 
   const upsert = useCallback(
     (item: DisplayNotification) => {
-      if (seenIds.current.has(item.id)) return;
-      seenIds.current.add(item.id);
+      const key = item.externalId ?? item.id;
+      if (seenIds.current.has(key)) return;
+      seenIds.current.add(key);
       setItems((prev) => mergeNotifications([item], prev).slice(0, 50));
       showToast(item);
       playNotificationSound();
@@ -244,7 +256,7 @@ export function NotificationBell() {
         remote.map(fromRemote),
         inbox.map(fromInbox),
       );
-      merged.forEach((n) => seenIds.current.add(n.id));
+      merged.forEach((n) => seenIds.current.add(n.externalId ?? n.id));
       setItems(merged.slice(0, 50));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement");
