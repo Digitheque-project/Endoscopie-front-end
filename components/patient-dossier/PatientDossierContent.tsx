@@ -10,40 +10,6 @@ interface PatientDossierContentProps {
   prescriptionId: string;
 }
 
-/** Traduit le statut brut du dossier CPA en libellé + couleur clairs pour le personnel Endoscopie. */
-function cpaStatutDisplay(statut?: string | null): { label: string; className: string } {
-  switch (statut) {
-    case "CPA Favorable":
-      return { label: "CPA OK — Favorable", className: "text-success" };
-    case "CPA Défavorable":
-      return { label: "CPA refusée", className: "text-error" };
-    case "CPA Reportée":
-      return { label: "CPA en attente — Reportée", className: "text-amber-600" };
-    case "CPA demandée":
-      return { label: "CPA en attente du bloc", className: "text-amber-600" };
-    case "Brouillon":
-    case undefined:
-    case null:
-      return { label: "Non demandé", className: "text-on-surface-variant" };
-    default:
-      return { label: statut, className: "text-on-surface" };
-  }
-}
-
-/** Traduit la décision brute du bloc (APTE/INAPTE/REPORT) en libellé lisible. */
-function decisionCpaDisplay(decision?: string | null): { label: string; className: string } {
-  switch (decision) {
-    case "APTE":
-      return { label: "Apte — Favorable", className: "text-success" };
-    case "INAPTE":
-      return { label: "Inapte — Refusée", className: "text-error" };
-    case "REPORT":
-      return { label: "Reportée", className: "text-amber-600" };
-    default:
-      return { label: decision || "", className: "text-on-surface" };
-  }
-}
-
 /** Traduit la priorité brute en badge d'urgence — mêmes règles/couleurs que le Fil de prescription. */
 function getUrgenceBadge(priorite?: string | null): { label: string; icon: string; className: string } {
   const p = priorite?.trim().toUpperCase();
@@ -207,22 +173,6 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                 .filter(Boolean)
                 .join(" • ")}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {prescription.statut === "A planifier" ? (
-                <button
-                  type="button"
-                  onClick={handlePlanifier}
-                  title="Planifier le rendez-vous de cet examen"
-                  className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider hover:opacity-80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                >
-                  {prescription.statut}
-                </button>
-              ) : (
-                <span className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider">
-                  {prescription.statut}
-                </span>
-              )}
-            </div>
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
@@ -239,8 +189,8 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
 
           <div className="space-y-6 text-sm text-on-surface-variant overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
             <section>
-              <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Motif de la demande</h4>
-              <p>{prescription.motif || "Aucun motif renseigné."}</p>
+              <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Renseignements cliniques</h4>
+              <p>{prescription.motif || "Aucun renseignement clinique."}</p>
             </section>
 
             <section>
@@ -267,79 +217,9 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                 <p className="font-bold text-lg text-primary">{prescription.typeExamen}</p>
               )}
             </section>
-
-            <section>
-              <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Suivi du dossier</h4>
-              <ul className="space-y-1.5">
-                <li className="flex items-center justify-between">
-                  <span>Dossier CPA</span>
-                  <span className={`font-semibold ${cpaStatutDisplay(prescription.dossierCPA?.statut).className}`}>
-                    {cpaStatutDisplay(prescription.dossierCPA?.statut).label}
-                  </span>
-                </li>
-                {prescription.dossierCPA?.dateCpa && (
-                  <li className="flex items-center justify-between">
-                    <span>Rendez-vous CPA donné par le Bloc</span>
-                    <span className="font-semibold text-emerald-600">
-                      {new Date(prescription.dossierCPA.dateCpa).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                    </span>
-                  </li>
-                )}
-                {prescription.dossierCPA?.decisionCpa && (
-                  <li className="flex items-center justify-between">
-                    <span>Décision du Bloc</span>
-                    <span className={`font-semibold ${decisionCpaDisplay(prescription.dossierCPA.decisionCpa).className}`}>
-                      {decisionCpaDisplay(prescription.dossierCPA.decisionCpa).label}
-                    </span>
-                  </li>
-                )}
-                {prescription.dossierCPA?.dateVpa && (
-                  <li className="flex items-center justify-between">
-                    <span>Visite pré-anesthésique</span>
-                    <span className="font-semibold text-emerald-600">
-                      Réalisée le {new Date(prescription.dossierCPA.dateVpa).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                    </span>
-                  </li>
-                )}
-                <li className="flex items-center justify-between">
-                  <span>Checklist avant</span>
-                  <span className={`font-semibold ${prescription.checklistAvant?.estValide ? "text-emerald-600" : "text-on-surface"}`}>
-                    {prescription.checklistAvant ? (prescription.checklistAvant.estValide ? "Validée" : "En cours") : "Non démarrée"}
-                  </span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>Checklist après</span>
-                  <span className={`font-semibold ${prescription.checklistApres?.estValide ? "text-emerald-600" : "text-on-surface"}`}>
-                    {prescription.checklistApres ? (prescription.checklistApres.estValide ? "Validée" : "En cours") : "Non démarrée"}
-                  </span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>Résultat d&apos;examen</span>
-                  <span className={`font-semibold ${prescription.resultatEndoscopie ? "text-emerald-600" : "text-on-surface"}`}>
-                    {prescription.resultatEndoscopie ? "Disponible" : "En attente"}
-                  </span>
-                </li>
-                {prescription.rendezVous && (
-                  <>
-                    <li className="flex items-center justify-between">
-                      <span>Rendez-vous</span>
-                      <span className="font-semibold text-on-surface">
-                        {new Date(prescription.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
-                      </span>
-                    </li>
-                    <li className="flex items-center justify-between">
-                      <span>Anesthésie</span>
-                      <span className={`font-semibold ${prescription.rendezVous.typeAnesthesie ? "text-emerald-600" : "text-on-surface"}`}>
-                        {prescription.rendezVous.typeAnesthesie || "En attente de décision"}
-                      </span>
-                    </li>
-                  </>
-                )}
-              </ul>
-            </section>
           </div>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-3 flex flex-col">
           <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Équipe</p>
           <p className="text-lg font-bold">{prescripteur}</p>
           <p className="text-sm text-on-surface-variant">Médecin prescripteur</p>
@@ -349,6 +229,22 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
               <p className="text-sm text-on-surface-variant">Anesthésiste référent</p>
             </>
           )}
+          <div className="flex justify-end mt-auto pt-2">
+            {prescription.statut === "A planifier" ? (
+              <button
+                type="button"
+                onClick={handlePlanifier}
+                title="Planifier le rendez-vous de cet examen"
+                className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider hover:opacity-80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                {prescription.statut}
+              </button>
+            ) : (
+              <span className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider">
+                {prescription.statut}
+              </span>
+            )}
+          </div>
         </div>
       </section>
     </>
