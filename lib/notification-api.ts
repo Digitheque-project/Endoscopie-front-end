@@ -59,8 +59,12 @@ function normalizeNotification(raw: RawNotification): NotificationItem {
       (payload?.sourceServiceId as string) ??
       (raw.emitter as string) ??
       ENDOSCOPIE_SERVICE_ID,
-    entiteRefType: (raw.entiteRefType as string) ?? undefined,
-    entiteRefId: (raw.entiteRefId as string) ?? undefined,
+    // Même repli que motif ci-dessus : ces deux champs sont nichés dans `data` pour les
+    // notifications émises par notre propre backend (voir NotificationService.createNotification),
+    // jamais à la racine — sans ce repli, le clic sur la notification n'avait aucun effet
+    // (silencieux : les conditions de navigation ne correspondaient jamais).
+    entiteRefType: (raw.entiteRefType as string) ?? (payload?.entiteRefType as string) ?? undefined,
+    entiteRefId: (raw.entiteRefId as string) ?? (payload?.entiteRefId as string) ?? undefined,
   };
 }
 
