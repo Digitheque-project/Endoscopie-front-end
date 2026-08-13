@@ -49,6 +49,41 @@ function typeLabel(type: string): string {
 
 const CPA_BLOC_TYPES = new Set(["CPA_RESULTAT", "VPA_REALISEE"]);
 
+// Répartition des notifications par rôle : le major n'est notifié que de l'arrivée de
+// nouvelles prescriptions ; le médecin, du passage "prêt pour décision" (RDV planifié
+// par le major) et des réponses du Bloc Opératoire (CPA/VPA).
+const ROLE_VISIBLE_TYPES: Record<string, Set<string>> = {
+  MAJOR: new Set(["DEMANDE_EXAMEN"]),
+  MEDECIN: new Set(["RENDEZ_VOUS", "CPA_RESULTAT", "VPA_REALISEE"]),
+};
+
+/**
+ * Un type explicitement assigné à un rôle (ci-dessus) est masqué pour les autres rôles.
+ * Un type non couvert par cette répartition (ex. futur type ajouté sans mettre ce mapping
+ * à jour) reste visible par défaut plutôt que d'être silencieusement caché.
+ */
+function isVisibleForRole(type: string, role: string | null | undefined): boolean {
+  const allowed = role ? ROLE_VISIBLE_TYPES[role] : undefined;
+  if (!allowed) return true;
+  const assignedElsewhere = Object.entries(ROLE_VISIBLE_TYPES).some(
+    ([r, types]) => r !== role && types.has(type),
+  );
+  return assignedElsewhere ? allowed.has(type) : true;
+}
+
+// Origine de la notification, affichée pour le médecin afin de distinguer un événement
+// interne (le major vient de planifier un RDV dans notre propre app) d'une réponse reçue
+// d'un service externe (le Bloc Opératoire, pour la CPA/VPA).
+const TYPE_ORIGIN: Record<string, "interne" | "externe"> = {
+  RENDEZ_VOUS: "interne",
+  CPA_RESULTAT: "externe",
+  VPA_REALISEE: "externe",
+};
+
+function typeOrigin(type: string): "interne" | "externe" | null {
+  return TYPE_ORIGIN[type] ?? null;
+}
+
 /**
  * Fond distinct selon la provenance/nature de la notification, pour repérer
  * d'un coup d'œil une nouvelle demande d'examen (autre service) d'un résultat
@@ -235,6 +270,7 @@ export function NotificationBell() {
 
   const upsert = useCallback(
     (item: DisplayNotification) => {
+      if (!isVisibleForRole(item.type, role)) return;
       const key = item.externalId ?? item.id;
       if (seenIds.current.has(key)) return;
       seenIds.current.add(key);
@@ -242,7 +278,7 @@ export function NotificationBell() {
       showToast(item);
       playNotificationSound();
     },
-    [showToast],
+    [showToast, role],
   );
 
   const refresh = useCallback(async () => {
@@ -255,13 +291,13 @@ export function NotificationBell() {
       const merged = mergeNotifications(
         remote.map(fromRemote),
         inbox.map(fromInbox),
-      );
+      ).filter((n) => isVisibleForRole(n.type, role));
       merged.forEach((n) => seenIds.current.add(n.externalId ?? n.id));
       setItems(merged.slice(0, 50));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     }
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     refresh();
@@ -284,16 +320,7 @@ export function NotificationBell() {
   const visibleItems = showRead ? readItems : unreadItems;
 
   const handleOpenItem = async (item: DisplayNotification) => {
-    // Le médecin voit les notifications de nouvelles prescriptions pour surveiller le
-    // travail du major, mais leur gestion ne le concerne pas — son clic ne doit ni
-    // naviguer, ni marquer la notification comme lue (sans quoi elle disparaîtrait de
-    // sa liste avant même que le major ait traité la prescription, lui faisant perdre
-    // le fil de la surveillance). Seule l'action du major (voir markRead côté backend)
-    // la fait disparaître pour lui aussi.
-    const isMedecinPrescriptionNotif =
-      role === "MEDECIN" && item.entiteRefType?.toLowerCase() === "prescription";
-
-    if (!item.readAt && !isMedecinPrescriptionNotif) {
+    if (!item.readAt) {
       if (item.isLocal) {
         await markInboxNotificationRead(item.id).catch(() => undefined);
       }
@@ -305,9 +332,8 @@ export function NotificationBell() {
     }
     setOpen(false);
 
-    if (isMedecinPrescriptionNotif) return;
-
-    // La notification référence une prescription (ex. nouvelle demande) : on ouvre
+    // La notification référence une prescription (ex. nouvelle demande, RDV planifié) :
+    // on ouvre
     // directement son détail. Le bouton "Retour" du dossier patient ramène toujours
     // vers le fil de prescription, peu importe la page depuis laquelle la cloche a
     // été ouverte.
@@ -455,6 +481,17 @@ export function NotificationBell() {
                         </span>
                       )}
                       {typeLabel(n.type)}
+                      {typeOrigin(n.type) && (
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                            typeOrigin(n.type) === "externe"
+                              ? "bg-violet-100 text-violet-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {typeOrigin(n.type)}
+                        </span>
+                      )}
                     </p>
                     <span className="text-[10px] text-slate-400 shrink-0">
                       {formatTime(n.receivedAt)}
