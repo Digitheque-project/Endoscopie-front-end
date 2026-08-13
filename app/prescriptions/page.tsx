@@ -755,15 +755,15 @@ function PrescriptionsContent() {
           </PageToolbar>
 
           {role === "MEDECIN" && (
-            <div className="flex gap-2 border-b border-outline-variant/10">
+            <div className="flex flex-wrap gap-2.5">
               {MEDECIN_TABS.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setMedecinTab(tab.key)}
-                  className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
+                  className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
                     medecinTab === tab.key
-                      ? "border-primary text-primary"
-                      : "border-transparent text-on-surface-variant hover:text-on-surface"
+                      ? "bg-primary text-white shadow-md"
+                      : "bg-surface-container text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high hover:text-on-surface"
                   }`}
                 >
                   {tab.label}
