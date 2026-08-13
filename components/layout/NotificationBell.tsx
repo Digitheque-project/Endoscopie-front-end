@@ -379,7 +379,12 @@ export function NotificationBell() {
       {toast && (
         <div
           role="alert"
-          className={`fixed top-20 right-4 sm:right-6 z-[60] w-[calc(100vw-2rem)] max-w-80 rounded-xl border border-primary/30 shadow-2xl p-4 animate-in fade-in slide-in-from-top-2 ${getNotificationBgClass(toast.type)} ${getNotificationBorderClass(toast.type)}`}
+          onClick={() => {
+            if (toastTimer.current) clearTimeout(toastTimer.current);
+            setToast(null);
+            handleOpenItem(toast);
+          }}
+          className={`fixed top-20 right-4 sm:right-6 z-[60] w-[calc(100vw-2rem)] max-w-80 rounded-xl border border-primary/30 shadow-2xl p-4 cursor-pointer hover:brightness-95 transition-[filter] animate-in fade-in slide-in-from-top-2 ${getNotificationBgClass(toast.type)} ${getNotificationBorderClass(toast.type)}`}
         >
           <div className="flex items-start gap-3">
             <span className={`material-symbols-outlined text-xl ${getNotificationIconClass(toast.type)}`}>
@@ -397,7 +402,11 @@ export function NotificationBell() {
             </div>
             <button
               type="button"
-              onClick={() => setToast(null)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (toastTimer.current) clearTimeout(toastTimer.current);
+                setToast(null);
+              }}
               className="text-slate-400 hover:text-slate-600"
               aria-label="Fermer"
             >
