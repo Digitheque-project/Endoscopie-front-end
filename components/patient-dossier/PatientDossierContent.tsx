@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 interface PatientDossierContentProps {
   prescriptionId: string;
@@ -151,6 +152,15 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
     if (prescripteur) params.set("prescriber", prescripteur);
     if (prescription.priorite) params.set("priority", String(prescription.priorite));
     params.set("from", "patient-dossier");
+    // Prescription multi-examens : sans groupExams, /planification-examens n'affiche pas
+    // l'interface "X/Y planifiés" du Fil de prescription — même transmission qu'à partir
+    // de là (voir handlePlanifier dans app/prescriptions/page.tsx) pour un rendu identique.
+    if (examensGroupe.length > 1) {
+      params.set(
+        "groupExams",
+        JSON.stringify(examensGroupe.map((ex) => ({ id: ex.id, procedure: ex.typeExamen, status: ex.statut }))),
+      );
+    }
 
     router.push(`/planification-examens?${params.toString()}`);
   };
@@ -201,7 +211,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                     const confirme = exam.statut === "Confirmé";
                     return (
                       <li key={exam.id} className="flex items-center justify-between gap-3">
-                        <span className="font-bold text-lg text-primary">• {exam.typeExamen}</span>
+                        <span className="font-bold text-lg text-primary">• {capitalizeFirst(exam.typeExamen)}</span>
                         <span
                           className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${
                             confirme ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
@@ -214,7 +224,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                   })}
                 </ul>
               ) : (
-                <p className="font-bold text-lg text-primary">{prescription.typeExamen}</p>
+                <p className="font-bold text-lg text-primary">{capitalizeFirst(prescription.typeExamen)}</p>
               )}
             </section>
           </div>
@@ -223,6 +233,12 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
           <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Équipe</p>
           <p className="text-lg font-bold">{prescripteur}</p>
           <p className="text-sm text-on-surface-variant">Médecin prescripteur</p>
+          {prescription.serviceSourceName && (
+            <>
+              <p className="text-lg font-bold mt-3">{prescription.serviceSourceName}</p>
+              <p className="text-sm text-on-surface-variant">Service prescripteur</p>
+            </>
+          )}
           {anesthesiste && (
             <>
               <p className="text-lg font-bold mt-3">{anesthesiste}</p>
@@ -235,9 +251,9 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
                 type="button"
                 onClick={handlePlanifier}
                 title="Planifier le rendez-vous de cet examen"
-                className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider hover:opacity-80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="px-3 py-1 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
-                {prescription.statut}
+                Planifier
               </button>
             ) : (
               <span className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider">

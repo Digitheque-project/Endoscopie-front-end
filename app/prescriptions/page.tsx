@@ -434,14 +434,20 @@ function PrescriptionsContent() {
     <div className="flex flex-wrap items-center gap-2 whitespace-nowrap">
       {role === "MEDECIN" ? (
         medecinRowState(req) === "a-decider" ? (
-          // Pas de bouton "Détails" ici : la page "Décider" affiche déjà le détail complet
-          // de la prescription (motif, examen demandé), inutile de dupliquer la navigation.
-          <button
-            onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}?tab=${medecinTab}`)}
-            className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
-          >
-            Décider
-          </button>
+          <>
+            <button
+              onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}?tab=${medecinTab}`)}
+              className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+            >
+              Décider
+            </button>
+            <button
+              onClick={() => handleDetail(req.id)}
+              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            >
+              Détails
+            </button>
+          </>
         ) : medecinRowState(req) === "pret" ? (
           <>
             <TreatButton
