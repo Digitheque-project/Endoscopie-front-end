@@ -81,8 +81,6 @@ function PlanificationContent() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [chainMessage, setChainMessage] = useState<string | null>(null);
 
-  const patientReal = prescriptionData?.patient || null;
-
   const getTodayLocal = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -265,12 +263,19 @@ function PlanificationContent() {
   }, [prescriptionData]);
 
   const prescriberLabel = useMemo(() => {
+    // Priorité au médecin résolu par le détail de la prescription (medecinPrescripteur,
+    // via le service utilisateurs central — fiable même quand le prescripteur appartient
+    // à un autre service que Endoscopie, donc absent de /api/medecins ci-dessous).
+    const fromPrescription = prescriptionData?.medecinPrescripteur;
+    if (fromPrescription) {
+      return `Dr. ${fromPrescription.prenom} ${fromPrescription.nom}`;
+    }
     if (medecinInfo) {
       return `Dr. ${medecinInfo.prenom} ${medecinInfo.nom}`;
     }
 
-    return searchParams.get("prescriber") || patientContext.prescriber || "Dr. Antoine Moreau";
-  }, [medecinInfo, searchParams, patientContext.prescriber]);
+    return searchParams.get("prescriber") || patientContext.prescriber || "Non renseigné";
+  }, [prescriptionData, medecinInfo, searchParams, patientContext.prescriber]);
 
   // Sélection par id (pas par nom) : plusieurs salles peuvent partager le même nom
   // affiché (ex. "Salle 01" et "Salle 02" ont toutes deux nom="Salle"), seul l'id
@@ -590,16 +595,6 @@ function PlanificationContent() {
                 {priorityIndicator.label}
               </div>
             </div>
-            <div className="mt-4 flex gap-12">
-              <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Poids</p>
-                <p className="text-sm font-bold">{patientReal?.poids ? `${patientReal.poids} kg` : "Non renseigné"}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Groupe sanguin</p>
-                <p className="text-sm font-bold">{patientReal?.groupeSanguin || "Non renseigné"}</p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -607,11 +602,13 @@ function PlanificationContent() {
           <div>
             <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">MÉDECIN PRESCRIPTEUR</p>
             <p className="font-headline font-bold text-on-secondary-fixed text-lg">
-              {isMedecinLoading ? "Chargement..." : medecinError ? "Service indisponible" : prescriberLabel}
+              {isMedecinLoading && !prescriptionData ? "Chargement..." : prescriberLabel}
             </p>
-            <p className="text-xs text-on-secondary-fixed-variant font-medium">
-              {medecinInfo?.specialite || "Service de Gastro-entérologie"}
-            </p>
+            {prescriptionData?.serviceSourceName && (
+              <p className="text-xs text-on-secondary-fixed-variant font-medium">
+                {prescriptionData.serviceSourceName}
+              </p>
+            )}
           </div>
             <div className="mt-4">
             <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">EXAMEN DEMANDÉ</p>
@@ -709,61 +706,61 @@ function PlanificationContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-8">
-              <div className="space-y-2 rounded-3xl border border-outline-variant/20 border-l-4 border-l-violet-300 bg-surface-container-low p-6 shadow-sm">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="material-symbols-outlined text-primary">meeting_room</span>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Salle</p>
-                    <p className="text-sm font-semibold text-on-surface">Sélectionnez la salle d&apos;opération</p>
-                  </div>
-                </div>
-                {(() => {
-                  const sallesDisponibles = salles.filter((s: any) => s.estActive !== false);
-                  if (sallesDisponibles.length === 0) {
-                    return (
-                      <p className="text-xs font-semibold text-on-surface-variant px-1 py-2">
-                        {salles.length === 0 ? "Chargement des salles…" : "Aucune salle disponible actuellement."}
-                      </p>
-                    );
-                  }
-                  return (
-                    <div role="group" aria-label="Salles disponibles" className="flex flex-wrap gap-2">
-                      {sallesDisponibles.map((s: any) => {
-                        const isSelected = selectedSalleId === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => setSelectedSalleId(s.id)}
-                            aria-pressed={isSelected}
-                            className={`px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all flex items-center gap-2 ${
-                              isSelected
-                                ? "border-primary bg-primary text-white shadow-md"
-                                : slotError
-                                ? "border-error/30 bg-surface-container-low text-on-surface hover:border-primary/50"
-                                : "border-outline-variant bg-surface-container-low text-on-surface hover:border-primary/50"
-                            }`}
-                          >
-                            <span className={`material-symbols-outlined text-[16px] ${isSelected ? "" : "text-primary"}`}>meeting_room</span>
-                            {s.nom} ({s.numero})
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-                {isCheckingSlot && !slotError && (
-                  <p className="text-[10px] font-semibold text-on-surface-variant px-1 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
-                    Vérification de la disponibilité du créneau…
-                  </p>
-                )}
-              </div>
-            </div>
-
             <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-6">
+              {/* Salle / Date / Heure côte à côte — évite de faire défiler pour planifier un
+                  créneau, les trois informations tiennent dans le même champ de vision. */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                <div className="space-y-2 rounded-3xl border border-outline-variant/20 border-l-4 border-l-violet-300 bg-surface-container-low p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="material-symbols-outlined text-primary">meeting_room</span>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Salle</p>
+                      <p className="text-sm font-semibold text-on-surface">Sélectionnez la salle d&apos;opération</p>
+                    </div>
+                  </div>
+                  {(() => {
+                    const sallesDisponibles = salles.filter((s: any) => s.estActive !== false);
+                    if (sallesDisponibles.length === 0) {
+                      return (
+                        <p className="text-xs font-semibold text-on-surface-variant px-1 py-2">
+                          {salles.length === 0 ? "Chargement des salles…" : "Aucune salle disponible actuellement."}
+                        </p>
+                      );
+                    }
+                    return (
+                      <div role="group" aria-label="Salles disponibles" className="flex flex-wrap gap-2">
+                        {sallesDisponibles.map((s: any) => {
+                          const isSelected = selectedSalleId === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => setSelectedSalleId(s.id)}
+                              aria-pressed={isSelected}
+                              className={`px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all flex items-center gap-2 ${
+                                isSelected
+                                  ? "border-primary bg-primary text-white shadow-md"
+                                  : slotError
+                                  ? "border-error/30 bg-surface-container-low text-on-surface hover:border-primary/50"
+                                  : "border-outline-variant bg-surface-container-low text-on-surface hover:border-primary/50"
+                              }`}
+                            >
+                              <span className={`material-symbols-outlined text-[16px] ${isSelected ? "" : "text-primary"}`}>meeting_room</span>
+                              {s.nom} ({s.numero})
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                  {isCheckingSlot && !slotError && (
+                    <p className="text-[10px] font-semibold text-on-surface-variant px-1 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span>
+                      Vérification de la disponibilité du créneau…
+                    </p>
+                  )}
+                </div>
+
                 <div className="rounded-3xl border border-outline-variant/20 border-l-4 border-l-blue-300 bg-surface-container-low p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="material-symbols-outlined text-primary">calendar_month</span>
@@ -772,50 +769,71 @@ function PlanificationContent() {
                       <p className="text-sm font-semibold text-on-surface">Sélectionnez la journée de l'examen</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Date</label>
-                      <input
-                        type="date"
-                        value={date}
-                        min={getTodayLocal()}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full appearance-none bg-white border border-outline-variant/50 px-4 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Date</label>
+                    <input
+                      type="date"
+                      value={date}
+                      min={getTodayLocal()}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full appearance-none bg-white border border-outline-variant/50 px-4 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    />
                   </div>
                 </div>
 
                 <div className="rounded-3xl border border-outline-variant/20 border-l-4 border-l-amber-300 bg-surface-container-low p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="material-symbols-outlined text-primary">schedule</span>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Heures</p>
-                      <p className="text-sm font-semibold text-on-surface">Définissez l'heure de début et de fin de l'examen</p>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-primary">schedule</span>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">Heures</p>
+                        <p className="text-sm font-semibold text-on-surface">Début et fin de l'examen</p>
+                      </div>
                     </div>
+                    {/* Plutôt qu'un calendrier miniature dupliqué ici, on renvoie vers l'agenda
+                        réel (mêmes RDV, mêmes filtres) — avec un retour direct vers ce
+                        formulaire pour ne pas perdre la saisie en cours. */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const backTo = `/planification-examens?${searchParams.toString()}`;
+                        const params = new URLSearchParams({
+                          backTo,
+                          backLabel: "Retour à la planification",
+                        });
+                        router.push(`/agenda-rendez-vous?${params.toString()}`);
+                      }}
+                      title="Voir l'agenda pour repérer un créneau libre"
+                      className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">calendar_month</span>
+                      Voir l&apos;agenda
+                    </button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Heure de début</label>
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Début</label>
                       <input
                         type="time"
                         value={heureDebut}
                         onChange={(e) => setHeureDebut(e.target.value)}
-                        className="w-full appearance-none bg-white border border-outline-variant/50 px-4 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full appearance-none bg-white border border-outline-variant/50 px-3 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Heure de fin</label>
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Fin</label>
                       <input
                         type="time"
                         value={heureFin}
                         onChange={(e) => setHeureFin(e.target.value)}
-                        className={`w-full appearance-none bg-white border ${dateError ? 'border-error' : 'border-outline-variant/50'} px-4 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10`}
+                        className={`w-full appearance-none bg-white border ${dateError ? 'border-error' : 'border-outline-variant/50'} px-3 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10`}
                       />
                     </div>
                   </div>
                 </div>
+              </div>
 
+              <div>
                 {dateError && (
                   <div className="flex items-start gap-2 rounded-xl border border-error/30 bg-error-container/20 px-3 py-2.5 text-error animate-in fade-in duration-150">
                     <span className="material-symbols-outlined text-[18px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>

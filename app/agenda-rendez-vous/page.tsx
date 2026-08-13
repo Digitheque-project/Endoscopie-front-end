@@ -3,8 +3,8 @@
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiJson, deleteRendezVous } from "@/lib/api";
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { JCalendar } from "@/components/ui/JCalendar";
 import { useRendezVousSync } from "@/lib/hooks/useRendezVousSync";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,8 +34,14 @@ interface Appointment {
 
 const EXCLUDED_RDV_STATUTS = new Set(["Annulé", "Terminé"]);
 
-export default function AgendaPage() {
+function AgendaContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Présent quand on arrive depuis "Voir l'agenda" au milieu d'une planification en
+  // cours (voir planification-examens/page.tsx) — permet d'y revenir sans perdre la
+  // saisie déjà faite, plutôt que de repartir du Fil de prescription.
+  const backTo = searchParams.get("backTo");
+  const backLabel = searchParams.get("backLabel") || "Retour";
   const { role } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [viewMode, setViewMode] = useState<"day" | "week" | "month">("day");
@@ -218,6 +224,15 @@ export default function AgendaPage() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
+        {backTo && (
+          <a
+            href={backTo}
+            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
+          >
+            <span className="material-symbols-outlined text-lg">arrow_back</span>
+            <span className="font-semibold">{backLabel}</span>
+          </a>
+        )}
         <PageToolbar
           actions={
           <div className="flex items-center gap-3 flex-wrap">
@@ -537,5 +552,13 @@ export default function AgendaPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function AgendaPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+      <AgendaContent />
+    </Suspense>
   );
 }
