@@ -728,7 +728,11 @@ function PlanificationContent() {
                       );
                     }
                     return (
-                      <div role="group" aria-label="Salles disponibles" className="flex flex-wrap gap-2">
+                      // Grille à 2 colonnes fixes (pas flex-wrap, dont le passage à la
+                      // ligne dépend de l'espace dispo) : "Salle (01)" et "Salle (02)"
+                      // restent toujours côte à côte, quelle que soit la largeur de la
+                      // colonne (voir la mise en page Salle/Date/Heure à 3 colonnes).
+                      <div role="group" aria-label="Salles disponibles" className="grid grid-cols-2 gap-2">
                         {sallesDisponibles.map((s: any) => {
                           const isSelected = selectedSalleId === s.id;
                           return (
@@ -737,7 +741,7 @@ function PlanificationContent() {
                               type="button"
                               onClick={() => setSelectedSalleId(s.id)}
                               aria-pressed={isSelected}
-                              className={`px-4 py-2.5 rounded-xl border-2 text-sm font-bold transition-all flex items-center gap-2 ${
+                              className={`px-3 py-2.5 rounded-xl border-2 text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
                                 isSelected
                                   ? "border-primary bg-primary text-white shadow-md"
                                   : slotError
@@ -745,8 +749,8 @@ function PlanificationContent() {
                                   : "border-outline-variant bg-surface-container-low text-on-surface hover:border-primary/50"
                               }`}
                             >
-                              <span className={`material-symbols-outlined text-[16px] ${isSelected ? "" : "text-primary"}`}>meeting_room</span>
-                              {s.nom} ({s.numero})
+                              <span className={`material-symbols-outlined text-[16px] shrink-0 ${isSelected ? "" : "text-primary"}`}>meeting_room</span>
+                              <span className="truncate">{s.nom} ({s.numero})</span>
                             </button>
                           );
                         })}
