@@ -81,18 +81,21 @@ function PrescriptionPostActeContent() {
       <div className={PAGE_CONTENT_CLASS}>
         <div className="space-y-5 pb-24">
           <section className="overflow-hidden rounded-3xl border border-white/70 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-            <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-sky-700 px-6 py-8 text-white lg:px-8 flex flex-col items-center text-center gap-3">
+            <div className="bg-gradient-to-r from-blue-950 via-blue-900 to-sky-700 px-6 py-8 text-white lg:px-8 space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white/90">
                 <span className="material-symbols-outlined text-[18px]">history_edu</span>
                 Prescription Post-Acte
               </div>
-              <p className="font-headline text-lg font-semibold text-white/80">{patientName}</p>
-              {/* Même style que le titre de procédure dans l'opération (grand, majuscules,
-                  couleur par type d'examen) — cohérence entre les deux interfaces. */}
+              <p className="font-headline text-2xl font-extrabold tracking-tight">{patientName}</p>
+              {/* Seule la procédure est centrée — pas le nom du patient ni le bandeau
+                  au-dessus. Même style que le titre de procédure dans l'opération (grand,
+                  majuscules, couleur par type d'examen) — cohérence entre les deux interfaces. */}
               {procedure && (
-                <p className={`inline-flex items-center rounded-2xl px-4 py-2 text-2xl lg:text-3xl font-black uppercase tracking-wide ${getExamTypeBadgeClass(procedure)}`}>
-                  {procedure}
-                </p>
+                <div className="flex justify-center">
+                  <p className={`inline-flex items-center rounded-2xl px-4 py-2 text-2xl lg:text-3xl font-black uppercase tracking-wide ${getExamTypeBadgeClass(procedure)}`}>
+                    {procedure}
+                  </p>
+                </div>
               )}
             </div>
           </section>
