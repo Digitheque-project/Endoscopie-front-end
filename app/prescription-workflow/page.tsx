@@ -13,6 +13,7 @@ import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
 import { fetchSessionSiblings, nextExamWithoutOperation, type SessionInfo } from "@/lib/exam-session";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 
 function PrescriptionWorkflowContent() {
@@ -304,27 +305,31 @@ const lastSavedTranscriptionRef = useRef("");
                       // d'examen en cours de dictée, sans attendre "Examen suivant" en pied de page.
                       <div className="flex flex-wrap items-center gap-2">
                         {session.exams.map((exam) => (
+                          // Même couleur par type d'examen que partout ailleurs (Fil de
+                          // prescription, badges de procédure...) — l'anneau blanc marque
+                          // seulement lequel est actif, la couleur elle-même ne change pas.
                           <label
                             key={exam.id}
-                            className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              exam.id === prescriptionId
-                                ? "border-white bg-white/15 text-white"
-                                : "border-white/30 text-white/80 hover:bg-white/10"
+                            className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${getExamTypeBadgeClass(exam.typeExamen)} ${
+                              exam.id === prescriptionId ? "ring-2 ring-white shadow-md" : "opacity-70 hover:opacity-100"
                             }`}
                           >
                             <input
                               type="checkbox"
                               checked={exam.id === prescriptionId}
                               onChange={() => handleSwitchExam(exam)}
-                              className="h-3.5 w-3.5 rounded border-white/50 accent-white"
+                              className="h-3.5 w-3.5 rounded"
                             />
                             {exam.typeExamen}
                           </label>
                         ))}
                       </div>
                     ) : (
-                      <p className="max-w-2xl text-sm leading-6 text-blue-50/90 lg:text-base">
-                        Procédure : <span className="font-semibold text-white">{procedure || "Non renseignée"}</span>
+                      <p className="flex flex-wrap items-center gap-2 text-sm leading-6 text-blue-50/90 lg:text-base">
+                        Procédure :
+                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${getExamTypeBadgeClass(procedure || "")}`}>
+                          {procedure || "Non renseignée"}
+                        </span>
                       </p>
                     )}
                   </div>
