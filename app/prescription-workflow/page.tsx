@@ -24,9 +24,10 @@ function PrescriptionWorkflowContent() {
   const [transcriptText, setTranscriptText] = useState("");
   const [savedMedicalNotes, setSavedMedicalNotes] = useState<SavedTranscriptionEntry[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  // Chargée/renvoyée telle quelle (édition déplacée vers /prescription-post-acte) — juste
+  // pour ne pas l'écraser à null quand cette page enregistre le reste (saveOperation
+  // envoie systématiquement tous les champs, jamais une fusion partielle côté backend).
   const [prescriptionPostActe, setPrescriptionPostActe] = useState("");
-  const [showPostActeModal, setShowPostActeModal] = useState(false);
-  const [draftPostActe, setDraftPostActe] = useState("");
   const [organIndex, setOrganIndex] = useState(0);
 const lastSavedTranscriptionRef = useRef("");
   const controlsRef = useRef<{ start: () => void; stop: () => void; restart: () => void; pause: () => void; resume: () => void } | null>(null);
@@ -56,12 +57,15 @@ const lastSavedTranscriptionRef = useRef("");
 
   // Écrit automatiquement le nom de l'organe directement dans le champ "Observation
   // durant l'examen" dès que c'est son tour — le médecin n'a plus qu'à dicter
-  // l'observation pour compléter la ligne (voir handleFinalTranscript).
+  // l'observation pour compléter la ligne (voir handleFinalTranscript). `includes`
+  // (pas seulement `endsWith`) : en recliquant sur un organe déjà décrit (jumpToOrgan),
+  // son libellé figure déjà plus haut dans le texte — on ne le réécrit pas une seconde
+  // fois en redondance, le curseur "revient" simplement sur cet organe.
   useEffect(() => {
     if (!currentOrgan) return;
     const label = `${currentOrgan.label} : `;
     setTranscriptText((cur) => {
-      if (cur.endsWith(label)) return cur;
+      if (cur.includes(label)) return cur;
       if (!cur.trim()) return label;
       const withPunctuation = ensureEndsWithPunctuation(cur.replace(/\s+$/, ''));
       return `${withPunctuation}\n${label}`;
@@ -325,11 +329,8 @@ const lastSavedTranscriptionRef = useRef("");
                         ))}
                       </div>
                     ) : (
-                      <p className="flex flex-wrap items-center gap-2 text-sm leading-6 text-blue-50/90 lg:text-base">
-                        Procédure :
-                        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${getExamTypeBadgeClass(procedure || "")}`}>
-                          {procedure || "Non renseignée"}
-                        </span>
+                      <p className={`inline-flex items-center rounded-2xl px-4 py-2 text-2xl lg:text-3xl font-black uppercase tracking-wide ${getExamTypeBadgeClass(procedure || "")}`}>
+                        {procedure || "Non renseignée"}
                       </p>
                     )}
                   </div>
@@ -419,121 +420,38 @@ const lastSavedTranscriptionRef = useRef("");
             </div>
           </section>
 
-          {/* Prescriptions Post-Acte à côté des Notes complémentaires (au lieu d'en dessous,
-              pleine largeur) — évite un long défilement pour y accéder. */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-            <section className="lg:col-span-2 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
-              <div className="mb-6">
-                <VoiceRecorder hideTextArea statusIdleText="Notes complémentaires" onFinalTranscript={handleNotesFinalTranscript} />
-              </div>
-
-              <textarea
-                className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                placeholder=""
-                rows={8}
-                onChange={(event) => setMedicalNotes(event.target.value)}
-                value={medicalNotes}
-              />
-
-              <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setMedicalNotes("")}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
-                >
-                  Effacer la note
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveTranscription(medicalNotes)}
-                  className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
-                >
-                  Enregistrer la note
-                </button>
-              </div>
-            </section>
-
-            <section
-              onClick={() => {
-                setDraftPostActe(prescriptionPostActe);
-                setShowPostActeModal(true);
-              }}
-              className="cursor-pointer rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6 flex flex-col items-start gap-4 transition-all hover:border-blue-300 hover:shadow-md"
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                  <span className="material-symbols-outlined text-2xl">history_edu</span>
-                </div>
-                <div>
-                  <h3 className="font-headline text-base text-slate-900">Prescriptions Post-Acte</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Saisie et vérification des prescriptions médicales pour la phase de réveil.</p>
-                </div>
-              </div>
-              {prescriptionPostActe.trim() ? (
-                <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shrink-0">
-                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                  Rédigée
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500 shrink-0">
-                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                  À rédiger
-                </span>
-              )}
-            </section>
-          </div>
-        </div>
-      </div>
-
-      {showPostActeModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setShowPostActeModal(false)}
-        >
-          <div
-            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                <span className="material-symbols-outlined text-2xl">history_edu</span>
-              </div>
-              <div>
-                <h3 className="font-headline text-lg font-bold text-slate-900">Prescriptions Post-Acte</h3>
-                <p className="text-xs text-slate-500">Phase de réveil — rédigez la prescription du patient.</p>
-              </div>
+          <section className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
+            <div className="mb-6">
+              <VoiceRecorder hideTextArea statusIdleText="Notes complémentaires" onFinalTranscript={handleNotesFinalTranscript} />
             </div>
+
             <textarea
-              autoFocus
-              value={draftPostActe}
-              onChange={(event) => setDraftPostActe(event.target.value)}
+              className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              placeholder=""
               rows={8}
-              placeholder="Ex : Paracétamol 1g si douleur, surveillance constantes 2h, reprise alimentation à 4h..."
-              className="min-h-48 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              onChange={(event) => setMedicalNotes(event.target.value)}
+              value={medicalNotes}
             />
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+
+            <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
               <button
                 type="button"
-                onClick={() => setShowPostActeModal(false)}
+                onClick={() => setMedicalNotes("")}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
               >
-                Annuler
+                Effacer la note
               </button>
               <button
                 type="button"
-                onClick={async () => {
-                  setPrescriptionPostActe(draftPostActe);
-                  setShowPostActeModal(false);
-                  await saveOperation(draftPostActe);
-                }}
-                className="rounded-xl bg-gradient-to-r from-[#00478D] to-[#005EB8] px-5 py-2 text-sm font-semibold text-white hover:opacity-90 transition-colors"
+                onClick={() => handleSaveTranscription(medicalNotes)}
+                className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
               >
-                Enregistrer
+                Enregistrer la note
               </button>
             </div>
-          </div>
+          </section>
         </div>
-      )}
+      </div>
 
       <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
         <div className="max-w-[896px] mx-auto flex items-center justify-end">
@@ -568,13 +486,15 @@ const lastSavedTranscriptionRef = useRef("");
                 setPatientData({ prescriptionId: next.id, procedure: next.typeExamen });
                 return;
               }
-              router.push('/checklists/apres');
+              // La Prescription Post-Acte suit désormais l'opération, avant la
+              // Check-list Après (page dédiée — voir /prescription-post-acte).
+              router.push('/prescription-post-acte');
             }}
             className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90"
           >
             {session?.sameSlot && nextExamWithoutOperation(session, prescriptionId || "")
               ? "Examen suivant"
-              : "Passer Check-list Après"}
+              : "Passer Prescription Post-Acte"}
             <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
           </button>
         </div>

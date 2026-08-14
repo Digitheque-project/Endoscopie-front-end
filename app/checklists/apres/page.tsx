@@ -220,12 +220,14 @@ function ChecklistApresContent() {
           <button
             onClick={async () => {
               await saveChecklist(answers, remarques);
-              router.push('/prescription-workflow');
+              // La Prescription Post-Acte (page dédiée) précède désormais directement
+              // cette check-list — voir prescription-workflow/page.tsx.
+              router.push('/prescription-post-acte');
             }}
             className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
           >
             <span className="material-symbols-outlined">arrow_back</span>
-            Retour à l'opération
+            Retour à la Prescription Post-Acte
           </button>
           <button onClick={handleValiderEtTerminer} className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90">
             Valider et Terminer
