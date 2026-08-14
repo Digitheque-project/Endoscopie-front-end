@@ -185,6 +185,16 @@ const lastSavedTranscriptionRef = useRef("");
     }, ORGAN_AUTO_ADVANCE_SILENCE_MS);
   };
 
+  // Clic direct sur un organe de la liste — permet au médecin de revenir sur un organe
+  // déjà décrit (ou d'en sauter un) sans attendre l'avancement automatique. Même geste
+  // que "Organe suivant" (annule l'avancement programmé), juste vers un index choisi
+  // plutôt que +1.
+  const jumpToOrgan = (index: number) => {
+    clearOrganAdvanceTimer();
+    organIndexRef.current = index;
+    setOrganIndex(index);
+  };
+
   // Le médecin recommence à parler (résultat intermédiaire non vide) avant la fin du
   // délai de silence : il n'a pas fini de décrire l'organe en cours, on annule
   // l'avancement programmé plutôt que de couper sa phrase.
@@ -195,6 +205,21 @@ const lastSavedTranscriptionRef = useRef("");
   };
 
   useEffect(() => clearOrganAdvanceTimer, []);
+
+  // Bascule vers un autre examen de la même session groupée — même remise à zéro que le
+  // bouton "Examen suivant" du pied de page, déclenchée ici depuis la case à cocher du
+  // type d'examen correspondant plutôt qu'automatiquement en fin de dictée.
+  const handleSwitchExam = async (exam: SessionInfo["exams"][number]) => {
+    if (!prescriptionId || exam.id === prescriptionId) return;
+    await saveOperation();
+    setTranscriptText("");
+    setMedicalNotes("");
+    setSavedMedicalNotes([]);
+    setPrescriptionPostActe("");
+    organIndexRef.current = 0;
+    setOrganIndex(0);
+    setPatientData({ prescriptionId: exam.id, procedure: exam.typeExamen });
+  };
 
   const handleAudioReady = (_blob: Blob) => {
     // audio blob ready for upload if needed
@@ -273,9 +298,35 @@ const lastSavedTranscriptionRef = useRef("");
                     )}
                   </div>
                   <div className="space-y-2">
-                    <p className="max-w-2xl text-sm leading-6 text-blue-50/90 lg:text-base">
-                      Étape intermédiaire du parcours clinique avec transcription vocale, prescriptions et suivi médical.
-                    </p>
+                    {session?.sameSlot && session.exams.length > 1 ? (
+                      // Examens multiples sur la même séance : à cocher plutôt qu'un simple
+                      // badge de position — permet de voir et de choisir directement le type
+                      // d'examen en cours de dictée, sans attendre "Examen suivant" en pied de page.
+                      <div className="flex flex-wrap items-center gap-2">
+                        {session.exams.map((exam) => (
+                          <label
+                            key={exam.id}
+                            className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                              exam.id === prescriptionId
+                                ? "border-white bg-white/15 text-white"
+                                : "border-white/30 text-white/80 hover:bg-white/10"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={exam.id === prescriptionId}
+                              onChange={() => handleSwitchExam(exam)}
+                              className="h-3.5 w-3.5 rounded border-white/50 accent-white"
+                            />
+                            {exam.typeExamen}
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="max-w-2xl text-sm leading-6 text-blue-50/90 lg:text-base">
+                        Procédure : <span className="font-semibold text-white">{procedure || "Non renseignée"}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -300,9 +351,12 @@ const lastSavedTranscriptionRef = useRef("");
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap gap-2">
                     {organFields.map((field, i) => (
-                      <span
+                      <button
                         key={field.key}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
+                        type="button"
+                        onClick={() => jumpToOrgan(i)}
+                        title={`Revenir sur « ${field.label} »`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer hover:opacity-80 ${
                           i === organIndex
                             ? "bg-blue-600 text-white"
                             : i < organIndex
@@ -312,7 +366,7 @@ const lastSavedTranscriptionRef = useRef("");
                       >
                         {i < organIndex && <span className="material-symbols-outlined text-[14px]">check</span>}
                         {field.label}
-                      </span>
+                      </button>
                     ))}
                   </div>
                   {currentOrgan && (
@@ -360,65 +414,69 @@ const lastSavedTranscriptionRef = useRef("");
             </div>
           </section>
 
-          <section className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
-            <div className="mb-6">
-              <VoiceRecorder hideTextArea statusIdleText="Notes complémentaires" onFinalTranscript={handleNotesFinalTranscript} />
-            </div>
-
-            <textarea
-              className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-              placeholder=""
-              rows={8}
-              onChange={(event) => setMedicalNotes(event.target.value)}
-              value={medicalNotes}
-            />
-
-            <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
-              <button
-                type="button"
-                onClick={() => setMedicalNotes("")}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
-              >
-                Effacer la note
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSaveTranscription(medicalNotes)}
-                className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
-              >
-                Enregistrer la note
-              </button>
-            </div>
-          </section>
-
-          <section
-            onClick={() => {
-              setDraftPostActe(prescriptionPostActe);
-              setShowPostActeModal(true);
-            }}
-            className="cursor-pointer rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6 flex items-center justify-between gap-4 transition-all hover:border-blue-300 hover:shadow-md"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-                <span className="material-symbols-outlined text-2xl">history_edu</span>
+          {/* Prescriptions Post-Acte à côté des Notes complémentaires (au lieu d'en dessous,
+              pleine largeur) — évite un long défilement pour y accéder. */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+            <section className="lg:col-span-2 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6">
+              <div className="mb-6">
+                <VoiceRecorder hideTextArea statusIdleText="Notes complémentaires" onFinalTranscript={handleNotesFinalTranscript} />
               </div>
-              <div>
-                <h3 className="font-headline text-base text-slate-900">Prescriptions Post-Acte</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Saisie et vérification des prescriptions médicales pour la phase de réveil.</p>
+
+              <textarea
+                className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                placeholder=""
+                rows={8}
+                onChange={(event) => setMedicalNotes(event.target.value)}
+                value={medicalNotes}
+              />
+
+              <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setMedicalNotes("")}
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors"
+                >
+                  Effacer la note
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveTranscription(medicalNotes)}
+                  className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
+                >
+                  Enregistrer la note
+                </button>
               </div>
-            </div>
-            {prescriptionPostActe.trim() ? (
-              <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shrink-0">
-                <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                Rédigée
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500 shrink-0">
-                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                À rédiger
-              </span>
-            )}
-          </section>
+            </section>
+
+            <section
+              onClick={() => {
+                setDraftPostActe(prescriptionPostActe);
+                setShowPostActeModal(true);
+              }}
+              className="cursor-pointer rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6 flex flex-col items-start gap-4 transition-all hover:border-blue-300 hover:shadow-md"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                  <span className="material-symbols-outlined text-2xl">history_edu</span>
+                </div>
+                <div>
+                  <h3 className="font-headline text-base text-slate-900">Prescriptions Post-Acte</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Saisie et vérification des prescriptions médicales pour la phase de réveil.</p>
+                </div>
+              </div>
+              {prescriptionPostActe.trim() ? (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 shrink-0">
+                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                  Rédigée
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500 shrink-0">
+                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  À rédiger
+                </span>
+              )}
+            </section>
+          </div>
         </div>
       </div>
 
