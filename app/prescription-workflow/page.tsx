@@ -372,14 +372,16 @@ const lastSavedTranscriptionRef = useRef("");
                       // Examens multiples sur la même séance : à cocher plutôt qu'un simple
                       // badge de position — permet de voir et de choisir directement le type
                       // d'examen en cours de dictée, sans attendre "Examen suivant" en pied de page.
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-3 overflow-x-auto pb-1">
                         {session.exams.map((exam) => (
                           // Même couleur par type d'examen que partout ailleurs (Fil de
                           // prescription, badges de procédure...) — l'anneau blanc marque
                           // seulement lequel est actif, la couleur elle-même ne change pas.
+                          // Toutes les procédures restent sur une seule ligne (défilement
+                          // horizontal si trop nombreuses) plutôt que de passer à la ligne.
                           <label
                             key={exam.id}
-                            className={`inline-flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-2 text-xl lg:text-2xl font-black uppercase tracking-wide transition-all ${getExamTypeBadgeClass(exam.typeExamen)} ${
+                            className={`shrink-0 inline-flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-2 text-xl lg:text-2xl font-black uppercase tracking-wide transition-all ${getExamTypeBadgeClass(exam.typeExamen)} ${
                               exam.id === prescriptionId ? "ring-2 ring-white shadow-md" : "opacity-70 hover:opacity-100"
                             }`}
                           >

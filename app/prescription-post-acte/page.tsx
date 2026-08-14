@@ -17,7 +17,7 @@ import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
  */
 function PrescriptionPostActeContent() {
   const router = useRouter();
-  const { patientId, prescriptionId, patientName, procedure, setPatientData } = usePatient();
+  const { patientId, prescriptionId, patientName, procedure } = usePatient();
   const [session, setSession] = useState<SessionInfo | null>(null);
 
   const [prescriptionPostActe, setPrescriptionPostActe] = useState("");
@@ -56,8 +56,9 @@ function PrescriptionPostActeContent() {
   }, [prescriptionId]);
 
   // Session groupée (plusieurs examens du même patient sur le même créneau, voir
-  // getSameSlotSiblings côté backend) — affichée dans le titre comme dans l'opération,
-  // pour ne pas perdre de vue qu'il y a d'autres examens à couvrir.
+  // getSameSlotSiblings côté backend) — affichée dans le titre, en simple liste : la
+  // prescription post-acte est unique pour toute la séance (pas un choix par examen,
+  // contrairement à l'opération où chaque examen a sa propre dictée).
   useEffect(() => {
     if (!prescriptionId) {
       setSession(null);
@@ -69,15 +70,6 @@ function PrescriptionPostActeContent() {
       .catch(() => { if (!cancelled) setSession(null); });
     return () => { cancelled = true; };
   }, [prescriptionId]);
-
-  // Bascule vers un autre examen de la même session — enregistre d'abord la prescription
-  // post-acte en cours pour ne rien perdre, puis change de contexte patient (déclenche le
-  // rechargement des données d'opération pour ce nouvel examen, voir loadData ci-dessus).
-  const handleSwitchExam = async (exam: SessionInfo["exams"][number]) => {
-    if (!prescriptionId || exam.id === prescriptionId) return;
-    await save();
-    setPatientData({ prescriptionId: exam.id, procedure: exam.typeExamen });
-  };
 
   const save = async () => {
     if (!prescriptionId || !patientId) return;
@@ -117,24 +109,18 @@ function PrescriptionPostActeContent() {
                   au-dessus. Même style que le titre de procédure dans l'opération (grand,
                   majuscules, couleur par type d'examen) — cohérence entre les deux interfaces. */}
               {session?.sameSlot && session.exams.length > 1 ? (
-                // Examens multiples sur la même séance — même case à cocher que dans
-                // l'opération, pour voir/choisir directement l'examen en cours ici aussi.
-                <div className="flex flex-wrap justify-center gap-3">
+                // Examens multiples sur la même séance — simple liste, non interactive :
+                // la prescription post-acte est unique pour toute la séance (contrairement
+                // à l'opération, il n'y a rien à "choisir" ici), toutes les procédures
+                // restent affichées sur une seule ligne (défilement horizontal si besoin).
+                <div className="flex items-center justify-center gap-3 overflow-x-auto pb-1">
                   {session.exams.map((exam) => (
-                    <label
+                    <span
                       key={exam.id}
-                      className={`inline-flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-2 text-xl lg:text-2xl font-black uppercase tracking-wide transition-all ${getExamTypeBadgeClass(exam.typeExamen)} ${
-                        exam.id === prescriptionId ? "ring-2 ring-white shadow-md" : "opacity-70 hover:opacity-100"
-                      }`}
+                      className={`shrink-0 inline-flex items-center gap-3 rounded-2xl px-4 py-2 text-xl lg:text-2xl font-black uppercase tracking-wide ${getExamTypeBadgeClass(exam.typeExamen)}`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={exam.id === prescriptionId}
-                        onChange={() => handleSwitchExam(exam)}
-                        className="h-5 w-5 rounded"
-                      />
                       {exam.typeExamen}
-                    </label>
+                    </span>
                   ))}
                 </div>
               ) : (
