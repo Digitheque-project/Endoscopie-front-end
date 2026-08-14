@@ -29,8 +29,12 @@ function insertAnswerIntoOrganBlock(
   answer: string,
 ): string {
   const field = fields[fieldIndex];
-  const label = `${field.label} : `;
-  const labelStart = cur.indexOf(label);
+  // Recherche sur "Label :" SANS exiger l'espace de fin : un organe resté vide puis
+  // quitté voit son "Label : " converti en "Label :." par la ponctuation automatique
+  // (voir l'effet d'écriture plus bas) — les deux-points sont le seul repère fiable,
+  // présent que le contenu soit vide, ponctué, ou déjà rempli.
+  const labelPrefix = `${field.label} :`;
+  const labelStart = cur.indexOf(labelPrefix);
   if (labelStart === -1) {
     // Le libellé n'est pas encore écrit (ne devrait pas arriver, l'effet d'écriture
     // automatique le précède toujours) — repli sur l'ajout en fin de texte.
@@ -40,12 +44,12 @@ function insertAnswerIntoOrganBlock(
   // Fin du bloc de cet organe = début du prochain libellé d'organe qui apparaît après
   // lui dans le texte (n'importe lequel des autres organes, peu importe l'ordre visité),
   // ou la fin du texte s'il n'y en a pas.
-  const afterLabel = labelStart + label.length;
+  const afterLabel = labelStart + labelPrefix.length;
   let blockEnd = cur.length;
   for (const other of fields) {
     if (other.key === field.key) continue;
-    const otherLabel = `\n${other.label} : `;
-    const pos = cur.indexOf(otherLabel, afterLabel);
+    const otherPrefix = `\n${other.label} :`;
+    const pos = cur.indexOf(otherPrefix, afterLabel);
     if (pos !== -1 && pos < blockEnd) blockEnd = pos;
   }
 
@@ -104,15 +108,17 @@ const lastSavedTranscriptionRef = useRef("");
 
   // Écrit automatiquement le nom de l'organe directement dans le champ "Observation
   // durant l'examen" dès que c'est son tour — le médecin n'a plus qu'à dicter
-  // l'observation pour compléter la ligne (voir handleFinalTranscript). `includes`
-  // (pas seulement `endsWith`) : en recliquant sur un organe déjà décrit (jumpToOrgan),
-  // son libellé figure déjà plus haut dans le texte — on ne le réécrit pas une seconde
-  // fois en redondance, le curseur "revient" simplement sur cet organe.
+  // l'observation pour compléter la ligne (voir handleFinalTranscript). Vérifie la
+  // présence de "Label :" (sans l'espace de fin) plutôt que "Label : " exact : un organe
+  // resté vide puis quitté voit son "Label : " converti en "Label :." par la ponctuation
+  // ci-dessous — chercher avec l'espace ne le retrouvait plus et le réécrivait en double
+  // à la fin du texte à chaque nouveau passage.
   useEffect(() => {
     if (!currentOrgan) return;
+    const labelPrefix = `${currentOrgan.label} :`;
     const label = `${currentOrgan.label} : `;
     setTranscriptText((cur) => {
-      if (cur.includes(label)) return cur;
+      if (cur.includes(labelPrefix)) return cur;
       if (!cur.trim()) return label;
       const withPunctuation = ensureEndsWithPunctuation(cur.replace(/\s+$/, ''));
       return `${withPunctuation}\n${label}`;
@@ -253,13 +259,15 @@ const lastSavedTranscriptionRef = useRef("");
     const field = organFieldsRef.current[index];
     const textarea = observationTextareaRef.current;
     if (!field || !textarea) return;
-    const label = `${field.label} : `;
-    const labelStart = transcriptText.indexOf(label);
+    // "Label :" sans l'espace de fin — même raison qu'ailleurs : un organe resté vide
+    // puis quitté devient "Label :." (ponctuation automatique), pas "Label : ".
+    const labelPrefix = `${field.label} :`;
+    const labelStart = transcriptText.indexOf(labelPrefix);
     if (labelStart === -1) return;
     let blockEnd = transcriptText.length;
     for (const other of organFieldsRef.current) {
       if (other.key === field.key) continue;
-      const pos = transcriptText.indexOf(`\n${other.label} : `, labelStart + label.length);
+      const pos = transcriptText.indexOf(`\n${other.label} :`, labelStart + labelPrefix.length);
       if (pos !== -1 && pos < blockEnd) blockEnd = pos;
     }
     // Après le re-render (organIndex déjà à jour au-dessus, mais le focus doit attendre
