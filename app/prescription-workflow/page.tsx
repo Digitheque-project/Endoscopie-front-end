@@ -466,7 +466,10 @@ const lastSavedTranscriptionRef = useRef("");
                   statusIdleText="Observation durant l'examen"
                   onFinalTranscript={handleFinalTranscript}
                   onTranscriptChange={handleObservationActivity}
-                  onManualPause={clearOrganAdvanceTimer}
+                  // Le médecin met en pause quand il a fini de décrire l'organe en cours —
+                  // même geste que le bouton "Organe suivant", pas une simple annulation de
+                  // l'avancement programmé (qui laissait l'organe actif inchangé).
+                  onManualPause={advanceToNextOrgan}
                   onAudio={handleAudioReady}
                   exposeControls={setControls}
                 />
