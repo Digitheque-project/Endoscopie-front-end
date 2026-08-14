@@ -119,11 +119,11 @@ function PrescriptionPostActeContent() {
               {session?.sameSlot && session.exams.length > 1 ? (
                 // Examens multiples sur la même séance — même case à cocher que dans
                 // l'opération, pour voir/choisir directement l'examen en cours ici aussi.
-                <div className="flex flex-wrap justify-center gap-2">
+                <div className="flex flex-wrap justify-center gap-3">
                   {session.exams.map((exam) => (
                     <label
                       key={exam.id}
-                      className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${getExamTypeBadgeClass(exam.typeExamen)} ${
+                      className={`inline-flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-2 text-xl lg:text-2xl font-black uppercase tracking-wide transition-all ${getExamTypeBadgeClass(exam.typeExamen)} ${
                         exam.id === prescriptionId ? "ring-2 ring-white shadow-md" : "opacity-70 hover:opacity-100"
                       }`}
                     >
@@ -131,7 +131,7 @@ function PrescriptionPostActeContent() {
                         type="checkbox"
                         checked={exam.id === prescriptionId}
                         onChange={() => handleSwitchExam(exam)}
-                        className="h-3.5 w-3.5 rounded"
+                        className="h-5 w-5 rounded"
                       />
                       {exam.typeExamen}
                     </label>
