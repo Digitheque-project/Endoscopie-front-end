@@ -927,9 +927,15 @@ function PrescriptionsContent() {
                                 );
                               })}
                               {isSameSlot && (
+                                // Couleur neutre (gris), volontairement hors de la palette des
+                                // procédures (voir exam-type-colors.ts) — une couleur vive aurait
+                                // pu se confondre avec un vrai badge de procédure (ex. indigo est
+                                // déjà utilisé pour Gastrostomie/GPE), donnant l'impression à tort
+                                // qu'il s'agit d'un examen supplémentaire plutôt que d'une simple
+                                // indication de planification groupée.
                                 <span
                                   title="Ces examens sont planifiés sur le même créneau (une seule séance)"
-                                  className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700"
+                                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600"
                                 >
                                   <span className="material-symbols-outlined text-[12px]">layers</span>
                                   Même créneau
