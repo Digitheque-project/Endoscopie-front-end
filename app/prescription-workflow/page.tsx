@@ -89,6 +89,12 @@ const lastSavedTranscriptionRef = useRef("");
   organIndexRef.current = organIndex;
   const organFieldsRef = useRef(organFields);
   organFieldsRef.current = organFields;
+  // Plus haut index jamais atteint dans le flux normal — distingue "l'organe courant est
+  // la frontière (jamais dépassée)" d'"on est revenu sur un organe déjà décrit" (voir
+  // jumpToOrgan et onManualPause) : la pause ne doit avancer QUE dans le premier cas,
+  // jamais quand on a recliqué en arrière pour compléter un organe précédent.
+  const highestOrganIndexRef = useRef(organIndex);
+  if (organIndex > highestOrganIndexRef.current) highestOrganIndexRef.current = organIndex;
   // Avancement automatique vers l'organe suivant, mais seulement après un silence
   // VRAIMENT prolongé (pas la simple pause de réflexion en pleine phrase) : on
   // programme l'avancement après chaque segment final, et on l'annule si le médecin
@@ -265,6 +271,17 @@ const lastSavedTranscriptionRef = useRef("");
     });
   };
 
+  // Pause manuelle sur le micro : avance vers l'organe suivant SEULEMENT si l'organe
+  // courant est la frontière du flux normal (jamais dépassée) — s'il est inférieur au
+  // plus haut index atteint, c'est qu'on a recliqué en arrière (jumpToOrgan) pour
+  // compléter un organe déjà décrit : la pause reste alors sans effet sur la position,
+  // pour que la reprise de la dictée continue sur CET organe, pas le suivant.
+  const handleManualPause = () => {
+    clearOrganAdvanceTimer();
+    if (organIndexRef.current < highestOrganIndexRef.current) return;
+    advanceToNextOrgan();
+  };
+
   // Le médecin recommence à parler (résultat intermédiaire non vide) avant la fin du
   // délai de silence : il n'a pas fini de décrire l'organe en cours, on annule
   // l'avancement programmé plutôt que de couper sa phrase.
@@ -287,6 +304,7 @@ const lastSavedTranscriptionRef = useRef("");
     setSavedMedicalNotes([]);
     setPrescriptionPostActe("");
     organIndexRef.current = 0;
+    highestOrganIndexRef.current = 0;
     setOrganIndex(0);
     setPatientData({ prescriptionId: exam.id, procedure: exam.typeExamen });
   };
@@ -319,6 +337,7 @@ const lastSavedTranscriptionRef = useRef("");
 
   const handleClearEditor = () => {
     organIndexRef.current = 0;
+    highestOrganIndexRef.current = 0;
     setOrganIndex(0);
     const firstOrgan = organFieldsRef.current[0];
     setTranscriptText(firstOrgan ? `${firstOrgan.label} : ` : "");
@@ -467,9 +486,11 @@ const lastSavedTranscriptionRef = useRef("");
                   onFinalTranscript={handleFinalTranscript}
                   onTranscriptChange={handleObservationActivity}
                   // Le médecin met en pause quand il a fini de décrire l'organe en cours —
-                  // même geste que le bouton "Organe suivant", pas une simple annulation de
-                  // l'avancement programmé (qui laissait l'organe actif inchangé).
-                  onManualPause={advanceToNextOrgan}
+                  // même geste que le bouton "Organe suivant" (voir handleManualPause) —
+                  // SAUF s'il vient de recliquer sur un organe déjà dépassé pour le
+                  // compléter : dans ce cas, la pause ne doit rien faire avancer, pour
+                  // que la reprise de la dictée continue sur cet organe-là.
+                  onManualPause={handleManualPause}
                   onAudio={handleAudioReady}
                   exposeControls={setControls}
                 />
