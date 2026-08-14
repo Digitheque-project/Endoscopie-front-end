@@ -11,9 +11,49 @@ import { truncateText } from "@/components/voice/formatTranscript";
 import HistoryModal from "@/components/ui/HistoryModal";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
-import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
+import { mapProcedureToExamType, getConstatationsFields, type ConstatationField } from "@/lib/examOrgans";
 import { fetchSessionSiblings, nextExamWithoutOperation, type SessionInfo } from "@/lib/exam-session";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+
+/**
+ * Insère la réponse dictée à la fin du BLOC de l'organe donné (entre son libellé et
+ * celui de l'organe suivant qui le suit dans le texte, ou la fin du texte) plutôt qu'à
+ * la toute fin du document — indispensable pour recliquer sur un organe déjà décrit
+ * (jumpToOrgan) : la dictée doit reprendre là où est ce bloc, pas systématiquement en
+ * bas de tout le texte.
+ */
+function insertAnswerIntoOrganBlock(
+  cur: string,
+  fields: ConstatationField[],
+  fieldIndex: number,
+  answer: string,
+): string {
+  const field = fields[fieldIndex];
+  const label = `${field.label} : `;
+  const labelStart = cur.indexOf(label);
+  if (labelStart === -1) {
+    // Le libellé n'est pas encore écrit (ne devrait pas arriver, l'effet d'écriture
+    // automatique le précède toujours) — repli sur l'ajout en fin de texte.
+    return cur.endsWith(' ') || !cur ? cur + answer : `${cur} ${answer}`;
+  }
+
+  // Fin du bloc de cet organe = début du prochain libellé d'organe qui apparaît après
+  // lui dans le texte (n'importe lequel des autres organes, peu importe l'ordre visité),
+  // ou la fin du texte s'il n'y en a pas.
+  const afterLabel = labelStart + label.length;
+  let blockEnd = cur.length;
+  for (const other of fields) {
+    if (other.key === field.key) continue;
+    const otherLabel = `\n${other.label} : `;
+    const pos = cur.indexOf(otherLabel, afterLabel);
+    if (pos !== -1 && pos < blockEnd) blockEnd = pos;
+  }
+
+  const before = cur.slice(0, blockEnd);
+  const after = cur.slice(blockEnd);
+  const needsSpace = before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+  return `${before}${needsSpace ? ' ' : ''}${answer}${after}`;
+}
 
 
 function PrescriptionWorkflowContent() {
@@ -31,6 +71,7 @@ function PrescriptionWorkflowContent() {
   const [organIndex, setOrganIndex] = useState(0);
 const lastSavedTranscriptionRef = useRef("");
   const controlsRef = useRef<{ start: () => void; stop: () => void; restart: () => void; pause: () => void; resume: () => void } | null>(null);
+  const observationTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Liste des organes à décrire pour ce type d'examen — dictée guidée organe par
   // organe (voir handleFinalTranscript) : même source que le compte rendu, pour que
@@ -151,13 +192,15 @@ const lastSavedTranscriptionRef = useRef("");
 
     if (organ) {
       // Dictée guidée : le nom de l'organe est déjà écrit dans le champ (voir l'effet
-      // ci-dessus) — on complète la ligne avec l'observation dictée. Le micro finalise
-      // un segment dès la moindre pause naturelle (même en pleine phrase) : on
-      // n'avance donc PAS immédiatement vers l'organe suivant ici, on programme
-      // l'avancement après un vrai silence prolongé (voir scheduleOrganAdvance) —
-      // annulé si le médecin recommence à parler avant l'échéance.
+      // ci-dessus) — on complète SON bloc avec l'observation dictée (pas forcément la
+      // fin du texte : après un clic sur un organe déjà décrit, ce bloc peut être suivi
+      // d'autres organes déjà remplis). Le micro finalise un segment dès la moindre
+      // pause naturelle (même en pleine phrase) : on n'avance donc PAS immédiatement
+      // vers l'organe suivant ici, on programme l'avancement après un vrai silence
+      // prolongé (voir scheduleOrganAdvance) — annulé si le médecin recommence à parler
+      // avant l'échéance.
       const answer = capitalizeFirst(normalized);
-      setTranscriptText((cur) => (cur.endsWith(' ') || !cur ? cur + answer : `${cur} ${answer}`));
+      setTranscriptText((cur) => insertAnswerIntoOrganBlock(cur, fields, organIndexRef.current, answer));
       scheduleOrganAdvance();
       return;
     }
@@ -193,11 +236,33 @@ const lastSavedTranscriptionRef = useRef("");
   // Clic direct sur un organe de la liste — permet au médecin de revenir sur un organe
   // déjà décrit (ou d'en sauter un) sans attendre l'avancement automatique. Même geste
   // que "Organe suivant" (annule l'avancement programmé), juste vers un index choisi
-  // plutôt que +1.
+  // plutôt que +1. La dictée qui suit s'insère désormais dans le bloc de cet organe
+  // (voir insertAnswerIntoOrganBlock), pas en fin de texte — on place aussi le curseur
+  // visuellement au même endroit, pour que la frappe manuelle suive la même règle.
   const jumpToOrgan = (index: number) => {
     clearOrganAdvanceTimer();
     organIndexRef.current = index;
     setOrganIndex(index);
+
+    const field = organFieldsRef.current[index];
+    const textarea = observationTextareaRef.current;
+    if (!field || !textarea) return;
+    const label = `${field.label} : `;
+    const labelStart = transcriptText.indexOf(label);
+    if (labelStart === -1) return;
+    let blockEnd = transcriptText.length;
+    for (const other of organFieldsRef.current) {
+      if (other.key === field.key) continue;
+      const pos = transcriptText.indexOf(`\n${other.label} : `, labelStart + label.length);
+      if (pos !== -1 && pos < blockEnd) blockEnd = pos;
+    }
+    // Après le re-render (organIndex déjà à jour au-dessus, mais le focus doit attendre
+    // que React ait bien reposé le DOM) — sans ce délai, le focus arrivait parfois avant
+    // que le textarea ne soit réellement prêt à recevoir une sélection.
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(blockEnd, blockEnd);
+    });
   };
 
   // Le médecin recommence à parler (résultat intermédiaire non vide) avant la fin du
@@ -406,6 +471,7 @@ const lastSavedTranscriptionRef = useRef("");
               </div>
 
               <textarea
+                ref={observationTextareaRef}
                 className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
                 placeholder=""
                 rows={8}
