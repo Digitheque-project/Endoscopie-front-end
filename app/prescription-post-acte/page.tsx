@@ -112,12 +112,13 @@ function PrescriptionPostActeContent() {
                 // Examens multiples sur la même séance — simple liste, non interactive :
                 // la prescription post-acte est unique pour toute la séance (contrairement
                 // à l'opération, il n'y a rien à "choisir" ici), toutes les procédures
-                // restent affichées sur une seule ligne (défilement horizontal si besoin).
-                <div className="flex items-center justify-center gap-3 overflow-x-auto pb-1">
+                // restent toutes visibles sans défilement (taille réduite, passent à la
+                // ligne si besoin plutôt qu'un scroll horizontal).
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   {session.exams.map((exam) => (
                     <span
                       key={exam.id}
-                      className={`shrink-0 inline-flex items-center gap-3 rounded-2xl px-4 py-2 text-xl lg:text-2xl font-black uppercase tracking-wide ${getExamTypeBadgeClass(exam.typeExamen)}`}
+                      className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide ${getExamTypeBadgeClass(exam.typeExamen)}`}
                     >
                       {exam.typeExamen}
                     </span>
