@@ -12,7 +12,7 @@ import HistoryModal from "@/components/ui/HistoryModal";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { mapProcedureToExamType, getConstatationsFields, type ConstatationField } from "@/lib/examOrgans";
-import { fetchSessionSiblings, nextExamWithoutOperation, type SessionInfo } from "@/lib/exam-session";
+import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 /**
@@ -561,10 +561,18 @@ const lastSavedTranscriptionRef = useRef("");
           <button
             onClick={async () => {
               await saveOperation();
-              // Session groupée : s'il reste un examen sans dictée enregistrée, on
-              // enchaîne dessus au lieu de quitter la page opération.
+              // Session groupée : enchaîne sur l'examen suivant DE LA LISTE (position dans
+              // session.exams), pas "le premier sans dictée enregistrée" — hasOperation
+              // devient vrai dès qu'une ligne existe en base, y compris juste en passant sur
+              // un examen sans rien y dicter (saveOperation à chaque navigation), ce qui
+              // sautait à tort "Passer Prescription Post-Acte" alors qu'il restait des
+              // examens à décrire.
               const freshSession = prescriptionId ? await fetchSessionSiblings(prescriptionId).catch(() => null) : null;
-              const next = freshSession && prescriptionId ? nextExamWithoutOperation(freshSession, prescriptionId) : null;
+              const currentIndex = freshSession?.exams.findIndex((e) => e.id === prescriptionId) ?? -1;
+              const next =
+                freshSession && currentIndex >= 0 && currentIndex < freshSession.exams.length - 1
+                  ? freshSession.exams[currentIndex + 1]
+                  : null;
               if (next) {
                 // Reset synchrone AVANT de changer d'examen : l'effet d'écriture automatique
                 // de l'organe (dépend de currentOrgan) doit repartir d'un champ vide, pas
@@ -584,9 +592,11 @@ const lastSavedTranscriptionRef = useRef("");
             }}
             className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90"
           >
-            {session?.sameSlot && nextExamWithoutOperation(session, prescriptionId || "")
-              ? "Examen suivant"
-              : "Passer Prescription Post-Acte"}
+            {(() => {
+              const idx = session?.exams.findIndex((e) => e.id === prescriptionId) ?? -1;
+              const hasNext = !!session?.sameSlot && idx >= 0 && idx < session.exams.length - 1;
+              return hasNext ? "Examen suivant" : "Passer Prescription Post-Acte";
+            })()}
             <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
           </button>
         </div>

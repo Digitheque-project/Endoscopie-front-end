@@ -15,7 +15,7 @@ import {
   mapProcedureToExamType,
   getConstatationsFields,
 } from "@/lib/examOrgans";
-import { fetchSessionSiblings, nextExamWithoutResultat, type SessionInfo } from "@/lib/exam-session";
+import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 // ---------------------------------------------------------------------------
@@ -648,10 +648,15 @@ function ResultatEndoscopieContent() {
         body: JSON.stringify(payload),
       });
       setIsSuccess(true);
-      // Session groupée : s'il reste un examen sans compte-rendu, on enchaîne dessus
-      // au lieu de quitter — un compte-rendu distinct par procédure, même patient.
+      // Session groupée : enchaîne sur l'examen suivant DE LA LISTE (position dans
+      // session.exams) — même logique que l'opération — plutôt que "le premier sans
+      // compte-rendu", pour un ordre prévisible qui couvre bien tous les examens un par un.
       const freshSession = await fetchSessionSiblings(prescriptionId).catch(() => null);
-      const next = freshSession ? nextExamWithoutResultat(freshSession, prescriptionId) : null;
+      const currentIndex = freshSession?.exams.findIndex((e) => e.id === prescriptionId) ?? -1;
+      const next =
+        freshSession && currentIndex >= 0 && currentIndex < freshSession.exams.length - 1
+          ? freshSession.exams[currentIndex + 1]
+          : null;
       setTimeout(() => {
         if (next) {
           setPatientData({ prescriptionId: next.id, procedure: next.typeExamen });
