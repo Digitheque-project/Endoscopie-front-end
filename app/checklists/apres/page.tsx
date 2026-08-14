@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { use, Suspense, useState, useEffect } from "react";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 const checklistItems = [
   {
@@ -28,6 +30,21 @@ function ChecklistApresContent() {
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [remarques, setRemarques] = useState("");
+  // Session groupée — le patient peut avoir plusieurs procédures à faire alors que cette
+  // checklist ne porte que sur l'une d'elles : on affiche toutes les procédures du groupe.
+  const [session, setSession] = useState<SessionInfo | null>(null);
+
+  useEffect(() => {
+    if (!prescriptionId) {
+      setSession(null);
+      return;
+    }
+    let cancelled = false;
+    fetchSessionSiblings(prescriptionId)
+      .then((s) => { if (!cancelled) setSession(s); })
+      .catch(() => { if (!cancelled) setSession(null); });
+    return () => { cancelled = true; };
+  }, [prescriptionId]);
 
   const titleToDbKey: Record<string, string> = {
     "Confirmation & Étiquetage": "confirmationEtiquetage",
@@ -137,8 +154,25 @@ function ChecklistApresContent() {
               </div>
             </div>
             <div className="text-right px-4 py-2 bg-surface-container-low rounded-lg border-l-4 border-blue-700">
-              <p className="text-[10px] font-bold text-blue-900 uppercase tracking-widest">Type d'examen</p>
-              <p className="font-bold text-on-surface">{procedure}</p>
+              <p className="text-[10px] font-bold text-blue-900 uppercase tracking-widest">
+                {session?.sameSlot && session.exams.length > 1 ? "Types d'examen" : "Type d'examen"}
+              </p>
+              {session?.sameSlot && session.exams.length > 1 ? (
+                <div className="flex flex-wrap justify-end gap-1.5 mt-1">
+                  {session.exams.map((exam) => (
+                    <span
+                      key={exam.id}
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${getExamTypeBadgeClass(exam.typeExamen)}`}
+                    >
+                      {exam.typeExamen}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold mt-1 ${getExamTypeBadgeClass(procedure || "")}`}>
+                  {procedure}
+                </span>
+              )}
             </div>
           </section>
 

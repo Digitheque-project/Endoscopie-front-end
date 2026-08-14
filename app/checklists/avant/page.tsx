@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import WorkflowProgressIndicator from "@/components/workflow/WorkflowProgressIndicator";
 import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 const checklistItems = [
   {
@@ -76,6 +78,23 @@ function ChecklistAvantContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [cpaDecision, setCpaDecision] = useState<string | null>(null);
   const isCpaBlocked = BLOCKING_CPA_DECISIONS.has(cpaDecision || "");
+  // Session groupée (plusieurs examens du même patient sur le même créneau) — le patient
+  // peut avoir plusieurs procédures à faire alors que cette checklist ne porte que sur
+  // l'une d'elles : on affiche donc toutes les procédures du groupe, pas seulement celle
+  // de la prescription courante.
+  const [session, setSession] = useState<SessionInfo | null>(null);
+
+  useEffect(() => {
+    if (!prescriptionId) {
+      setSession(null);
+      return;
+    }
+    let cancelled = false;
+    fetchSessionSiblings(prescriptionId)
+      .then((s) => { if (!cancelled) setSession(s); })
+      .catch(() => { if (!cancelled) setSession(null); });
+    return () => { cancelled = true; };
+  }, [prescriptionId]);
 
   const titleToDbKey: Record<string, string> = {
     "Identite du patient verifiee": "identiteVerifiee",
@@ -211,9 +230,26 @@ function ChecklistAvantContent() {
               </div>
               <div className="space-y-2 pl-3 border-l-4 border-l-slate-200">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Procédure</p>
-                    <p className="text-sm font-semibold text-slate-800">{procedure}</p>
-                  <p className="text-sm text-slate-600">Date : 24/10/2023</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">
+                    {session?.sameSlot && session.exams.length > 1 ? "Procédures" : "Procédure"}
+                  </p>
+                  {session?.sameSlot && session.exams.length > 1 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {session.exams.map((exam) => (
+                        <span
+                          key={exam.id}
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${getExamTypeBadgeClass(exam.typeExamen)}`}
+                        >
+                          {exam.typeExamen}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${getExamTypeBadgeClass(procedure || "")}`}>
+                      {procedure}
+                    </span>
+                  )}
+                  <p className="text-sm text-slate-600 mt-1">Date : 24/10/2023</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Service</p>
