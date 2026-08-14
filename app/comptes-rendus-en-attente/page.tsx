@@ -8,9 +8,10 @@ import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function PendingReportsContent() {
   const router = useRouter();
@@ -75,6 +76,24 @@ const [rows, setRows] = useState<any[]>([]);
     const matchesMed = prescriberName.includes(filters.medecin.toLowerCase());
     return matchesNom && matchesProc && matchesMed;
   });
+
+  // Regroupe les prescriptions qui partagent la même prescription externe multi-examens
+  // (même patient, même créneau) en une seule ligne — sinon le nom du patient se
+  // répétait une fois par procédure en attente.
+  const groupedRows = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    const order: string[] = [];
+    for (const row of filtered) {
+      const key = row.prescriptionExternalId || `single-${row.id}`;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+        order.push(key);
+      }
+      groups.get(key)!.push(row);
+    }
+    return order.map((key) => groups.get(key)!);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered]);
 
   return (
     <AppShell>
@@ -145,23 +164,41 @@ const [rows, setRows] = useState<any[]>([]);
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((row) => {
-                    const checklistValide = !!row.checklistApres?.estValide;
-                    const operationCommencee = !!row.operationEndoscopie;
-                    const interrompu = operationCommencee && !checklistValide;
+                  {groupedRows.map((group) => {
+                    const primary = group[0];
+                    const withStatus = group.map((row) => {
+                      const checklistValide = !!row.checklistApres?.estValide;
+                      const operationCommencee = !!row.operationEndoscopie;
+                      return { row, interrompu: operationCommencee && !checklistValide };
+                    });
+                    // Une seule procédure interrompue suffit à signaler toute la ligne — le
+                    // bouton "Reprendre" cible précisément celle-là, pas forcément la première.
+                    const interrompuEntry = withStatus.find((e) => e.interrompu);
+                    const interrompu = !!interrompuEntry;
                     return (
-                    <tr key={row.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""} ${priseEnChargeStripeClass(!!row.patient?.priseEnChargeId)}`}>
+                    <tr key={primary.prescriptionExternalId || primary.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""} ${priseEnChargeStripeClass(!!primary.patient?.priseEnChargeId)}`}>
                       <td className="px-4 py-2.5 font-semibold text-on-surface">
-                        <div>{`${row.patient?.nom || ""} ${row.patient?.prenom || ""}`.trim() || "Patient inconnu"}</div>
-                        <PriseEnChargeBadge priseEnChargeId={row.patient?.priseEnChargeId} className="mt-0.5" />
+                        <div>{`${primary.patient?.nom || ""} ${primary.patient?.prenom || ""}`.trim() || "Patient inconnu"}</div>
+                        <PriseEnChargeBadge priseEnChargeId={primary.patient?.priseEnChargeId} className="mt-0.5" />
                       </td>
-                      <td className="px-4 py-2.5 text-on-surface-variant">{row.typeExamen}</td>
-                      <td className="px-4 py-2.5 text-on-surface-variant">
-                        {row.medecinPrescripteur ? `Dr. ${row.medecinPrescripteur.prenom} ${row.medecinPrescripteur.nom}` : "—"}
+                      <td className="px-4 py-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {group.map((row) => (
+                            <span
+                              key={row.id}
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${getExamTypeBadgeClass(row.typeExamen)}`}
+                            >
+                              {row.typeExamen}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-4 py-2.5 text-on-surface-variant">
-                        {row.rendezVous?.dateHeureDebut
-                          ? new Date(row.rendezVous.dateHeureDebut).toLocaleDateString("fr-FR")
+                        {primary.medecinPrescripteur ? `Dr. ${primary.medecinPrescripteur.prenom} ${primary.medecinPrescripteur.nom}` : "—"}
+                      </td>
+                      <td className="px-4 py-2.5 text-on-surface-variant">
+                        {primary.rendezVous?.dateHeureDebut
+                          ? new Date(primary.rendezVous.dateHeureDebut).toLocaleDateString("fr-FR")
                           : "—"}
                       </td>
                       <td className="px-4 py-2.5">
@@ -179,16 +216,16 @@ const [rows, setRows] = useState<any[]>([]);
                       </td>
                       <td className="px-4 py-2.5">
                         <div className="flex flex-wrap items-center gap-2">
-                          {interrompu && (
+                          {interrompuEntry && (
                             <button
-                              onClick={() => handleReprendre(row)}
+                              onClick={() => handleReprendre(interrompuEntry.row)}
                               className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800 transition-all duration-200 hover:bg-amber-100"
                             >
                               Reprendre l'examen
                             </button>
                           )}
                           <button
-                            onClick={() => handleRediger(row)}
+                            onClick={() => handleRediger(primary)}
                             className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
                           >
                             Rédiger le compte-rendu

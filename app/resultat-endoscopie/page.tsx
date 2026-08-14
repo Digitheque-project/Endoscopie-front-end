@@ -16,6 +16,7 @@ import {
   getConstatationsFields,
 } from "@/lib/examOrgans";
 import { fetchSessionSiblings, nextExamWithoutResultat, type SessionInfo } from "@/lib/exam-session";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 // ---------------------------------------------------------------------------
 // Dictée globale des constatations — parser organe → champ
@@ -622,6 +623,14 @@ function ResultatEndoscopieContent() {
     });
   };
 
+  // Choix manuel de l'examen à rédiger en premier (ou à tout moment) — la position
+  // n'a rien d'imposé, contrairement au chaînage automatique après enregistrement
+  // (handleSubmit ci-dessous), qui lui suit l'ordre "premier sans compte-rendu".
+  const handleChooseExam = (exam: SessionInfo["exams"][number]) => {
+    if (exam.id === prescriptionId) return;
+    setPatientData({ prescriptionId: exam.id, procedure: exam.typeExamen });
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -668,11 +677,24 @@ function ResultatEndoscopieContent() {
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">Service d'endoscopie — CHU Fianarantsoa</p>
                 <h1 className="mt-3 text-3xl font-bold text-slate-900">{dynamicTitle}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {session?.sameSlot && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                      <span className="material-symbols-outlined text-[14px]">layers</span>
-                      Examen {session.exams.findIndex((e) => e.id === prescriptionId) + 1} / {session.exams.length}
-                    </span>
+                  {session?.sameSlot && session.exams.length > 1 && (
+                    // Choix manuel de l'examen à rédiger — pas seulement un indicateur de
+                    // position : cliquer bascule directement dessus (voir handleChooseExam),
+                    // sans attendre l'enchaînement automatique après enregistrement.
+                    session.exams.map((exam) => (
+                      <button
+                        key={exam.id}
+                        type="button"
+                        onClick={() => handleChooseExam(exam)}
+                        title={`Rédiger le compte rendu de « ${exam.typeExamen} »`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-all ${getExamTypeBadgeClass(exam.typeExamen)} ${
+                          exam.id === prescriptionId ? "ring-2 ring-blue-400 shadow-sm" : "opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        {exam.hasResultat && <span className="material-symbols-outlined text-[14px]">check_circle</span>}
+                        {exam.typeExamen}
+                      </button>
+                    ))
                   )}
                   {!hasExistingResult && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
