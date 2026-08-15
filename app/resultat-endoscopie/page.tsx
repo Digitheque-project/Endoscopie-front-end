@@ -712,7 +712,9 @@ function ResultatEndoscopieContent() {
           setPatientData({ prescriptionId: next.id, procedure: next.typeExamen });
           setIsSuccess(false);
         } else {
-          router.push("/");
+          // Dernier compte rendu de la séance enregistré : bascule vers la liste des
+          // comptes rendus en attente plutôt que le tableau de bord.
+          router.push("/comptes-rendus-en-attente");
         }
       }, 1200);
     } catch (err) {

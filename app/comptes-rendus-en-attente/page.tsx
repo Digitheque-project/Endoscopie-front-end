@@ -169,12 +169,17 @@ const [rows, setRows] = useState<any[]>([]);
                     const withStatus = group.map((row) => {
                       const checklistValide = !!row.checklistApres?.estValide;
                       const operationCommencee = !!row.operationEndoscopie;
-                      return { row, interrompu: operationCommencee && !checklistValide };
+                      // Compte rendu déjà écrit mais checklist après pas encore validée —
+                      // pas une interruption d'examen, juste une étape administrative
+                      // oubliée (voir getPendingReports côté backend).
+                      const checklistAFinaliser = !!row.hasResultat && !checklistValide;
+                      return { row, interrompu: operationCommencee && !checklistValide && !row.hasResultat, checklistAFinaliser };
                     });
                     // Une seule procédure interrompue suffit à signaler toute la ligne — le
                     // bouton "Reprendre" cible précisément celle-là, pas forcément la première.
                     const interrompuEntry = withStatus.find((e) => e.interrompu);
                     const interrompu = !!interrompuEntry;
+                    const aFinaliserEntry = withStatus.find((e) => e.checklistAFinaliser);
                     return (
                     <tr key={primary.prescriptionExternalId || primary.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""} ${priseEnChargeStripeClass(!!primary.patient?.priseEnChargeId)}`}>
                       <td className="px-4 py-2.5 font-semibold text-on-surface">
@@ -207,6 +212,11 @@ const [rows, setRows] = useState<any[]>([]);
                             <span className="material-symbols-outlined text-[13px]">bolt</span>
                             Interrompu
                           </span>
+                        ) : aFinaliserEntry ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-800">
+                            <span className="material-symbols-outlined text-[13px]">checklist</span>
+                            Checklist à finaliser
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-800">
                             <span className="material-symbols-outlined text-[13px]">check_circle</span>
@@ -228,7 +238,7 @@ const [rows, setRows] = useState<any[]>([]);
                             onClick={() => handleRediger(primary)}
                             className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
                           >
-                            Rédiger le compte-rendu
+                            {aFinaliserEntry ? "Finaliser le dossier" : "Rédiger le compte-rendu"}
                           </button>
                         </div>
                       </td>

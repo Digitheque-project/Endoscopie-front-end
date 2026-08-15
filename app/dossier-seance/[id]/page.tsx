@@ -99,6 +99,21 @@ function DossierSeanceContent() {
     router.push("/resultat-endoscopie");
   };
 
+  // Compte rendu déjà rédigé mais checklist après pas encore validée : seul chemin
+  // restant pour que l'examen passe "Terminé" et sorte de cette page d'attente.
+  const handleCompleterChecklist = () => {
+    if (!prescription) return;
+    const patient = prescription.patient;
+    const patientName = patient ? `${patient.nom} ${patient.prenom}`.trim() : "";
+    setPatientData({
+      patientId: prescription.patientId,
+      prescriptionId: prescription.id,
+      patientName,
+      procedure: prescription.typeExamen || "",
+    });
+    router.push("/checklists/apres");
+  };
+
   if (isLoading) {
     return (
       <AppShell>
@@ -319,7 +334,17 @@ function DossierSeanceContent() {
                 Rédiger le compte rendu
               </button>
             )}
-            {prescription.resultatEndoscopie && (
+            {prescription.resultatEndoscopie && !cap?.estValide && (
+              <button
+                type="button"
+                onClick={handleCompleterChecklist}
+                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-6 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity shadow-md"
+              >
+                <span className="material-symbols-outlined">checklist</span>
+                Compléter la checklist après
+              </button>
+            )}
+            {prescription.resultatEndoscopie && cap?.estValide && (
               <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-100 text-emerald-700 px-5 py-3 text-sm font-bold">
                 <span className="material-symbols-outlined">check_circle</span>
                 Compte rendu déjà rédigé
