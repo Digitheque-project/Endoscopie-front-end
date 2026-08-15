@@ -197,6 +197,14 @@ type Genre = "Masculin" | "Féminin";
 
 type ConditionExamen = "anesthesie_locale" | "anesthesie_generale";
 
+// Correspond au type d'anesthésie déjà décidé en amont (decisions-anesthesie) —
+// voir decidedAnesthesie.
+function mapTypeAnesthesieToCondition(typeAnesthesie?: string | null): ConditionExamen | null {
+  if (typeAnesthesie === "Locale") return "anesthesie_locale";
+  if (typeAnesthesie === "Générale") return "anesthesie_generale";
+  return null;
+}
+
 type PreDesinfection = "Effectuée" | "Non effectuée";
 
 export interface Responsable {
@@ -338,6 +346,10 @@ function ResultatEndoscopieContent() {
   // Un compte rendu existe déjà pour cet examen (consultation depuis les Archives) :
   // simple lecture, le bouton d'enregistrement n'a plus lieu d'être.
   const [hasExistingResult, setHasExistingResult] = useState(false);
+  // Type d'anesthésie déjà tranché en amont (decisions-anesthesie, avant l'examen) —
+  // quand on le connaît, plus la peine de re-proposer les deux options au médecin
+  // dans le compte rendu : on l'affiche en simple titre, voir la section Endoscopistes.
+  const [decidedAnesthesie, setDecidedAnesthesie] = useState<"Locale" | "Générale" | null>(null);
   // Session groupée (plusieurs examens du même patient sur le même créneau) — permet
   // d'enchaîner la rédaction du compte-rendu procédure par procédure sans quitter la page.
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -407,6 +419,7 @@ function ResultatEndoscopieContent() {
       setParsedOrganNotes({});
       setImages([]);
       setHasExistingResult(false);
+      setDecidedAnesthesie(null);
       try {
         // Charge en parallèle : compte rendu existant, notes d'opération, et prescription (source de vérité du type)
         const [data, opData, prescriptionData] = await Promise.all([
@@ -414,6 +427,8 @@ function ResultatEndoscopieContent() {
           apiJson<any>(`/api/operations/${prescriptionId}`).catch(() => null),
           apiJson<any>(`/api/prescriptions/${prescriptionId}`).catch(() => null),
         ]);
+
+        setDecidedAnesthesie(prescriptionData?.rendezVous?.typeAnesthesie ?? null);
 
         // Détecte automatiquement le type d'examen depuis la prescription (source la plus fiable)
         const detectedType =
@@ -541,17 +556,20 @@ function ResultatEndoscopieContent() {
               complication: data.extractionSpecifique?.complication || prev.extractionSpecifique.complication,
             },
           }));
-        } else if (role === "MEDECIN" && medecinName) {
+        } else {
           // Nouveau compte rendu (rien à restaurer) : pré-remplit le nom de la
-          // responsable et l'opérateur avec le médecin Endoscopie connecté — évite une
-          // ressaisie manuelle à chaque examen.
-          const doctorLabel = `Dr. ${medecinName}`;
+          // responsable et l'opérateur avec le médecin Endoscopie connecté, et la
+          // condition d'examen avec le type d'anesthésie déjà décidé en amont — évite
+          // une ressaisie manuelle à chaque examen.
+          const doctorLabel = role === "MEDECIN" && medecinName ? `Dr. ${medecinName}` : null;
+          const mappedCondition = mapTypeAnesthesieToCondition(prescriptionData?.rendezVous?.typeAnesthesie);
           setFormData((prev) => ({
             ...prev,
-            responsableExamen: prev.responsableExamen || doctorLabel,
+            responsableExamen: doctorLabel ? prev.responsableExamen || doctorLabel : prev.responsableExamen,
             endoscopistes: {
               ...prev.endoscopistes,
-              operateur: prev.endoscopistes.operateur || doctorLabel,
+              operateur: doctorLabel ? prev.endoscopistes.operateur || doctorLabel : prev.endoscopistes.operateur,
+              conditionExamen: mappedCondition || prev.endoscopistes.conditionExamen,
             },
           }));
         }
@@ -851,30 +869,47 @@ function ResultatEndoscopieContent() {
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">3. Endoscopistes</p>
               </div>
               <div className="grid gap-3">
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="conditionExamen"
-                      value="anesthesie_locale"
-                      checked={formData.endoscopistes.conditionExamen === "anesthesie_locale"}
-                      onChange={() => updateNested("endoscopistes", "conditionExamen", "anesthesie_locale")}
-                      className="h-4 w-4 text-primary"
-                    />
-                    <span>Anesthésie locale</span>
-                  </label>
-                  <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="conditionExamen"
-                      value="anesthesie_generale"
-                      checked={formData.endoscopistes.conditionExamen === "anesthesie_generale"}
-                      onChange={() => updateNested("endoscopistes", "conditionExamen", "anesthesie_generale")}
-                      className="h-4 w-4 text-primary"
-                    />
-                    <span>Anesthésie générale</span>
-                  </label>
-                </div>
+                {decidedAnesthesie ? (
+                  // Anesthésie déjà tranchée en amont (decisions-anesthesie, avant
+                  // l'examen) : simple titre, pas la peine de reproposer l'option qui
+                  // ne s'applique pas à ce patient.
+                  <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+                    <span className="material-symbols-outlined text-lg">check_circle</span>
+                    <span className="font-semibold">Anesthésie {decidedAnesthesie}</span>
+                  </div>
+                ) : hasExistingResult ? (
+                  <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700">
+                    <span className="material-symbols-outlined text-lg">info</span>
+                    <span className="font-semibold">
+                      {formData.endoscopistes.conditionExamen === "anesthesie_generale" ? "Anesthésie générale" : "Anesthésie locale"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="conditionExamen"
+                        value="anesthesie_locale"
+                        checked={formData.endoscopistes.conditionExamen === "anesthesie_locale"}
+                        onChange={() => updateNested("endoscopistes", "conditionExamen", "anesthesie_locale")}
+                        className="h-4 w-4 text-primary"
+                      />
+                      <span>Anesthésie locale</span>
+                    </label>
+                    <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="conditionExamen"
+                        value="anesthesie_generale"
+                        checked={formData.endoscopistes.conditionExamen === "anesthesie_generale"}
+                        onChange={() => updateNested("endoscopistes", "conditionExamen", "anesthesie_generale")}
+                        className="h-4 w-4 text-primary"
+                      />
+                      <span>Anesthésie générale</span>
+                    </label>
+                  </div>
+                )}
 
                 <label className="space-y-1 text-sm text-slate-700">
                   Opérateur
