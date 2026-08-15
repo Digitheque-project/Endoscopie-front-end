@@ -6,6 +6,7 @@ import { RequireRole } from "@/components/auth/RequireRole";
 import { useRouter } from "next/navigation";
 import { apiFetch, apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { useAuth } from "@/contexts/AuthContext";
 import MicButton from "@/components/voice/MicButton";
 import { appendFinalSegment } from "@/components/voice/formatTranscript";
 import {
@@ -219,7 +220,7 @@ interface Infirmieres {
 }
 
 interface RendezVous {
-  endoscope: string;
+  endoscope: string[];
   preDesinfection: PreDesinfection;
   desinfection: string;
   kitLigature?: string;
@@ -230,6 +231,9 @@ interface RendezVous {
 interface CompteRenduEndoscopie {
   typeExamen: TypeExamen;
   responsable: Responsable;
+  // Médecin responsable du compte rendu (distinct du patient ci-dessus) — pré-rempli
+  // avec le médecin Endoscopie connecté, voir loadData.
+  responsableExamen: string;
   endoscopistes: Endoscopistes;
   infirmieres: Infirmieres;
   rendezVous: RendezVous;
@@ -253,6 +257,7 @@ const initialData: CompteRenduEndoscopie = {
     indication: "",
     prescripteur: "",
   },
+  responsableExamen: "",
   endoscopistes: {
     conditionExamen: "anesthesie_locale",
     operateur: "",
@@ -263,7 +268,7 @@ const initialData: CompteRenduEndoscopie = {
     medecinAnesthesiste: "",
   },
   rendezVous: {
-    endoscope: "",
+    endoscope: [],
     preDesinfection: "Effectuée",
     desinfection: "",
     kitLigature: "Kit 6 élastiques",
@@ -323,6 +328,7 @@ const initialData: CompteRenduEndoscopie = {
 function ResultatEndoscopieContent() {
   const router = useRouter();
   const { patientId, prescriptionId, patientName, procedure, age, prescriber, setPatientData } = usePatient();
+  const { role, medecinName } = useAuth();
   const [formData, setFormData] = useState<CompteRenduEndoscopie>(() => ({
     ...initialData,
     typeExamen: mapProcedureToExamType(procedure) ?? initialData.typeExamen,
@@ -445,6 +451,7 @@ function ResultatEndoscopieContent() {
             conclusion: data.conclusion || prev.conclusion,
             recommandations: data.recommandations || (opData?.medicalNotes ?? prev.recommandations),
             typeExamen: detectedType || (data.details?.typeExamen as TypeExamen | undefined) || prev.typeExamen,
+            responsableExamen: data.responsableExamen || prev.responsableExamen,
             responsable: {
               nom: data.responsable?.nom || prev.responsable.nom,
               prenoms: data.responsable?.prenoms || prev.responsable.prenoms,
@@ -463,7 +470,13 @@ function ResultatEndoscopieContent() {
               medecinAnesthesiste: data.infirmieres?.medecinAnesthesiste || prev.infirmieres.medecinAnesthesiste,
             },
             rendezVous: {
-              endoscope: data.rendezVous?.endoscope || prev.rendezVous.endoscope,
+              // Comptes rendus enregistrés avant le passage à la sélection multiple :
+              // `endoscope` y est encore une simple chaîne — on la normalise en tableau.
+              endoscope: Array.isArray(data.rendezVous?.endoscope)
+                ? data.rendezVous.endoscope
+                : data.rendezVous?.endoscope
+                ? [data.rendezVous.endoscope]
+                : prev.rendezVous.endoscope,
               preDesinfection: data.rendezVous?.preDesinfection || prev.rendezVous.preDesinfection,
               desinfection: data.rendezVous?.desinfection || prev.rendezVous.desinfection,
               kitLigature: data.rendezVous?.kitLigature || prev.rendezVous.kitLigature,
@@ -522,6 +535,19 @@ function ResultatEndoscopieContent() {
               complication: data.extractionSpecifique?.complication || prev.extractionSpecifique.complication,
             },
           }));
+        } else if (role === "MEDECIN" && medecinName) {
+          // Nouveau compte rendu (rien à restaurer) : pré-remplit le nom de la
+          // responsable et l'opérateur avec le médecin Endoscopie connecté — évite une
+          // ressaisie manuelle à chaque examen.
+          const doctorLabel = `Dr. ${medecinName}`;
+          setFormData((prev) => ({
+            ...prev,
+            responsableExamen: prev.responsableExamen || doctorLabel,
+            endoscopistes: {
+              ...prev.endoscopistes,
+              operateur: prev.endoscopistes.operateur || doctorLabel,
+            },
+          }));
         }
       } catch (err) {
         console.error("Erreur chargement du compte rendu :", err);
@@ -529,7 +555,7 @@ function ResultatEndoscopieContent() {
     }
 
     loadData();
-  }, [prescriptionId, procedure]);
+  }, [prescriptionId, procedure, role, medecinName]);
 
   // Pré-remplit automatiquement le responsable et les informations patient
   // à partir de la prescription (patient, prescripteur, indication clinique).
@@ -744,8 +770,8 @@ function ResultatEndoscopieContent() {
                   <label className="space-y-1 text-sm text-slate-700">
                     Nom de la responsable
                     <input
-                      value={formData.responsable.nom}
-                      onChange={(e) => updateNested("responsable", "nom", e.target.value)}
+                      value={formData.responsableExamen}
+                      onChange={(e) => updateField("responsableExamen", e.target.value)}
                       placeholder="Copier ou saisir le nom"
                       className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
@@ -889,17 +915,27 @@ function ResultatEndoscopieContent() {
               {(
                 <div className="mt-6">
                   <div className="mb-4 flex items-center justify-between gap-4">
-                    <p className="text-sm font-semibold text-slate-900">Sélectionner un endoscope</p>
-                    <span className="text-xs uppercase tracking-[0.22em] text-slate-500">1 sélection</span>
+                    <p className="text-sm font-semibold text-slate-900">Sélectionner un ou plusieurs endoscopes</p>
+                    <span className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                      {formData.rendezVous.endoscope.length} sélection{formData.rendezVous.endoscope.length > 1 ? 's' : ''}
+                    </span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {availableEndoscopes.map((endoscope) => {
-                      const selected = formData.rendezVous.endoscope === endoscope.id;
+                      const selected = formData.rendezVous.endoscope.includes(endoscope.id);
                       return (
                         <button
                           key={endoscope.id}
                           type="button"
-                          onClick={() => updateNested("rendezVous", "endoscope", selected ? "" : endoscope.id)}
+                          onClick={() =>
+                            updateNested(
+                              "rendezVous",
+                              "endoscope",
+                              selected
+                                ? formData.rendezVous.endoscope.filter((id) => id !== endoscope.id)
+                                : [...formData.rendezVous.endoscope, endoscope.id],
+                            )
+                          }
                           className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -907,7 +943,7 @@ function ResultatEndoscopieContent() {
                               <p className="font-semibold text-slate-900">{endoscope.modele}</p>
                               <p className="text-sm text-slate-500">{endoscope.serie ?? 'Série non précisée'}</p>
                             </div>
-                            <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full border text-sm ${selected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white text-slate-400'}`}>
+                            <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md border text-sm ${selected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white text-slate-400'}`}>
                               {selected ? '✓' : ''}
                             </span>
                           </div>
