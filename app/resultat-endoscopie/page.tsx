@@ -223,7 +223,7 @@ interface RendezVous {
   endoscope: string[];
   preDesinfection: PreDesinfection;
   desinfection: string;
-  kitLigature?: string;
+  kitLigature?: string[];
   elastiquesCharges?: number;
   elastiquesUtilises?: string;
 }
@@ -271,7 +271,7 @@ const initialData: CompteRenduEndoscopie = {
     endoscope: [],
     preDesinfection: "Effectuée",
     desinfection: "",
-    kitLigature: "Kit 6 élastiques",
+    kitLigature: [],
     elastiquesCharges: undefined,
     elastiquesUtilises: "Sonde urinaire",
   },
@@ -479,7 +479,13 @@ function ResultatEndoscopieContent() {
                 : prev.rendezVous.endoscope,
               preDesinfection: data.rendezVous?.preDesinfection || prev.rendezVous.preDesinfection,
               desinfection: data.rendezVous?.desinfection || prev.rendezVous.desinfection,
-              kitLigature: data.rendezVous?.kitLigature || prev.rendezVous.kitLigature,
+              // Comptes rendus enregistrés avant le passage à la sélection multiple :
+              // `kitLigature` y est encore une simple chaîne — on la normalise en tableau.
+              kitLigature: Array.isArray(data.rendezVous?.kitLigature)
+                ? data.rendezVous.kitLigature
+                : data.rendezVous?.kitLigature
+                ? [data.rendezVous.kitLigature]
+                : prev.rendezVous.kitLigature,
               elastiquesCharges:
                 data.rendezVous?.elastiquesCharges !== undefined
                   ? Number(data.rendezVous.elastiquesCharges)
@@ -985,7 +991,12 @@ function ResultatEndoscopieContent() {
 
               {isLigature && (
                 <div className="mt-6 grid gap-4">
-                  <div className="text-sm font-semibold text-slate-900">Kit ligature</div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="text-sm font-semibold text-slate-900">Kit ligature</div>
+                    <span className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                      {(formData.rendezVous.kitLigature ?? []).length} sélection{(formData.rendezVous.kitLigature ?? []).length > 1 ? 's' : ''}
+                    </span>
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {[
                       'Euroligator*',
@@ -993,12 +1004,19 @@ function ResultatEndoscopieContent() {
                       'Kit rechargeable',
                       'Boston*',
                     ].map((option) => {
-                      const selected = formData.rendezVous.kitLigature === option;
+                      const current = formData.rendezVous.kitLigature ?? [];
+                      const selected = current.includes(option);
                       return (
                         <button
                           key={option}
                           type="button"
-                          onClick={() => updateNested("rendezVous", "kitLigature", selected ? "" : option)}
+                          onClick={() =>
+                            updateNested(
+                              "rendezVous",
+                              "kitLigature",
+                              selected ? current.filter((o) => o !== option) : [...current, option],
+                            )
+                          }
                           className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1006,7 +1024,7 @@ function ResultatEndoscopieContent() {
                               <p className="font-semibold text-slate-900">{option}</p>
                               <p className="text-sm text-slate-500">&nbsp;</p>
                             </div>
-                            <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full border text-sm ${selected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white text-slate-400'}`}>
+                            <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md border text-sm ${selected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white text-slate-400'}`}>
                               {selected ? '✓' : ''}
                             </span>
                           </div>
