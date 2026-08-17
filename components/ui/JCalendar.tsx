@@ -296,9 +296,9 @@ export function JCalendar({
                         }}
                         title="Supprimer ce rendez-vous"
                         aria-label="Supprimer ce rendez-vous"
-                        className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg border border-error/30 text-error text-[9px] font-bold py-1 hover:bg-error hover:text-white transition-colors z-20 relative"
+                        className="mt-1.5 w-full flex items-center justify-center gap-1.5 rounded-lg border border-error/30 bg-error/5 text-error text-[10px] font-bold tracking-wide py-1.5 shadow-sm hover:bg-error hover:text-white hover:shadow transition-all z-20 relative"
                       >
-                        <span className="material-symbols-outlined text-[12px]">delete</span>
+                        <span className="material-symbols-outlined text-[13px]">delete</span>
                         Supprimer
                       </button>
                     )}
@@ -355,9 +355,9 @@ export function JCalendar({
                               }}
                               title="Supprimer ce rendez-vous"
                               aria-label="Supprimer ce rendez-vous"
-                              className="mt-1 w-full flex items-center justify-center gap-0.5 rounded-md border border-error/30 text-error text-[8px] font-bold py-0.5 hover:bg-error hover:text-white transition-colors"
+                              className="mt-1 w-full flex items-center justify-center gap-1 rounded-md border border-error/30 bg-error/5 text-error text-[9px] font-bold py-1 shadow-sm hover:bg-error hover:text-white hover:shadow transition-all"
                             >
-                              <span className="material-symbols-outlined text-[10px]">delete</span>
+                              <span className="material-symbols-outlined text-[11px]">delete</span>
                               Supprimer
                             </button>
                           )}
