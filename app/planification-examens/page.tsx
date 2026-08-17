@@ -16,9 +16,14 @@ function PlanificationContent() {
   const patientContext = usePatient();
 
   const patientId = searchParams.get("patientId") || patientContext.patientId || "";
-  const patientName = searchParams.get("patientName") || patientContext.patientName || "MARIE LEFEBVRE";
+  // Anciens noms de démo codés en dur ("MARIE LEFEBVRE" / "Fibroscopie Oeso-Gastro-
+  // Duodénale") — contrairement à demande-cpa, patientName/procedureParam sont
+  // réellement envoyés à la création du rendez-vous (voir handleConfirmRDV) : un repli
+  // plausible pouvait donc écrire un faux patient/examen en base. Repli honnête +
+  // garde-fou sur patientId avant tout envoi (voir handleConfirmRDV).
+  const patientName = searchParams.get("patientName") || patientContext.patientName || "";
   const priorityParam = searchParams.get("priority") || patientContext.priority || "NORMAL";
-  const procedureParam = searchParams.get("procedure") || patientContext.procedure || "Fibroscopie Oeso-Gastro-Duodénale";
+  const procedureParam = searchParams.get("procedure") || patientContext.procedure || "";
   const prescriptionId = searchParams.get("prescriptionId") || patientContext.prescriptionId || null;
   const medecinId = searchParams.get("medecinId") || null;
 
@@ -413,6 +418,20 @@ function PlanificationContent() {
   const handleConfirmRDV = async () => {
     setSubmitError(null);
 
+    // Garde-fou : sans patient ni procédure valides, on refuse d'écrire un rendez-vous
+    // en base plutôt que de laisser passer un repli vide/générique (voir patientName/
+    // procedureParam ci-dessus).
+    if (!patientId || !patientName) {
+      setSubmitError("Patient non valide. Revenez au Fil de prescription et sélectionnez à nouveau cet examen.");
+      return;
+    }
+    // Pas pertinent en planification groupée : chaque examen du groupe a déjà son
+    // propre type côté serveur (prescriptionIds), procedureParam n'y est même pas envoyé.
+    if (!procedureParam && !(planifierEnsemble && groupExams.length > 1)) {
+      setSubmitError("Type d'examen non renseigné. Revenez au Fil de prescription et sélectionnez à nouveau cet examen.");
+      return;
+    }
+
     // Garde-fou : revalide au moment de l'envoi (au cas où l'utilisateur aurait
     // soumis avant la fin de la vérification automatique en arrière-plan).
     const dateTimeDebut = buildDateTime(date, heureDebut);
@@ -586,7 +605,7 @@ function PlanificationContent() {
           <div className="flex-1">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">{patientName}</h3>
+                <h3 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">{patientName || "Patient inconnu"}</h3>
               </div>
               <div className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-normal whitespace-nowrap ${priorityIndicator.className}`}>
                 <span className="material-symbols-outlined text-[12px] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -612,7 +631,7 @@ function PlanificationContent() {
           </div>
             <div className="mt-4">
             <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">EXAMEN DEMANDÉ</p>
-            <p className="text-sm font-bold text-on-secondary-fixed leading-tight">{procedureParam}</p>
+            <p className="text-sm font-bold text-on-secondary-fixed leading-tight">{procedureParam || "Examen non précisé"}</p>
           </div>
         </div>
       </section>

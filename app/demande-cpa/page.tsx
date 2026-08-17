@@ -40,8 +40,12 @@ function DemandeCPAContent() {
   const paramPatientName = searchParams.get("patientName");
   const [fetchedPatientName, setFetchedPatientName] = useState<string | null>(null);
   const paramsPriority = searchParams.get("priority") || patientContext.priority || "NORMAL";
-  const patientName = fetchedPatientName || paramPatientName || patientContext.patientName || "MARIE LEFEBVRE";
-  const prescriber = searchParams.get("prescriber") || patientContext.prescriber || "Dr. Antoine Moreau";
+  // "MARIE LEFEBVRE" / "Dr. Antoine Moreau" étaient des noms de démo codés en dur —
+  // n'affectent jamais la demande envoyée (handleSubmit n'utilise que patientId), mais
+  // pouvaient laisser croire au médecin qu'il confirmait le bon patient/prescripteur
+  // alors que le contexte n'avait tout simplement pas encore chargé.
+  const patientName = fetchedPatientName || paramPatientName || patientContext.patientName || "Patient inconnu";
+  const prescriber = searchParams.get("prescriber") || patientContext.prescriber || "Prescripteur inconnu";
   const procedureParam = searchParams.get("procedure") || patientContext.procedure || "";
   const priorityState = paramsPriority.toUpperCase();
   const urgenceBadge = getUrgenceBadge(priorityState);

@@ -76,7 +76,10 @@ export default function Home() {
           prescriptionId: rdv.prescriptionId || rdv.prescription?.id,
           patientRealId: rdv.patient?.id || rdv.patientId,
           procedure: rdv.prescription?.typeExamen || rdv.procedure || rdv.typeExamen || "Examen Endoscopique",
-          doctor: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Dr. Antoine Moreau",
+          // "Dr. Antoine Moreau" était un nom de démo codé en dur, affiché à la place de
+          // TOUT rendez-vous sans médecin Endoscopie encore assigné (le cas le plus
+          // courant) — donnait l'impression trompeuse d'un vrai médecin assigné.
+          doctor: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Non assigné",
           status: status,
           statusClass: statusClass,
           notesCliniques: rdv.notesCliniques || rdv.notes || "Dossier en cours",
