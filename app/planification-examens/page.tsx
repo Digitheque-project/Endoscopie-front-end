@@ -422,13 +422,13 @@ function PlanificationContent() {
     // en base plutôt que de laisser passer un repli vide/générique (voir patientName/
     // procedureParam ci-dessus).
     if (!patientId || !patientName) {
-      setSubmitError("Patient non valide. Revenez au Fil de prescription et sélectionnez à nouveau cet examen.");
+      setSubmitError("Patient non valide. Revenez au Fil de travail et sélectionnez à nouveau cet examen.");
       return;
     }
     // Pas pertinent en planification groupée : chaque examen du groupe a déjà son
     // propre type côté serveur (prescriptionIds), procedureParam n'y est même pas envoyé.
     if (!procedureParam && !(planifierEnsemble && groupExams.length > 1)) {
-      setSubmitError("Type d'examen non renseigné. Revenez au Fil de prescription et sélectionnez à nouveau cet examen.");
+      setSubmitError("Type d'examen non renseigné. Revenez au Fil de travail et sélectionnez à nouveau cet examen.");
       return;
     }
 

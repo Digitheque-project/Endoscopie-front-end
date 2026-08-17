@@ -26,7 +26,7 @@ function PatientDossierPageContent() {
           <PatientDossierContent prescriptionId={prescriptionId} />
         ) : (
           <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 text-center text-on-surface-variant">
-            Aucun dossier sélectionné — recherchez un patient depuis Archives ou le Fil de prescription.
+            Aucun dossier sélectionné — recherchez un patient depuis Archives ou le Fil de travail.
           </section>
         )}
       </div>

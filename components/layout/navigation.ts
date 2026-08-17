@@ -15,7 +15,7 @@ export type HeaderMeta = {
 
 export const MAIN_LINKS: NavLink[] = [
   { href: "/", icon: "dashboard", label: "Tableau de bord" },
-  { href: "/prescriptions", icon: "medication", label: "Fil de prescription" },
+  { href: "/prescriptions", icon: "medication", label: "Fil de travail" },
   { href: "/agenda-rendez-vous", icon: "calendar_month", label: "Agenda / Rendez-vous" },
   { href: "/comptes-rendus-en-attente", icon: "edit_note", label: "Comptes rendus", roles: ["MEDECIN"] },
   { href: "/rapport", icon: "description", label: "Rapport" },
@@ -29,7 +29,7 @@ export const HEADER_BY_PATH: Record<string, HeaderMeta> = {
     icon: "dashboard",
   },
   "/prescriptions": {
-    title: "Fil de prescription",
+    title: "Fil de travail",
     subtitle: "Demandes et planification",
     icon: "medication",
   },
