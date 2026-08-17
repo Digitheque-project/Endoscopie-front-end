@@ -244,7 +244,7 @@ export function JCalendar({
                     key={app.id}
                     onClick={() => onAppointmentClick?.(app)}
                     title={`${app.typeExamen} — ${app.patient} — ${app.medecin}`}
-                    className={`absolute rounded-xl p-2.5 shadow-lg border-l-4 group cursor-pointer transition-all hover:scale-[1.02] hover:z-50 hover:shadow-2xl overflow-hidden flex flex-col min-h-[96px] ${
+                    className={`absolute rounded-xl p-2.5 shadow-lg border-l-4 group cursor-pointer transition-all hover:scale-[1.02] hover:z-50 hover:shadow-2xl overflow-visible flex flex-col min-h-[150px] ${
                       app.statut.toUpperCase() === 'URGENT' || app.statut.toUpperCase() === 'PRIORITÉ'
                         ? 'border-tertiary bg-tertiary-fixed/40 animate-pulse' :
                       app.statut.toUpperCase() === 'CONFIRMÉ'
