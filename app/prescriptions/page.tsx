@@ -549,7 +549,7 @@ function PrescriptionsContent() {
             className="inline-flex items-center gap-1 rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-surface-container-high disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[13px]">sync</span>
-            {verifyingCpaId === req.id ? "Vérification…" : "Vérifier statut CPA"}
+            {verifyingCpaId === req.id ? "Vérification…" : "Vérifier CPA"}
           </button>
           <button
             onClick={() => handleDetail(req.id)}
