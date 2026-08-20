@@ -229,6 +229,7 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
             </section>
           </div>
         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-3 flex flex-col">
           <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Équipe</p>
           <p className="text-lg font-bold">{prescripteur}</p>
@@ -261,6 +262,28 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
               </span>
             )}
           </div>
+        </div>
+
+        {/* Précautions & alertes saisies par le prescripteur d'origine (allergies,
+            contre-indications...) — toujours affiché, jamais caché quand vide, pour que
+            l'absence d'alerte soit aussi explicite que sa présence (sécurité patient). */}
+        {prescription.alertes ? (
+          <div className="bg-error-container/10 rounded-2xl shadow-sm border-2 border-error/40 p-6 space-y-2 flex flex-col">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-error">
+              <span className="material-symbols-outlined text-base">warning</span>
+              Précautions &amp; Alertes
+            </p>
+            <p className="text-lg font-bold text-error whitespace-pre-line">{prescription.alertes}</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-2 flex flex-col">
+            <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+              <span className="material-symbols-outlined text-base">shield</span>
+              Précautions &amp; Alertes
+            </p>
+            <p className="text-sm text-on-surface-variant">Aucune allergie ni précaution signalée.</p>
+          </div>
+        )}
         </div>
       </section>
     </>
