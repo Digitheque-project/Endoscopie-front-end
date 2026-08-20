@@ -225,12 +225,30 @@ function DossierSeanceContent() {
                   { key: "materielDisponible", label: "Matériel disponible" },
                   { key: "risquesVerifies", label: "Risques vérifiés" },
                   { key: "preparationAdequate", label: "Préparation adéquate" },
-                ].map(({ key, label }) => (
-                  <div key={key} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${(ca as any)[key] ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-400"}`}>
-                    <span className="material-symbols-outlined text-[14px]">{(ca as any)[key] ? "check_circle" : "cancel"}</span>
-                    {label}
-                  </div>
-                ))}
+                ].map(({ key, label }) => {
+                  // "Antibioprophylaxie" / "Anticoagulants arrêtés" sont stockés en texte
+                  // ("OUI"/"NON"/"NA", voir schema.prisma) — les autres restent des
+                  // booléens classiques. "NA" (non applicable à ce patient) ne doit
+                  // apparaître ni coché ni en échec, sinon une réponse volontaire d'ordre
+                  // clinique légitime se lit comme un oubli.
+                  const value = (ca as any)[key];
+                  const isNA = value === "NA";
+                  const isChecked = value === true || value === "OUI";
+                  return (
+                    <div
+                      key={key}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${
+                        isChecked ? "bg-emerald-50 text-emerald-700" : isNA ? "bg-slate-50 text-slate-500" : "bg-slate-50 text-slate-400"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[14px]">
+                        {isChecked ? "check_circle" : isNA ? "remove_circle" : "cancel"}
+                      </span>
+                      {label}
+                      {isNA && <span className="text-[10px] font-normal">(N/A)</span>}
+                    </div>
+                  );
+                })}
               </div>
               {ca.observations && <Field label="Observations" value={ca.observations} />}
               <div className="pt-2 border-t border-outline-variant/10">

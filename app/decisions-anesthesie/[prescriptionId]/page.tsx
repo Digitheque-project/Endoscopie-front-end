@@ -93,13 +93,26 @@ function PlanificationExamenContent() {
           statut: "Annulé",
           motifRefus: motifRefus.trim(),
         });
-        setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
+        // La prescription imbriquée dans la réponse est un instantané pris avant le
+        // cascade serveur (statut/motifRefus répercutés sur Prescription juste après) —
+        // on applique donc ici les mêmes valeurs qu'on vient d'envoyer, sans attendre un
+        // rechargement complet, sinon le motif tout juste saisi n'apparaît pas.
+        setPrescription((prev: any) => ({
+          ...prev,
+          statut: "Annulé",
+          motifRefus: motifRefus.trim(),
+          rendezVous: { ...prev.rendezVous, ...updated },
+        }));
       } else {
         const updated = await updateRendezVous(prescription.rendezVous.id, {
           typeAnesthesie: selectedAnesthesie,
           statut: "Décision rendue",
         });
-        setPrescription((prev: any) => ({ ...prev, rendezVous: { ...prev.rendezVous, ...updated } }));
+        setPrescription((prev: any) => ({
+          ...prev,
+          statut: "Décision rendue",
+          rendezVous: { ...prev.rendezVous, ...updated },
+        }));
 
         // Anesthésie locale : s'applique directement aux autres examens de la MÊME séance
         // (planifiés ensemble sur exactement le même créneau, voir session.sameSlot) —

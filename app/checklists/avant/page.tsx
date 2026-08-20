@@ -58,7 +58,7 @@ const checklistItems = [
   {
     icon: "vaccines",
     title: "Antibioprophylaxie",
-    buttons: ["OUI", "NON", "N/A"],
+    buttons: ["OUI", "NON", "NA"],
   },
   {
     icon: "checkroom",
@@ -123,8 +123,14 @@ function ChecklistAvantContent() {
         if (data) {
           const mappedAnswers: Record<string, string> = {};
           Object.entries(titleToDbKey).forEach(([title, key]) => {
-            if (data[key] === true) mappedAnswers[title] = "OUI";
-            else if (data[key] === false) mappedAnswers[title] = "NON";
+            const value = data[key];
+            // "Antibioprophylaxie" / "Gestion des antiagrégants..." : stockés en texte
+            // ("OUI"/"NON"/"NA", voir saveChecklist) — les autres items restent des
+            // booléens classiques.
+            if (typeof value === "string") {
+              if (value === "OUI" || value === "NON" || value === "NA") mappedAnswers[title] = value;
+            } else if (value === true) mappedAnswers[title] = "OUI";
+            else if (value === false) mappedAnswers[title] = "NON";
           });
           setAnswers(mappedAnswers);
         }
@@ -155,10 +161,21 @@ function ChecklistAvantContent() {
       jeuneRespecte: newAnswers["Patient a jeun"] === "OUI",
       preparationAdequate: newAnswers["Preparation adequate"] === "OUI",
       validationCollegiale: newAnswers["Validation collégiale clinique"] === "OUI",
-      anticoagulantsArretes: newAnswers["Gestion des antiagrégants/anticoagulants"] === "OUI",
-      antibioprophylaxie: newAnswers["Antibioprophylaxie"] === "OUI",
+      // Texte brut ("OUI"/"NON"/"NA") — pas de coercion en booléen ici, sinon "NA"
+      // (non applicable à ce patient) redevient indiscernable de "NON" (voir estValide
+      // ci-dessous, et schema.prisma pour le pourquoi de ce choix).
+      anticoagulantsArretes: newAnswers["Gestion des antiagrégants/anticoagulants"] || null,
+      antibioprophylaxie: newAnswers["Antibioprophylaxie"] || null,
       tenueAppropriee: newAnswers["Tenue du patient"] === "OUI",
-      estValide: Object.keys(titleToDbKey).every(title => newAnswers[title] === "OUI"),
+      // "Valide" = chaque item a une réponse concluante : "OUI", ou "NA" pour les deux
+      // items qui l'autorisent (non applicable à ce patient — pas un oubli). "NON" reste
+      // bloquant : un vrai risque signalé ne doit pas se fondre dans "checklist complète".
+      estValide: checklistItems.every((item) => {
+        const answer = newAnswers[item.title];
+        if (answer === "OUI") return true;
+        if (answer === "NA" && item.buttons.includes("NA")) return true;
+        return false;
+      }),
     };
 
     try {

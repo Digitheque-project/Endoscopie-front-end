@@ -234,8 +234,8 @@ export function JCalendar({
                      if (e.target === e.currentTarget) {
                         const rect = e.currentTarget.getBoundingClientRect();
                         const y = e.clientY - rect.top;
-                        const hour = 8 + Math.floor(y / 80);
-                        const minute = Math.floor(((y % 80) / 80) * 60);
+                        const hour = 8 + Math.floor(y / PIXELS_PER_HOUR);
+                        const minute = Math.floor(((y % PIXELS_PER_HOUR) / PIXELS_PER_HOUR) * 60);
                         onSlotClick?.(currentDate, `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
                      }
                    }}>
