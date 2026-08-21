@@ -584,7 +584,11 @@ function PrescriptionsContent() {
 
   const baseFiltered = useMemo(() => {
     if (role === "MEDECIN") {
-      if (medecinTab === "tous") return allRequests;
+      // "Tous" doit quand même exclure les dossiers Terminé (compte-rendu déjà
+      // enregistré, archivés) — sans filtre du tout ici, un patient totalement pris en
+      // charge restait affiché dans le Fil de travail indéfiniment. Un examen refusé
+      // reste volontairement visible (traçabilité), lui.
+      if (medecinTab === "tous") return allRequests.filter((p) => p.status !== "Terminé");
       return allRequests.filter((p) => medecinRowState(p) === medecinTab);
     }
     return allRequests.filter((p) => MAJOR_TRACKED_STATUTS.has(p.status));
