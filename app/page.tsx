@@ -125,6 +125,26 @@ export default function Home() {
     return matchesNom && matchesProcedure && matchesMedecin && matchesDate;
   });
 
+  // Un même patient planifié plusieurs examens sur exactement le même créneau (une
+  // seule séance, ex. coloscopie + fibroscopie) apparaissait sur autant de lignes
+  // séparées qu'il y a d'examens — regroupées ici en une seule ligne, comme dans le
+  // Fil de travail (voir groupedRequests dans app/prescriptions/page.tsx).
+  const groupedSchedule = (() => {
+    const groups = new Map<string, typeof filteredSchedule>();
+    const order: string[] = [];
+    for (const item of filteredSchedule) {
+      const key = item.patientRealId
+        ? `${item.patientRealId}-${item.rawStart.getTime()}`
+        : `single-${item.id}`;
+      if (!groups.has(key)) {
+        groups.set(key, []);
+        order.push(key);
+      }
+      groups.get(key)!.push(item);
+    }
+    return order.map((key) => groups.get(key)!);
+  })();
+
   const fetchSalles = async (showLoading = true) => {
     if (showLoading) setIsRefreshing(true);
     try {
@@ -443,7 +463,7 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/10">
-                  {filteredSchedule.length === 0 ? (
+                  {groupedSchedule.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-8 text-center">
                         <div className="flex flex-col items-center gap-2">
@@ -459,8 +479,17 @@ export default function Home() {
                       </td>
                     </tr>
                   ) : (
-                    filteredSchedule.map((item) => (
-                      <tr key={`${item.time}-${item.id}`} className="hover:bg-surface-container-low transition-colors cursor-pointer">
+                    groupedSchedule.map((group) => {
+                      const isGrouped = group.length > 1;
+                      // Représentant du groupe pour Médecin/Motif/Statut/Détails/Action : celui
+                      // qui a le plus besoin d'une action, pour ne pas masquer une décision
+                      // encore en attente derrière un examen déjà traité du même groupe.
+                      const item =
+                        group.find((it) => role === "MEDECIN" && !it.typeAnesthesie && it.prescriptionId) ||
+                        group.find((it) => it.status === "Décision rendue") ||
+                        group[0];
+                      return (
+                    <tr key={`${item.time}-${item.id}`} className="hover:bg-surface-container-low transition-colors cursor-pointer">
                         <td className="px-6 py-2">
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-bold text-primary tabular-nums">{item.time}</span>
@@ -469,7 +498,27 @@ export default function Home() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-2 text-sm font-medium leading-tight">{item.procedure}</td>
+                        <td className="px-6 py-2">
+                          <div className="flex flex-wrap gap-1">
+                            {group.map((it, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-semibold text-on-surface"
+                              >
+                                {it.procedure}
+                              </span>
+                            ))}
+                            {isGrouped && (
+                              <span
+                                title="Ces examens sont planifiés sur le même créneau (une seule séance)"
+                                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600"
+                              >
+                                <span className="material-symbols-outlined text-[12px]">layers</span>
+                                {group.length}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-6 py-2 text-sm text-on-surface-variant leading-tight">{item.doctor}</td>
                         <td className="px-6 py-2">
                           <div className="max-w-[180px]">
@@ -547,7 +596,8 @@ export default function Home() {
                           </div>
                         </td>
                       </tr>
-                    )))}
+                      );
+                    }))}
                 </tbody>
               </table>
             </div>

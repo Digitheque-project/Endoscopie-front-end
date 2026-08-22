@@ -212,6 +212,50 @@ function mergeNotifications(
   );
 }
 
+// Une notification arrivée par le chemin "direct" (loadNotifications, isLocal: false —
+// y compris quand il passe par notre backend, voir refresh ci-dessous) n'a aucun suivi
+// "lu" persistant côté serveur, contrairement à la boîte locale (fetchNotificationInbox).
+// Marquer un tel item comme lu ne survivait donc qu'en mémoire React : la moindre
+// navigation (chaque page réinstancie son propre AppShell/NotificationBell) démontait le
+// composant et perdait cet état, faisant réapparaître la notification comme non lue et
+// le compteur ne redescendait jamais. On mémorise donc aussi côté navigateur.
+const READ_STORAGE_KEY = "endoscopie_notif_read_ids";
+const MAX_STORED_READ_IDS = 300;
+
+function getStoredReadIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(READ_STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function markIdReadInStorage(key: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const ids = getStoredReadIds();
+    ids.add(key);
+    // Borne la taille pour ne pas grossir indéfiniment — garde les entrées les plus
+    // récentes en tronquant les plus anciennes.
+    window.localStorage.setItem(READ_STORAGE_KEY, JSON.stringify([...ids].slice(-MAX_STORED_READ_IDS)));
+  } catch {
+    // Stockage indisponible (navigation privée...) — tant pis, pas bloquant.
+  }
+}
+
+/** Applique le suivi "lu" mémorisé côté navigateur à une liste fraîchement chargée. */
+function applyStoredReadStatus(list: DisplayNotification[]): DisplayNotification[] {
+  const stored = getStoredReadIds();
+  if (stored.size === 0) return list;
+  return list.map((n) =>
+    n.readAt || !stored.has(n.externalId ?? n.id)
+      ? n
+      : { ...n, readAt: new Date().toISOString() },
+  );
+}
+
 function playNotificationSound() {
   if (typeof window === "undefined") return;
   try {
@@ -288,10 +332,12 @@ export function NotificationBell() {
         loadNotifications("ENVOYE"),
         fetchNotificationInbox(),
       ]);
-      const merged = mergeNotifications(
-        remote.map(fromRemote),
-        inbox.map(fromInbox),
-      ).filter((n) => isVisibleForRole(n.type, role));
+      const merged = applyStoredReadStatus(
+        mergeNotifications(
+          remote.map(fromRemote),
+          inbox.map(fromInbox),
+        ).filter((n) => isVisibleForRole(n.type, role)),
+      );
       merged.forEach((n) => seenIds.current.add(n.externalId ?? n.id));
       setItems(merged.slice(0, 50));
     } catch (e) {
@@ -324,6 +370,10 @@ export function NotificationBell() {
       if (item.isLocal) {
         await markInboxNotificationRead(item.id).catch(() => undefined);
       }
+      // Mémorisé côté navigateur dans tous les cas (pas seulement isLocal) — sans ça,
+      // une notification arrivée par le chemin direct redevient non lue à la moindre
+      // navigation, le compteur ne redescend jamais (voir applyStoredReadStatus).
+      markIdReadInStorage(item.externalId ?? item.id);
       setItems((prev) =>
         prev.map((n) =>
           n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n,
