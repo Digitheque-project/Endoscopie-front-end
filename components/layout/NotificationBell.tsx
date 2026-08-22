@@ -267,26 +267,28 @@ const CATCHUP_TOAST_ID = "session-catchup";
 const moduleSeenIds = new Set<string>();
 
 // Le toast/son "pendant votre absence" (voir refresh) ne doit sonner qu'une seule fois par
-// vraie session — à la connexion, jamais en re-naviguant entre les pages. sessionStorage
-// (pas une variable de module) : survit de façon fiable à chaque remontage de page, quelle
-// qu'en soit la cause, et se réinitialise proprement à la fermeture de l'onglet/du
-// navigateur — contrairement à une variable de module, qui s'est avérée se réinitialiser
-// de façon inattendue à la navigation (le son se redéclenchait à chaque changement de page).
-const CATCHUP_DONE_KEY = "endoscopie_notif_catchup_done";
+// connexion — jamais en re-naviguant entre les pages, mais bien de nouveau si un autre
+// utilisateur (ou le même sous un autre rôle — Major/Médecin partagent souvent le même
+// poste) se connecte ensuite dans le même onglet, sans le fermer. D'où une clé par identité
+// (rôle + médecin, voir hasShownCatchupThisSession) plutôt qu'une clé fixe : une simple clé
+// fixe dans sessionStorage restait logiquement "déjà montrée" après une déconnexion/
+// reconnexion dans le même onglet, empêchant le résumé de resonner pour le nouvel
+// utilisateur alors qu'il avait bien manqué quelque chose.
+const CATCHUP_DONE_PREFIX = "endoscopie_notif_catchup_done:";
 
-function hasShownCatchupThisSession(): boolean {
+function hasShownCatchupThisSession(identityKey: string): boolean {
   if (typeof window === "undefined") return true;
   try {
-    return window.sessionStorage.getItem(CATCHUP_DONE_KEY) === "1";
+    return window.sessionStorage.getItem(CATCHUP_DONE_PREFIX + identityKey) === "1";
   } catch {
     return true;
   }
 }
 
-function markCatchupShown() {
+function markCatchupShown(identityKey: string) {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(CATCHUP_DONE_KEY, "1");
+    window.sessionStorage.setItem(CATCHUP_DONE_PREFIX + identityKey, "1");
   } catch {
     // Stockage indisponible — tant pis, au pire un résumé pourrait resonner une fois de trop.
   }
@@ -329,7 +331,11 @@ function playNotificationSound() {
 
 export function NotificationBell() {
   const router = useRouter();
-  const { role } = useAuth();
+  const { role, medecinId } = useAuth();
+  // Identifie l'utilisateur connecté pour le rattrapage "pendant votre absence" (voir
+  // hasShownCatchupThisSession) — medecinId d'abord (distingue deux médecins), rôle en
+  // repli (utile pour Major, qui n'a pas de medecinId propre).
+  const identityKey = medecinId || role || "anonyme";
   const [open, setOpen] = useState(false);
   // Une notification lue disparaissait définitivement du panneau, sans aucun moyen de
   // la retrouver — cet onglet garde un historique consultable des notifications déjà lues.
@@ -382,8 +388,8 @@ export function NotificationBell() {
       // ordinaire, sinon toute notification encore non lue resonnerait toutes les 30
       // secondes tant qu'elle n'est pas ouverte. Les arrivées en direct pendant que
       // l'utilisateur est connecté sont déjà couvertes par upsert (flux temps réel).
-      if (!hasShownCatchupThisSession()) {
-        markCatchupShown();
+      if (!hasShownCatchupThisSession(identityKey)) {
+        markCatchupShown(identityKey);
         const unread = merged.filter((n) => !n.readAt);
         if (unread.length === 1) {
           showToast(unread[0]);
@@ -402,7 +408,7 @@ export function NotificationBell() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     }
-  }, [role]);
+  }, [role, identityKey]);
 
   useEffect(() => {
     refresh();
