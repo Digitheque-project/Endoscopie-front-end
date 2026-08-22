@@ -100,7 +100,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
     <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-6 max-w-5xl">
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
-          <span className="material-symbols-outlined text-2xl">contact_page</span>
+          <span className="material-symbols-outlined text-2xl">description</span>
         </div>
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Dossier patient</p>

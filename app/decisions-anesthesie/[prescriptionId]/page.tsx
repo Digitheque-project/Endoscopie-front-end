@@ -256,7 +256,7 @@ function PlanificationExamenContent() {
                   aria-label="Voir le dossier patient complet"
                   className="flex items-center justify-center w-11 h-11 rounded-xl border border-outline-variant/20 text-primary hover:bg-primary/10 transition-colors shrink-0"
                 >
-                  <span className="material-symbols-outlined text-2xl">contact_page</span>
+                  <span className="material-symbols-outlined text-2xl">description</span>
                 </button>
               </section>
 
