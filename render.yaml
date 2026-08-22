@@ -18,7 +18,7 @@ services:
       # le proxy retombe sur http://127.0.0.1:3333 (inexistant sur Render) et
       # tous les appels /api/* échouent avec "Impossible de contacter le serveur".
       - key: BACKEND_URL
-        value: https://endoscopie-api.onrender.com
+        value: https://endoscopie-back.onrender.com
       - key: NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID
         value: ab97eaaa-9239-4f37-b5d7-d652c4231cc7
       - key: NEXT_PUBLIC_ENDOSCOPIE_CHU_ID
