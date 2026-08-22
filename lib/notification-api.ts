@@ -1,9 +1,9 @@
-import { apiUrl } from './api';
+import { apiUrl, currentRoleHeaders } from './api';
 import { ENDOSCOPIE_SERVICE_ID } from './config';
 
 const NOTIFICATION_API_URL =
   process.env.NEXT_PUBLIC_NOTIFICATION_API_URL?.trim().replace(/\/$/, '') ||
-  'https://service-notification-nlqp.onrender.com';
+  'https://gateway-bwm4.onrender.com';
 
 export type NotificationItem = {
   id?: string;
@@ -99,8 +99,12 @@ export async function fetchNotificationsViaBackend(
 export async function fetchNotificationsDirect(
   status = 'ENVOYE',
 ): Promise<NotificationItem[]> {
+  // Passé par le gateway CHU : jeton Bearer obligatoire, contrairement à l'ancien appel
+  // direct au service notification. Seul jeton disponible côté navigateur : celui de
+  // l'utilisateur connecté (voir currentRoleHeaders) — pas de compte de service ici.
   const resp = await fetch(
     `${NOTIFICATION_API_URL}/notifications?status=${encodeURIComponent(status)}`,
+    { headers: currentRoleHeaders() },
   );
   if (!resp.ok) {
     throw new Error(`Notifications direct (${resp.status})`);

@@ -21,12 +21,13 @@ export const ENDOSCOPIE_SERVICE_ID = requireEnv('NEXT_PUBLIC_ENDOSCOPIE_SERVICE_
 export const ENDOSCOPIE_CHU_ID = requireEnv('NEXT_PUBLIC_ENDOSCOPIE_CHU_ID', process.env.NEXT_PUBLIC_ENDOSCOPIE_CHU_ID);
 
 /**
- * Gateway du service d'authentification centralisé (auth-service + user-service,
- * proxifiés). Point d'entrée unique pour /auth/login, /auth/register, etc.
+ * Gateway unique de l'écosystème CHU (auth, users, services, chu, accueil,
+ * notification...), chacun sous son propre préfixe de chemin. Point d'entrée pour
+ * /auth/login, /auth/register, etc.
  */
 export const AUTH_GATEWAY_URL =
   process.env.NEXT_PUBLIC_AUTH_GATEWAY_URL?.trim().replace(/\/$/, '') ||
-  'https://auth-service-tnqp.onrender.com';
+  'https://gateway-bwm4.onrender.com';
 
 /**
  * serviceId du service « Endoscopie » tel qu'enregistré dans le registre central

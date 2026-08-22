@@ -122,7 +122,7 @@ export async function renvoyerCpaAuBloc(dossierId: string) {
  * backend s'en sert pour interroger le service utilisateurs (liste des médecins) avec
  * l'identité de l'utilisateur courant plutôt qu'un compte de service séparé.
  */
-function currentRoleHeaders(): Record<string, string> {
+export function currentRoleHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {};
   try {
     const saved = window.localStorage.getItem('current_auth_context');
