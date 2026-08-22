@@ -8,7 +8,7 @@ import { apiFetch, apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { useAuth } from "@/contexts/AuthContext";
 import MicButton from "@/components/voice/MicButton";
-import { appendFinalSegment } from "@/components/voice/formatTranscript";
+import { appendFinalSegment, capitalizeFirst } from "@/components/voice/formatTranscript";
 import {
   type TypeExamen,
   type Constatations,
@@ -749,7 +749,7 @@ function ResultatEndoscopieContent() {
                         }`}
                       >
                         {exam.hasResultat && <span className="material-symbols-outlined text-[14px]">check_circle</span>}
-                        {exam.typeExamen}
+                        {capitalizeFirst(exam.typeExamen)}
                       </button>
                     ))
                   )}

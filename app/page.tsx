@@ -9,6 +9,8 @@ import ProcedureCountsCard, { type ProcedureCount } from "@/components/dashboard
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { useAuth } from "@/contexts/AuthContext";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 import { useState, useEffect, useRef, Fragment, type KeyboardEvent } from "react";
 
 /** Date locale (YYYY-MM-DD) — cohérent avec le filtrage "aujourd'hui" côté backend. */
@@ -503,9 +505,9 @@ export default function Home() {
                             {group.map((it, i) => (
                               <span
                                 key={i}
-                                className="inline-flex max-w-full items-center truncate rounded-full bg-surface-container px-2 py-0.5 text-[11px] font-semibold text-on-surface"
+                                className={`inline-flex max-w-full items-center truncate rounded-full px-2 py-0.5 text-[11px] font-bold ${getExamTypeBadgeClass(it.procedure)}`}
                               >
-                                {it.procedure}
+                                {capitalizeFirst(it.procedure)}
                               </span>
                             ))}
                             {isGrouped && (

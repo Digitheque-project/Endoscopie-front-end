@@ -256,6 +256,19 @@ function applyStoredReadStatus(list: DisplayNotification[]): DisplayNotification
   );
 }
 
+/** Id spécial du toast "rattrapage" affiché après connexion (voir refresh) — n'ouvre
+ *  jamais de détail au clic (aucune prescription unique à ouvrir), seulement le panneau. */
+const CATCHUP_TOAST_ID = "session-catchup";
+
+// Au niveau du module (pas useRef) : chaque page réinstancie sa propre NotificationBell
+// en la démontant/remontant (voir AppShell, un par page plutôt qu'un layout racine unique)
+// — un useRef y serait réinitialisé à chaque navigation, redéclenchant le toast de
+// rattrapage à chaque clic de menu au lieu d'une seule fois à la vraie connexion. Ces deux
+// variables survivent tant que l'onglet reste ouvert (réinitialisées seulement par un
+// rechargement complet de la page, ce qu'une vraie connexion SSO déclenche justement).
+const moduleSeenIds = new Set<string>();
+let moduleHasShownCatchup = false;
+
 function playNotificationSound() {
   if (typeof window === "undefined") return;
   try {
@@ -301,7 +314,6 @@ export function NotificationBell() {
   const [items, setItems] = useState<DisplayNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<DisplayNotification | null>(null);
-  const seenIds = useRef(new Set<string>());
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -316,8 +328,8 @@ export function NotificationBell() {
     (item: DisplayNotification) => {
       if (!isVisibleForRole(item.type, role)) return;
       const key = item.externalId ?? item.id;
-      if (seenIds.current.has(key)) return;
-      seenIds.current.add(key);
+      if (moduleSeenIds.has(key)) return;
+      moduleSeenIds.add(key);
       setItems((prev) => mergeNotifications([item], prev).slice(0, 50));
       showToast(item);
       playNotificationSound();
@@ -338,8 +350,37 @@ export function NotificationBell() {
           inbox.map(fromInbox),
         ).filter((n) => isVisibleForRole(n.type, role)),
       );
-      merged.forEach((n) => seenIds.current.add(n.externalId ?? n.id));
+
+      // Non lues et jamais vues dans cette session — soit arrivées pendant l'absence
+      // (avant la connexion, détecté au tout premier chargement ci-dessous), soit
+      // apparues entre deux sondages sans passer par le flux temps réel (SSE), qui les
+      // aurait déjà signalées via upsert.
+      const newlySeenUnread = merged.filter(
+        (n) => !n.readAt && !moduleSeenIds.has(n.externalId ?? n.id),
+      );
+      merged.forEach((n) => moduleSeenIds.add(n.externalId ?? n.id));
       setItems(merged.slice(0, 50));
+
+      // Un seul toast (son inclus) même quand plusieurs sont détectées d'un coup — à la
+      // connexion après une longue absence comme lors d'un sondage périodique, pas une
+      // rafale qui s'écraserait de toute façon les unes les autres (un seul toast affiché
+      // à la fois).
+      if (newlySeenUnread.length === 1) {
+        showToast(newlySeenUnread[0]);
+        playNotificationSound();
+      } else if (newlySeenUnread.length > 1) {
+        showToast({
+          id: CATCHUP_TOAST_ID,
+          type: "",
+          motif: moduleHasShownCatchup
+            ? `${newlySeenUnread.length} nouvelles notifications reçues.`
+            : `${newlySeenUnread.length} nouvelles notifications reçues pendant votre absence.`,
+          receivedAt: new Date().toISOString(),
+          isLocal: false,
+        });
+        playNotificationSound();
+      }
+      moduleHasShownCatchup = true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     }
@@ -432,7 +473,13 @@ export function NotificationBell() {
           onClick={() => {
             if (toastTimer.current) clearTimeout(toastTimer.current);
             setToast(null);
-            handleOpenItem(toast);
+            // Le résumé "pendant votre absence" regroupe plusieurs notifications — rien
+            // d'unique à ouvrir, on ouvre simplement le panneau complet.
+            if (toast.id === CATCHUP_TOAST_ID) {
+              setOpen(true);
+            } else {
+              handleOpenItem(toast);
+            }
           }}
           className={`fixed top-20 right-4 sm:right-6 z-[60] w-[calc(100vw-2rem)] max-w-80 rounded-xl border border-primary/30 shadow-2xl p-4 cursor-pointer hover:brightness-95 transition-[filter] animate-in fade-in slide-in-from-top-2 ${getNotificationBgClass(toast.type)} ${getNotificationBorderClass(toast.type)}`}
         >
@@ -442,11 +489,13 @@ export function NotificationBell() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-primary uppercase tracking-wide">
-                Nouvelle notification
+                {toast.id === CATCHUP_TOAST_ID ? "Pendant votre absence" : "Nouvelle notification"}
               </p>
-              <p className="text-sm font-semibold text-slate-800 mt-0.5 truncate">
-                {typeLabel(toast.type)}
-              </p>
+              {toast.id !== CATCHUP_TOAST_ID && (
+                <p className="text-sm font-semibold text-slate-800 mt-0.5 truncate">
+                  {typeLabel(toast.type)}
+                </p>
+              )}
               <p className="text-sm text-slate-600 mt-1 line-clamp-2">{splitMotifProcedures(toast.motif).text}</p>
               <ProcedureBadges procedures={splitMotifProcedures(toast.motif).procedures} />
             </div>

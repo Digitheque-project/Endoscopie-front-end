@@ -8,6 +8,7 @@ import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -185,11 +186,11 @@ function DossierSeanceContent() {
                   .filter(Boolean).join(" • ")}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="px-3 py-1 rounded-full bg-secondary-container text-secondary text-xs font-bold uppercase tracking-wider">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getExamTypeBadgeClass(prescription.typeExamen)}`}>
                   {prescription.typeExamen}
                 </span>
                 {rdv?.typeExamenSecondaire && (
-                  <span className="px-3 py-1 rounded-full bg-tertiary-fixed text-tertiary text-xs font-bold uppercase tracking-wider">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getExamTypeBadgeClass(rdv.typeExamenSecondaire)}`}>
                     + {rdv.typeExamenSecondaire}
                   </span>
                 )}

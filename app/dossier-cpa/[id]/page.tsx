@@ -8,6 +8,7 @@ import { apiJson, verifierStatutCpa, renvoyerCpaAuBloc } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -151,7 +152,7 @@ function DossierCpaContent() {
                     })()}
                   </p>
                   {dossier.prescription?.typeExamen && (
-                    <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-secondary-container text-secondary text-[10px] font-bold uppercase tracking-wider">
+                    <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getExamTypeBadgeClass(dossier.prescription.typeExamen)}`}>
                       {dossier.prescription.typeExamen}
                     </span>
                   )}

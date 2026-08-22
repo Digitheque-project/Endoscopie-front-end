@@ -7,6 +7,7 @@ import { RequireRole } from "@/components/auth/RequireRole";
 import { apiJson, updateRendezVous } from "@/lib/api";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -228,9 +229,16 @@ function PlanificationExamenContent() {
                       return age != null ? `${age} ans` : null;
                     })()}
                   </p>
-                  <span className="inline-block mt-2 px-2 py-0.5 rounded-full bg-secondary-container text-secondary text-[10px] font-bold uppercase tracking-wider">
-                    {session?.sameSlot ? session.exams.map((e) => e.typeExamen).join(" + ") : prescription.typeExamen}
-                  </span>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {(session?.sameSlot ? session.exams.map((e) => e.typeExamen) : [prescription.typeExamen]).map((t, i) => (
+                      <span
+                        key={i}
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getExamTypeBadgeClass(t)}`}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
                   {session?.sameSlot && (
                     <p className="mt-1.5 text-[10px] font-semibold text-amber-600">
                       Session groupée — la décision s&apos;appliquera aux {session.exams.length} examens de cette séance.

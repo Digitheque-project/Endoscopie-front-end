@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
 import StatBadge from "@/components/ui/StatBadge";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 const INACTIVE_STATUTS = new Set(["Annulé", "Terminé"]);
 
@@ -667,7 +668,7 @@ function PlanificationContent() {
                   className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1.5 text-xs font-bold"
                 >
                   <span className="material-symbols-outlined text-[14px]">medical_services</span>
-                  {exam.procedure}
+                  {capitalizeFirst(exam.procedure)}
                 </span>
               ))}
             </div>
@@ -690,7 +691,7 @@ function PlanificationContent() {
                     }`}
                   >
                     {isPlanned && !isActive && <span className="material-symbols-outlined text-[14px]">check_circle</span>}
-                    {exam.procedure}
+                    {capitalizeFirst(exam.procedure)}
                   </button>
                 );
               })}

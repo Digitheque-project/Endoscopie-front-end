@@ -9,6 +9,7 @@ import { apiFetch, apiJson, apiUrl } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 const checklistItems = [
   {
@@ -257,13 +258,13 @@ function ChecklistAvantContent() {
                           key={exam.id}
                           className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${getExamTypeBadgeClass(exam.typeExamen)}`}
                         >
-                          {exam.typeExamen}
+                          {capitalizeFirst(exam.typeExamen)}
                         </span>
                       ))}
                     </div>
                   ) : (
                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${getExamTypeBadgeClass(procedure || "")}`}>
-                      {procedure}
+                      {capitalizeFirst(procedure || "")}
                     </span>
                   )}
                   <p className="text-sm text-slate-600 mt-1">Date : 24/10/2023</p>

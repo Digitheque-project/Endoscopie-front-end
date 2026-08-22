@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 export interface JCalendarAppointment {
   id: string;
@@ -162,7 +163,7 @@ export function JCalendar({
                     {app.statut}
                   </span>
                 </div>
-                <p className="text-xs text-on-surface-variant truncate mt-0.5">{app.typeExamen}</p>
+                <p className="text-xs text-on-surface-variant truncate mt-0.5">{capitalizeFirst(app.typeExamen)}</p>
                 <div className="flex items-center justify-between gap-2 mt-1.5 text-[10px] font-bold text-on-surface-variant">
                   {app.medecin && app.medecin !== "Médecin non assigné" ? (
                     <span className="flex items-center gap-1 min-w-0 truncate">
@@ -260,7 +261,7 @@ export function JCalendar({
                     }}
                   >
                     <div className="flex justify-between items-start gap-1.5">
-                      <h4 className="text-xs font-extrabold text-on-surface leading-tight truncate min-w-0 flex-1 group-hover:text-primary transition-colors">{app.typeExamen}</h4>
+                      <h4 className="text-xs font-extrabold text-on-surface leading-tight truncate min-w-0 flex-1 group-hover:text-primary transition-colors">{capitalizeFirst(app.typeExamen)}</h4>
                       <span className={`shrink-0 whitespace-nowrap text-[7px] font-bold px-1 py-0.5 rounded-full uppercase tracking-tight leading-none shadow-sm ${
                         app.statut.toUpperCase() === 'URGENT' ? 'bg-tertiary text-white' :
                         app.statut.toUpperCase() === 'CONFIRMÉ' ? 'bg-primary text-white' :

@@ -9,6 +9,7 @@ import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -193,7 +194,7 @@ const [rows, setRows] = useState<any[]>([]);
                               key={row.id}
                               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${getExamTypeBadgeClass(row.typeExamen)}`}
                             >
-                              {row.typeExamen}
+                              {capitalizeFirst(row.typeExamen)}
                             </span>
                           ))}
                         </div>

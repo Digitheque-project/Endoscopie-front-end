@@ -3,6 +3,8 @@
 import { AppShell, PAGE_CONTENT_CLASS } from "@/components/layout/AppShell";
 import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 type Period = "week" | "month";
 
@@ -155,7 +157,9 @@ export default function RapportPage() {
                 <div className="space-y-3">
                   {stats.parTypeExamen.map((row) => (
                     <div key={row.typeExamen} className="flex items-center gap-4">
-                      <p className="w-56 shrink-0 text-sm font-medium text-on-surface truncate">{row.typeExamen}</p>
+                      <span className={`w-56 shrink-0 truncate rounded-full px-2.5 py-1 text-center text-[11px] font-bold ${getExamTypeBadgeClass(row.typeExamen)}`}>
+                        {capitalizeFirst(row.typeExamen)}
+                      </span>
                       <div className="flex-1 h-2.5 rounded-full bg-surface-container-high overflow-hidden">
                         <div
                           className="h-full rounded-full bg-primary"

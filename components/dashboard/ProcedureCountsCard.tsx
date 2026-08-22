@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment } from "react";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 export type ProcedureCount = {
   procedure: string;
@@ -40,16 +41,16 @@ export default function ProcedureCountsCard({
             {totalProceduresToday.toString().padStart(2, '0')}
           </h3>
           {procedureCounts.length > 0 ? (
-            <p className="mt-1.5 max-h-10 overflow-y-auto text-[11px] leading-relaxed text-on-surface-variant scrollbar-thin scrollbar-thumb-outline-variant/30 scrollbar-track-transparent">
-              {procedureCounts.map(({ procedure, count }, index) => (
-                <Fragment key={procedure}>
-                  <span className="font-bold text-on-surface">{count}</span> {procedure}
-                  {index < procedureCounts.length - 1 && (
-                    <span className="mx-1.5 text-outline-variant">•</span>
-                  )}
-                </Fragment>
+            <div className="mt-1.5 flex max-h-10 flex-wrap gap-1 overflow-y-auto scrollbar-thin scrollbar-thumb-outline-variant/30 scrollbar-track-transparent">
+              {procedureCounts.map(({ procedure, count }) => (
+                <span
+                  key={procedure}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${getExamTypeBadgeClass(procedure)}`}
+                >
+                  {count} {capitalizeFirst(procedure)}
+                </span>
               ))}
-            </p>
+            </div>
           ) : (
             <p className="mt-1.5 text-[11px] text-on-surface-variant">
               Aucune procédure programmée aujourd&apos;hui.

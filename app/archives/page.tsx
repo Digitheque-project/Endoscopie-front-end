@@ -7,6 +7,8 @@ import { PageToolbar } from "@/components/layout/PageToolbar";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
+import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 interface ArchiveRow {
   prescriptionId: string;
@@ -260,7 +262,11 @@ export default function ArchivesPage() {
                           <div>{row.patientNom} {row.patientPrenom}</div>
                           <PriseEnChargeBadge priseEnChargeId={row.priseEnChargeId} className="mt-0.5" />
                         </td>
-                        <td className="px-4 py-3 text-sm">{row.typeExamen}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${getExamTypeBadgeClass(row.typeExamen)}`}>
+                            {capitalizeFirst(row.typeExamen)}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-sm text-on-surface-variant">{row.typeAnesthesie || "—"}</td>
                         <td className="px-4 py-3 text-sm text-on-surface-variant">{row.prescripteur || "—"}</td>
                         <td className="px-4 py-3 text-sm">{row.cpaStatut || "Non demandé"}</td>
