@@ -260,14 +260,37 @@ function applyStoredReadStatus(list: DisplayNotification[]): DisplayNotification
  *  jamais de détail au clic (aucune prescription unique à ouvrir), seulement le panneau. */
 const CATCHUP_TOAST_ID = "session-catchup";
 
-// Au niveau du module (pas useRef) : chaque page réinstancie sa propre NotificationBell
-// en la démontant/remontant (voir AppShell, un par page plutôt qu'un layout racine unique)
-// — un useRef y serait réinitialisé à chaque navigation, redéclenchant le toast de
-// rattrapage à chaque clic de menu au lieu d'une seule fois à la vraie connexion. Ces deux
-// variables survivent tant que l'onglet reste ouvert (réinitialisées seulement par un
-// rechargement complet de la page, ce qu'une vraie connexion SSO déclenche justement).
+// Dédoublonnage des arrivées SSE (voir upsert) — au niveau du module (pas useRef) : chaque
+// page réinstancie sa propre NotificationBell en la démontant/remontant (voir AppShell, un
+// par page plutôt qu'un layout racine unique), et un useRef y serait réinitialisé à chaque
+// navigation. Survit tant que l'onglet reste ouvert.
 const moduleSeenIds = new Set<string>();
-let moduleHasShownCatchup = false;
+
+// Le toast/son "pendant votre absence" (voir refresh) ne doit sonner qu'une seule fois par
+// vraie session — à la connexion, jamais en re-naviguant entre les pages. sessionStorage
+// (pas une variable de module) : survit de façon fiable à chaque remontage de page, quelle
+// qu'en soit la cause, et se réinitialise proprement à la fermeture de l'onglet/du
+// navigateur — contrairement à une variable de module, qui s'est avérée se réinitialiser
+// de façon inattendue à la navigation (le son se redéclenchait à chaque changement de page).
+const CATCHUP_DONE_KEY = "endoscopie_notif_catchup_done";
+
+function hasShownCatchupThisSession(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return window.sessionStorage.getItem(CATCHUP_DONE_KEY) === "1";
+  } catch {
+    return true;
+  }
+}
+
+function markCatchupShown() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(CATCHUP_DONE_KEY, "1");
+  } catch {
+    // Stockage indisponible — tant pis, au pire un résumé pourrait resonner une fois de trop.
+  }
+}
 
 function playNotificationSound() {
   if (typeof window === "undefined") return;
@@ -351,36 +374,31 @@ export function NotificationBell() {
         ).filter((n) => isVisibleForRole(n.type, role)),
       );
 
-      // Non lues et jamais vues dans cette session — soit arrivées pendant l'absence
-      // (avant la connexion, détecté au tout premier chargement ci-dessous), soit
-      // apparues entre deux sondages sans passer par le flux temps réel (SSE), qui les
-      // aurait déjà signalées via upsert.
-      const newlySeenUnread = merged.filter(
-        (n) => !n.readAt && !moduleSeenIds.has(n.externalId ?? n.id),
-      );
       merged.forEach((n) => moduleSeenIds.add(n.externalId ?? n.id));
       setItems(merged.slice(0, 50));
 
-      // Un seul toast (son inclus) même quand plusieurs sont détectées d'un coup — à la
-      // connexion après une longue absence comme lors d'un sondage périodique, pas une
-      // rafale qui s'écraserait de toute façon les unes les autres (un seul toast affiché
-      // à la fois).
-      if (newlySeenUnread.length === 1) {
-        showToast(newlySeenUnread[0]);
-        playNotificationSound();
-      } else if (newlySeenUnread.length > 1) {
-        showToast({
-          id: CATCHUP_TOAST_ID,
-          type: "",
-          motif: moduleHasShownCatchup
-            ? `${newlySeenUnread.length} nouvelles notifications reçues.`
-            : `${newlySeenUnread.length} nouvelles notifications reçues pendant votre absence.`,
-          receivedAt: new Date().toISOString(),
-          isLocal: false,
-        });
-        playNotificationSound();
+      // Le son/toast "pendant votre absence" ne se déclenche qu'une seule fois par vraie
+      // session (voir hasShownCatchupThisSession) — jamais à un sondage périodique
+      // ordinaire, sinon toute notification encore non lue resonnerait toutes les 30
+      // secondes tant qu'elle n'est pas ouverte. Les arrivées en direct pendant que
+      // l'utilisateur est connecté sont déjà couvertes par upsert (flux temps réel).
+      if (!hasShownCatchupThisSession()) {
+        markCatchupShown();
+        const unread = merged.filter((n) => !n.readAt);
+        if (unread.length === 1) {
+          showToast(unread[0]);
+          playNotificationSound();
+        } else if (unread.length > 1) {
+          showToast({
+            id: CATCHUP_TOAST_ID,
+            type: "",
+            motif: `${unread.length} nouvelles notifications reçues pendant votre absence.`,
+            receivedAt: new Date().toISOString(),
+            isLocal: false,
+          });
+          playNotificationSound();
+        }
       }
-      moduleHasShownCatchup = true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     }
