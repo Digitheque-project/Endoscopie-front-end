@@ -26,7 +26,7 @@ export const ENDOSCOPIE_CHU_ID = requireEnv('NEXT_PUBLIC_ENDOSCOPIE_CHU_ID', pro
  */
 export const AUTH_GATEWAY_URL =
   process.env.NEXT_PUBLIC_AUTH_GATEWAY_URL?.trim().replace(/\/$/, '') ||
-  'https://auth-service-4q6g.onrender.com';
+  'https://auth-service-tnqp.onrender.com';
 
 /**
  * serviceId du service « Endoscopie » tel qu'enregistré dans le registre central
