@@ -9,20 +9,42 @@ import { SuiviTab } from "@/components/patient-dossier/dossier-tabs/SuiviTab";
 import { ParametresTab } from "@/components/patient-dossier/dossier-tabs/ParametresTab";
 import { HistoriqueTab } from "@/components/patient-dossier/dossier-tabs/HistoriqueTab";
 import { ResultatsParacliniquesTab } from "@/components/patient-dossier/dossier-tabs/ResultatsParacliniquesTab";
+import { AvisTab } from "@/components/patient-dossier/dossier-tabs/AvisTab";
+import { PrescriptionTab } from "@/components/patient-dossier/dossier-tabs/PrescriptionTab";
+import { CompteRenduOperatoireTab } from "@/components/patient-dossier/dossier-tabs/CompteRenduOperatoireTab";
+import { SortieTab } from "@/components/patient-dossier/dossier-tabs/SortieTab";
 
 interface PatientDossierInfoContentProps {
   prescriptionId: string;
 }
 
+// Même modal que les autres services CHU consommant le dossier patient partagé (ex. ORL) —
+// deux rangées, même ordre. "Avis" et "Sortie" n'ont pas encore de source de données
+// accessible depuis Endoscopie (voir AvisTab/SortieTab) ; "Prescription" et "Compte rendu
+// opératoire" montrent les propres données Endoscopie du patient (pas le dossier CHU
+// partagé, qui n'a pas cette notion).
 const DOSSIER_TABS = [
   { key: "observation", label: "Observation médicale", icon: "stethoscope" },
   { key: "diagnostic", label: "Diagnostic", icon: "monitor_heart" },
   { key: "suivi", label: "Suivi / Évolution", icon: "timeline" },
   { key: "parametres", label: "Paramètres", icon: "speed" },
-  { key: "historique", label: "Historique", icon: "history" },
+  { key: "avis", label: "Avis", icon: "forum" },
+  { key: "prescription", label: "Prescription", icon: "assignment" },
+  { key: "compte-rendu-operatoire", label: "Compte rendu opératoire", icon: "content_cut" },
   { key: "resultats", label: "Résultats paracliniques", icon: "biotech" },
+  { key: "sortie", label: "Sortie", icon: "logout" },
+  { key: "historique", label: "Historique", icon: "history" },
 ] as const;
 type DossierTabKey = (typeof DOSSIER_TABS)[number]["key"];
+
+function computeAge(dateNaissance?: string | null): number | null {
+  if (!dateNaissance) return null;
+  const birth = new Date(dateNaissance);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) age--;
+  return age;
+}
 
 export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfoContentProps) {
   const [prescription, setPrescription] = useState<any>(null);
@@ -95,20 +117,41 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
   }
 
   const patient = prescription.patient;
+  const age = computeAge(patient?.dateNaissance);
+  const sexeLabel = patient?.sexe === "F" ? "Femme" : patient?.sexe === "M" ? "Homme" : "—";
+  const initiale = patient?.nom?.trim()?.[0]?.toUpperCase() || "?";
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-6 max-w-5xl">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
-          <span className="material-symbols-outlined text-2xl">description</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center text-lg font-extrabold shrink-0">
+            {initiale}
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-headline text-lg font-extrabold tracking-tight truncate">
+              {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
+            </h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <PriseEnChargeBadge priseEnChargeId={patient?.priseEnChargeId} />
+              <span className="inline-flex items-center rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant">
+                Groupe : —
+              </span>
+              <span className="inline-flex items-center rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant">
+                Âge / Sexe : {age != null ? `${age} ans` : "—"} / {sexeLabel}
+              </span>
+              <span className="inline-flex items-center rounded-full bg-surface-container px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant">
+                Chambre : —
+              </span>
+            </div>
+          </div>
         </div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Dossier patient</p>
-          <h1 className="font-headline text-xl font-extrabold tracking-tight">
-            {patient ? `${patient.nom} ${patient.prenom}` : "Patient inconnu"}
-          </h1>
-          <PriseEnChargeBadge priseEnChargeId={patient?.priseEnChargeId} className="mt-1" />
-        </div>
+        {/* Même badge que les autres services CHU consommant ce dossier — rappelle que
+            rien ici ne peut être modifié depuis Endoscopie (voir DossierPatientService). */}
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 text-amber-700 px-3 py-1.5 text-xs font-bold uppercase tracking-wider shrink-0 self-start sm:self-center">
+          <span className="material-symbols-outlined text-sm">lock</span>
+          Lecture seule
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -117,7 +160,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
             key={tab.key}
             type="button"
             onClick={() => setActiveDossierTab(tab.key)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
               activeDossierTab === tab.key
                 ? "bg-primary text-white shadow-sm"
                 : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
@@ -135,8 +178,12 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
           {activeDossierTab === "diagnostic" && <DiagnosticTab patientId={patient.id} />}
           {activeDossierTab === "suivi" && <SuiviTab patientId={patient.id} />}
           {activeDossierTab === "parametres" && <ParametresTab patientId={patient.id} />}
-          {activeDossierTab === "historique" && <HistoriqueTab patientId={patient.id} />}
+          {activeDossierTab === "avis" && <AvisTab />}
+          {activeDossierTab === "prescription" && <PrescriptionTab patientId={patient.id} />}
+          {activeDossierTab === "compte-rendu-operatoire" && <CompteRenduOperatoireTab patientId={patient.id} />}
           {activeDossierTab === "resultats" && <ResultatsParacliniquesTab patientId={patient.id} />}
+          {activeDossierTab === "sortie" && <SortieTab />}
+          {activeDossierTab === "historique" && <HistoriqueTab patientId={patient.id} />}
         </>
       )}
 
