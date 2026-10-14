@@ -364,7 +364,7 @@ function ChecklistAvantContent() {
               await saveChecklist(answers);
               router.push('/prescription-workflow');
             }}
-            className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
+            className="px-8 py-3 bg-gradient-to-r from-[#006A8C] to-[#0A7EA4] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
           >
             Passer à l'opération
             <span className="material-symbols-outlined">arrow_forward</span>

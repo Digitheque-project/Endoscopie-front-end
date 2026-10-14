@@ -6,6 +6,20 @@
 }
 
 @theme inline {
+  /* La sidebar et plusieurs écrans utilisent encore les classes Tailwind
+     blue-*. On retinte directement cette échelle en teal pour que tout
+     le chrome de l'app suive, sans toucher chaque composant. */
+  --color-blue-50: #eaf6f9;
+  --color-blue-100: #d6eef3;
+  --color-blue-200: #aedce6;
+  --color-blue-300: #7fc3d3;
+  --color-blue-400: #4aa8be;
+  --color-blue-500: #0a7ea4;
+  --color-blue-600: #006a8c;
+  --color-blue-700: #004a66;
+  --color-blue-800: #003847;
+  --color-blue-900: #012430;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);

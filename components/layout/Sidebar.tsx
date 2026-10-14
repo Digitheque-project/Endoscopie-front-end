@@ -160,7 +160,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   return (
     <>
       {/* Desktop — inchangé, toujours visible à lg+ */}
-      <aside className="hidden lg:flex fixed left-0 top-0 z-50 w-64 h-screen bg-[#062B47] p-4 flex-col border-r border-white/10">
+      <aside className="hidden lg:flex fixed left-0 top-0 z-50 w-64 h-screen bg-[#004A66] p-4 flex-col border-r border-white/10">
         <SidebarBrand />
         <nav className="flex-1 space-y-1 overflow-y-auto">{navLinks()}</nav>
         <SidebarFooter />
@@ -178,7 +178,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           onClick={onClose}
         />
         <aside
-          className={`absolute left-0 top-0 h-full w-72 max-w-[80vw] bg-[#062B47] p-4 flex flex-col border-r border-white/10 shadow-2xl transition-transform duration-200 ${
+          className={`absolute left-0 top-0 h-full w-72 max-w-[80vw] bg-[#004A66] p-4 flex flex-col border-r border-white/10 shadow-2xl transition-transform duration-200 ${
             isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >

@@ -169,7 +169,7 @@ function ResultatContent() {
         {/* En-tête avec type d'endoscopie */}
         <div className="mb-8 flex items-center gap-4 p-6 bg-surface-container-low/50 rounded-xl border border-outline-variant/10">
           <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white`} 
-               style={{ backgroundColor: config.color === 'primary' ? '#1f3a93' : '#166534' }}>
+               style={{ backgroundColor: config.color === 'primary' ? '#004A66' : '#166534' }}>
             <span className="material-symbols-outlined">{config.icon}</span>
           </div>
           <div className="flex-1">

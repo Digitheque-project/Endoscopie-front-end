@@ -175,7 +175,7 @@ function PrescriptionPostActeContent() {
               router.push("/checklists/apres");
             }}
             disabled={isSaving}
-            className="px-8 py-3 bg-gradient-to-r from-[#00478D] to-[#005EB8] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90 disabled:opacity-60"
+            className="px-8 py-3 bg-gradient-to-r from-[#006A8C] to-[#0A7EA4] text-white rounded-xl shadow-lg shadow-blue-900/20 font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:opacity-90 disabled:opacity-60"
           >
             {isSaving ? "Enregistrement…" : "Passer Check-list Après"}
             <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
