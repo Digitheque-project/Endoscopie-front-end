@@ -216,7 +216,7 @@ function ChecklistApresContent() {
                         onClick={() => updateAnswer(item.title, button)}
                         className={`flex-1 py-2.5 text-center rounded-lg border transition-all font-medium ${
                           isSelected
-                            ? "bg-primary-container text-white border-primary-container shadow-sm"
+                            ? "bg-primary text-white border-primary shadow-sm"
                             : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                         }`}
                       >
