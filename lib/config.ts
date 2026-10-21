@@ -47,4 +47,4 @@ export const AUTH_ENDOSCOPIE_SERVICE_ID =
  */
 export const AUTH_CLIENT_LOGIN_URL =
   process.env.NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL?.trim().replace(/\/$/, '') ||
-  'https://authentification-front.vercel.app/login';
+  'https://authentification-front-psi.vercel.app/login';
