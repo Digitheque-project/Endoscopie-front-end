@@ -53,7 +53,7 @@ const CPA_BLOC_TYPES = new Set(["CPA_RESULTAT", "VPA_REALISEE"]);
 // nouvelles prescriptions ; le médecin, du passage "prêt pour décision" (RDV planifié
 // par le major) et des réponses du Bloc Opératoire (CPA/VPA).
 const ROLE_VISIBLE_TYPES: Record<string, Set<string>> = {
-  MAJOR: new Set(["DEMANDE_EXAMEN"]),
+  MAJOR: new Set(["DEMANDE_EXAMEN", "DECISION_MEDECIN"]),
   MEDECIN: new Set(["RENDEZ_VOUS", "CPA_RESULTAT", "VPA_REALISEE"]),
 };
 
@@ -76,6 +76,7 @@ function isVisibleForRole(type: string, role: string | null | undefined): boolea
 // d'un service externe (le Bloc Opératoire, pour la CPA/VPA).
 const TYPE_ORIGIN: Record<string, "interne" | "externe"> = {
   RENDEZ_VOUS: "interne",
+  DECISION_MEDECIN: "interne",
   CPA_RESULTAT: "externe",
   VPA_REALISEE: "externe",
 };
@@ -195,17 +196,28 @@ function fromInbox(n: InboxNotification): DisplayNotification {
   };
 }
 
+// Même événement reçu par deux chemins sous deux identifiants différents (boîte locale
+// du backend ET secours direct au service notification, qui stocke sa propre copie) :
+// l'id ne suffit pas à les rapprocher — on compare aussi le contenu.
+function contentKey(n: DisplayNotification): string {
+  return `${n.type}|${(n.motif ?? "").trim()}|${n.entiteRefId ?? ""}`;
+}
+
 function mergeNotifications(
   remote: DisplayNotification[],
   local: DisplayNotification[],
 ): DisplayNotification[] {
   const byKey = new Map<string, DisplayNotification>();
+  const byContent = new Set<string>();
   // `local` en premier : en cas de doublon (même externalId), on garde la version de la
   // boîte locale — motif toujours correctement rempli — plutôt que celle du secours direct
   // au service externe, dont le mapping peut laisser motif vide (voir normalizeNotification).
   for (const n of [...local, ...remote]) {
     const key = n.externalId ?? n.id;
-    if (!byKey.has(key)) byKey.set(key, n);
+    const content = contentKey(n);
+    if (byKey.has(key) || byContent.has(content)) continue;
+    byKey.set(key, n);
+    byContent.add(content);
   }
   return [...byKey.values()].sort(
     (a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt),
@@ -265,6 +277,8 @@ const CATCHUP_TOAST_ID = "session-catchup";
 // par page plutôt qu'un layout racine unique), et un useRef y serait réinitialisé à chaque
 // navigation. Survit tant que l'onglet reste ouvert.
 const moduleSeenIds = new Set<string>();
+// Même dédoublonnage par contenu pour les toasts/sons (voir contentKey).
+const moduleSeenContents = new Set<string>();
 
 // Le toast/son "pendant votre absence" (voir refresh) ne doit sonner qu'une seule fois par
 // connexion — jamais en re-naviguant entre les pages, mais bien de nouveau si un autre
@@ -357,8 +371,10 @@ export function NotificationBell() {
     (item: DisplayNotification) => {
       if (!isVisibleForRole(item.type, role)) return;
       const key = item.externalId ?? item.id;
-      if (moduleSeenIds.has(key)) return;
+      const content = contentKey(item);
+      if (moduleSeenIds.has(key) || moduleSeenContents.has(content)) return;
       moduleSeenIds.add(key);
+      moduleSeenContents.add(content);
       setItems((prev) => mergeNotifications([item], prev).slice(0, 50));
       showToast(item);
       playNotificationSound();
@@ -380,7 +396,10 @@ export function NotificationBell() {
         ).filter((n) => isVisibleForRole(n.type, role)),
       );
 
-      merged.forEach((n) => moduleSeenIds.add(n.externalId ?? n.id));
+      merged.forEach((n) => {
+        moduleSeenIds.add(n.externalId ?? n.id);
+        moduleSeenContents.add(contentKey(n));
+      });
       setItems(merged.slice(0, 50));
 
       // Le son/toast "pendant votre absence" ne se déclenche qu'une seule fois par vraie

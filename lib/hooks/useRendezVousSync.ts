@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { apiUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 /**
  * Hook personnalisé pour synchroniser automatiquement les rendez-vous
@@ -59,6 +59,12 @@ interface UseRendezVousSyncOptions {
    * Service ID optionnel
    */
   serviceId?: string;
+
+  /**
+   * true = tous les rendez-vous (vues Semaine / Mois, filtrées ensuite par la page) au
+   * lieu des seuls rendez-vous du jour `date`.
+   */
+  allDates?: boolean;
 }
 
 export function useRendezVousSync(options: UseRendezVousSyncOptions = {}) {
@@ -84,17 +90,19 @@ export function useRendezVousSync(options: UseRendezVousSyncOptions = {}) {
   }, []);
 
   const date = options.date || getTodayISO();
+  const allDates = !!options.allDates;
 
-  // Fonction pour charger les rendez-vous du jour
+  // Charge les rendez-vous du jour (ou tous, pour les vues Semaine / Mois). Passe par
+  // apiFetch : en-têtes d'identité et nouvelles tentatives au réveil du serveur.
   const loadRendezVous = useCallback(async () => {
     try {
       setError(null);
-      let url = apiUrl(`/api/rendezvous/jour/${date}`);
+      let path = allDates ? '/api/rendezvous' : `/api/rendezvous/jour/${date}`;
       if (optionsRef.current.serviceId) {
-        url += `?serviceId=${optionsRef.current.serviceId}`;
+        path += `?serviceId=${optionsRef.current.serviceId}`;
       }
 
-      const response = await fetch(url);
+      const response = await apiFetch(path);
       if (!response.ok) {
         throw new Error(`Erreur ${response.status}: ${response.statusText}`);
       }
@@ -122,12 +130,12 @@ export function useRendezVousSync(options: UseRendezVousSyncOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [date]);
+  }, [date, allDates]);
 
-  // Charger les rendez-vous au montage et quand la date change
+  // Charger les rendez-vous au montage et quand la date (ou la vue) change
   useEffect(() => {
     loadRendezVous();
-  }, [date, loadRendezVous]);
+  }, [loadRendezVous]);
 
   // Configurer le rafraîchissement automatique si demandé
   useEffect(() => {
@@ -146,7 +154,10 @@ export function useRendezVousSync(options: UseRendezVousSyncOptions = {}) {
     };
   }, [options.refreshInterval, loadRendezVous]);
 
+  // Actualisation manuelle : indicateur de chargement visible pendant la requête
+  // (le rafraîchissement automatique, lui, reste silencieux).
   const refresh = useCallback(() => {
+    setLoading(true);
     return loadRendezVous();
   }, [loadRendezVous]);
 

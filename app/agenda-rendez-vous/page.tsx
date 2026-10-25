@@ -79,6 +79,7 @@ function AgendaContent() {
     refresh: refreshRDV
   } = useRendezVousSync({
     date: getCurrentDateISO(),
+    allDates: viewMode !== "day",
     refreshInterval: 30000,
     onRendezVousCreated: (rdv) => {
       setSuccessNotification(`Nouveau rendez-vous créé pour ${rdv.patient?.prenom || 'Patient'} ${rdv.patient?.nom || ''}`);

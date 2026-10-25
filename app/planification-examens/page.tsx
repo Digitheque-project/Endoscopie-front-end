@@ -36,6 +36,9 @@ function PlanificationContent() {
       : from === "patient-dossier" && prescriptionId
       ? `/patient-dossier/${encodeURIComponent(prescriptionId)}`
       : "/prescriptions";
+  // Après une planification réussie : retour au Fil de prescription (ou à l'agenda),
+  // jamais au détail du patient — le rendez-vous est pris, la suite se passe dans le Fil.
+  const successUrl = from === "agenda" ? "/agenda-rendez-vous" : "/prescriptions";
 
   // Prescription multi-examens (ex. Coloscopie + Fibroscopie pour le même patient) :
   // liste de tous les examens à planifier l'un après l'autre, transmise depuis le fil
@@ -524,7 +527,7 @@ function PlanificationContent() {
         // Tous les examens du groupe viennent d'être planifiés en une fois : rien à
         // enchaîner, retour direct à la page d'origine.
         setChainMessage("Tous les examens ont été planifiés. Retour…");
-        setTimeout(() => router.push(returnUrl), 1200);
+        setTimeout(() => router.push(successUrl), 1200);
         return;
       }
 
@@ -551,7 +554,7 @@ function PlanificationContent() {
         if (nextExam) {
           switchActiveExam(nextExam);
         } else {
-          router.push(returnUrl);
+          router.push(successUrl);
         }
       }, 1200);
     } catch (error: any) {
@@ -630,9 +633,27 @@ function PlanificationContent() {
               </p>
             )}
           </div>
-            <div className="mt-4">
-            <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">EXAMEN DEMANDÉ</p>
-            <p className="text-sm font-bold text-on-secondary-fixed leading-tight">{procedureParam || "Examen non précisé"}</p>
+          <div className="mt-4">
+            <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">
+              {groupExams.length > 1 ? `EXAMENS DEMANDÉS (${groupExams.length})` : "EXAMEN DEMANDÉ"}
+            </p>
+            {groupExams.length > 1 ? (
+              // Prescription multi-examens : tous les examens, pas seulement celui en cours.
+              <ul className="space-y-0.5">
+                {groupExams.map((exam) => (
+                  <li
+                    key={exam.id}
+                    className={`text-sm leading-tight text-on-secondary-fixed ${exam.id === prescriptionId ? "font-extrabold" : "font-medium"}`}
+                  >
+                    • {capitalizeFirst(exam.procedure)}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm font-bold text-on-secondary-fixed leading-tight">
+                {procedureParam ? capitalizeFirst(procedureParam) : "Examen non précisé"}
+              </p>
+            )}
           </div>
         </div>
       </section>

@@ -78,6 +78,13 @@ function ChecklistAvantContent() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [cpaDecision, setCpaDecision] = useState<string | null>(null);
+  // Rendez-vous et prescripteur réels (à la place des valeurs d'exemple d'origine).
+  const [rdvInfo, setRdvInfo] = useState<{
+    date: string | null;
+    salle: string | null;
+    prescripteur: string | null;
+    serviceSource: string | null;
+  } | null>(null);
   const isCpaBlocked = BLOCKING_CPA_DECISIONS.has(cpaDecision || "");
   // Session groupée (plusieurs examens du même patient sur le même créneau) — le patient
   // peut avoir plusieurs procédures à faire alors que cette checklist ne porte que sur
@@ -136,6 +143,18 @@ function ChecklistAvantContent() {
           setAnswers(mappedAnswers);
         }
         setCpaDecision(prescription?.dossierCPA?.decisionCpa ?? null);
+        if (prescription) {
+          const rdv = prescription.rendezVous;
+          const medecin = prescription.medecinPrescripteur;
+          setRdvInfo({
+            date: rdv?.dateHeureDebut
+              ? new Date(rdv.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })
+              : null,
+            salle: rdv?.salle ? `${rdv.salle.nom}${rdv.salle.numero ? ` (${rdv.salle.numero})` : ""}` : null,
+            prescripteur: medecin ? `Dr. ${medecin.prenom ?? ""} ${medecin.nom ?? ""}`.replace(/\s+/g, " ").trim() : null,
+            serviceSource: prescription.serviceSourceName ?? null,
+          });
+        }
       } catch (err) {
         console.error("Erreur lors du chargement de la checklist:", err);
       } finally {
@@ -267,22 +286,24 @@ function ChecklistAvantContent() {
                       {capitalizeFirst(procedure || "")}
                     </span>
                   )}
-                  <p className="text-sm text-slate-600 mt-1">Date : 24/10/2023</p>
+                  <p className="text-sm text-slate-600 mt-1">Date : {rdvInfo?.date ?? "non planifiée"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Service</p>
-                  <p className="text-sm text-slate-800">Gastro-entérologie - Salle1</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Salle</p>
+                  <p className="text-sm text-slate-800">{rdvInfo?.salle ?? "Non renseignée"}</p>
                 </div>
               </div>
               <div className="space-y-2 pl-3 border-l-4 border-l-violet-200">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Equipe</p>
-                  <div className="flex flex-col gap-1 text-sm text-slate-800">
-                    <span><b>Anesthésiste:</b> Dr. Morel</span>
-                    <span><b>IADE:</b> M. Lucas</span>
-                    <span><b>Coord:</b> Mme. Faure</span>
-                  </div>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Médecin prescripteur</p>
+                  <p className="text-sm text-slate-800">{rdvInfo?.prescripteur ?? "Non renseigné"}</p>
                 </div>
+                {rdvInfo?.serviceSource && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Service prescripteur</p>
+                    <p className="text-sm text-slate-800">{rdvInfo.serviceSource}</p>
+                  </div>
+                )}
               </div>
             </div>
           </section>

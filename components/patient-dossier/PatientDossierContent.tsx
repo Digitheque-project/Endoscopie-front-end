@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiJson } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 interface PatientDossierContentProps {
   prescriptionId: string;
+  /** Onglet du Fil de prescription d'où vient le médecin (restauré après la décision). */
+  tab?: string | null;
 }
 
 /** Traduit la priorité brute en badge d'urgence — mêmes règles/couleurs que le Fil de prescription. */
@@ -35,9 +38,10 @@ function computeAge(dateNaissance?: string | null): number | null {
   return age;
 }
 
-export function PatientDossierContent({ prescriptionId }: PatientDossierContentProps) {
+export function PatientDossierContent({ prescriptionId, tab }: PatientDossierContentProps) {
   const router = useRouter();
   const { setPatientData } = usePatient();
+  const { role } = useAuth();
   const [prescription, setPrescription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +131,13 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
   const prescripteur = prescription.medecinPrescripteur
     ? `Dr. ${prescription.medecinPrescripteur.prenom} ${prescription.medecinPrescripteur.nom}`
     : "Non spécifié";
+  // Même règle que l'onglet « À décider » du Fil de prescription : rendez-vous
+  // planifié, non annulé, type d'anesthésie pas encore choisi.
+  const aDecider =
+    role === "MEDECIN" &&
+    !!prescription.rendezVous &&
+    prescription.rendezVous.statut !== "Annulé" &&
+    !prescription.rendezVous.typeAnesthesie;
   const anesthesiste = prescription.dossierCPA?.anesthesiste
     ? `Dr. ${prescription.dossierCPA.anesthesiste.prenom} ${prescription.dossierCPA.anesthesiste.nom}`
     : null;
@@ -231,7 +242,6 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className={`bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-3 flex flex-col ${!prescription.alertes ? "sm:col-span-2" : ""}`}>
-          <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Équipe</p>
           <p className="text-lg font-bold">{prescripteur}</p>
           <p className="text-sm text-on-surface-variant">Médecin prescripteur</p>
           {prescription.serviceSourceName && (
@@ -246,8 +256,29 @@ export function PatientDossierContent({ prescriptionId }: PatientDossierContentP
               <p className="text-sm text-on-surface-variant">Anesthésiste référent</p>
             </>
           )}
+          {prescription.rendezVous?.salle && (
+            <>
+              <p className="text-lg font-bold mt-3">
+                {prescription.rendezVous.salle.nom}
+                {prescription.rendezVous.salle.numero ? ` (${prescription.rendezVous.salle.numero})` : ""}
+              </p>
+              <p className="text-sm text-on-surface-variant">Salle</p>
+            </>
+          )}
           <div className="flex justify-end mt-auto pt-2">
-            {prescription.statut === "A planifier" ? (
+            {aDecider ? (
+              // Le médecin décide depuis le détail, sans repasser par la liste (où le
+              // patient se perd quand elle est longue).
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(`/decisions-anesthesie/${encodeURIComponent(prescription.id)}?tab=${encodeURIComponent(tab || "a-decider")}`)
+                }
+                className="px-4 py-1.5 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                Décider
+              </button>
+            ) : prescription.statut === "A planifier" ? (
               <button
                 type="button"
                 onClick={handlePlanifier}
