@@ -12,6 +12,8 @@ interface GuideApiProps {
 
 export default function GuideApi({ serviceName = 'Radiologie', apiKey = 'YOUR_API_KEY_HERE', hopital = 'Votre Hôpital' }: GuideApiProps) {
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  // Adresse publique à communiquer : celle de ce front, qui relaie /api/* vers le backend.
+  const adresse = typeof window !== 'undefined' ? window.location.origin : '';
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
@@ -21,7 +23,7 @@ export default function GuideApi({ serviceName = 'Radiologie', apiKey = 'YOUR_AP
   };
 
   const exampleCurl = `curl -X GET \\
-  https://endoscopie-api.onrender.com/api/examens/resultats/PRES-2024-0187 \\
+  ${adresse}/api/examens/resultats/PRES-2024-0187 \\
   -H "x-api-key: ${apiKey}"`;
 
   const examplePython = `import requests
@@ -31,7 +33,7 @@ headers = {
 }
 
 response = requests.get(
-    'https://endoscopie-api.onrender.com/api/examens/resultats/PRES-2024-0187',
+    '${adresse}/api/examens/resultats/PRES-2024-0187',
     headers=headers
 )
 
@@ -43,7 +45,7 @@ print(resultat)`;
   'Content-Type': 'application/json'
 };
 
-fetch('https://endoscopie-api.onrender.com/api/examens/resultats/PRES-2024-0187', {
+fetch('${adresse}/api/examens/resultats/PRES-2024-0187', {
   method: 'GET',
   headers: headers
 })
@@ -91,9 +93,9 @@ fetch('https://endoscopie-api.onrender.com/api/examens/resultats/PRES-2024-0187'
 
           <p className="font-semibold mb-2">URL:</p>
           <div className="bg-white border border-blue-300 rounded p-3 flex justify-between items-center font-mono text-sm mb-4">
-            <code className="break-all">https://endoscopie-api.onrender.com/api/examens/resultats/:prescriptionId</code>
+            <code className="break-all">{`${adresse}/api/examens/resultats/:prescriptionId`}</code>
             <button
-              onClick={() => copyToClipboard('https://endoscopie-api.onrender.com/api/examens/resultats/:prescriptionId', 'url')}
+              onClick={() => copyToClipboard(`${adresse}/api/examens/resultats/:prescriptionId`, 'url')}
               className="ml-2 p-2 hover:bg-gray-100 rounded flex-shrink-0"
             >
               {copiedText === 'url' ? (

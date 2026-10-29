@@ -1,9 +1,6 @@
 import { apiUrl, currentRoleHeaders } from './api';
-import { ENDOSCOPIE_SERVICE_ID } from './config';
+import { endoscopieServiceId, GATEWAY_URL } from './config';
 
-const NOTIFICATION_API_URL =
-  process.env.NEXT_PUBLIC_NOTIFICATION_API_URL?.trim().replace(/\/$/, '') ||
-  'https://gateway-h36x.onrender.com';
 
 export type NotificationItem = {
   id?: string;
@@ -58,7 +55,7 @@ function normalizeNotification(raw: RawNotification): NotificationItem {
     serviceId:
       (payload?.sourceServiceId as string) ??
       (raw.emitter as string) ??
-      ENDOSCOPIE_SERVICE_ID,
+      endoscopieServiceId(),
     // Même repli que motif ci-dessus : ces deux champs sont nichés dans `data` pour les
     // notifications émises par notre propre backend (voir NotificationService.createNotification),
     // jamais à la racine — sans ce repli, le clic sur la notification n'avait aucun effet
@@ -79,13 +76,13 @@ function parseItems(data: unknown): RawNotification[] {
   );
 }
 
-/** Via le backend endoscopie — filtré par ENDOSCOPIE_SERVICE_ID côté serveur. */
+/** Via le backend endoscopie — filtré par le service Endoscopie côté serveur. */
 export async function fetchNotificationsViaBackend(
   status = 'ENVOYE',
 ): Promise<NotificationItem[]> {
   const params = new URLSearchParams({
     status,
-    serviceId: ENDOSCOPIE_SERVICE_ID,
+    serviceId: endoscopieServiceId(),
   });
   const resp = await fetch(apiUrl(`/api/notifications?${params.toString()}`));
   if (!resp.ok) {
@@ -103,14 +100,14 @@ export async function fetchNotificationsDirect(
   // direct au service notification. Seul jeton disponible côté navigateur : celui de
   // l'utilisateur connecté (voir currentRoleHeaders) — pas de compte de service ici.
   const resp = await fetch(
-    `${NOTIFICATION_API_URL}/notifications?status=${encodeURIComponent(status)}`,
+    `${GATEWAY_URL}/notifications?status=${encodeURIComponent(status)}`,
     { headers: currentRoleHeaders() },
   );
   if (!resp.ok) {
     throw new Error(`Notifications direct (${resp.status})`);
   }
   const data = await resp.json();
-  const sid = ENDOSCOPIE_SERVICE_ID.toLowerCase();
+  const sid = endoscopieServiceId().toLowerCase();
   return parseItems(data)
     .filter((raw) => JSON.stringify(raw).toLowerCase().includes(sid))
     .map(normalizeNotification);

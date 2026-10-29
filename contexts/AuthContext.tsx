@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { decodeJwt, type AuthServiceClaim } from "@/lib/auth";
-import { AUTH_ENDOSCOPIE_SERVICE_ID } from "@/lib/config";
 import { apiJson } from "@/lib/api";
 
 export type AppRole = "MAJOR" | "MEDECIN";
@@ -106,11 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Jeton de connexion invalide.");
     }
 
-    // Cherché d'abord par nom (stable d'un déploiement à l'autre — l'ID, lui, peut
-    // changer selon l'écosystème d'auth utilisé), avec l'ID figé en secours.
-    const claim =
-      payload.services.find((s) => s.serviceName?.trim().toLowerCase() === "endoscopie") ??
-      payload.services.find((s) => s.serviceId === AUTH_ENDOSCOPIE_SERVICE_ID);
+    // Cherché par nom : l'identifiant du service change d'un CHU à l'autre.
+    const claim = payload.services.find(
+      (s) => s.serviceName?.trim().toLowerCase() === "endoscopie",
+    );
     if (!claim) {
       throw new Error("Ce compte n'a pas accès au service Endoscopie.");
     }

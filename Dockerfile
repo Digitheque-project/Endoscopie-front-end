@@ -15,16 +15,8 @@ COPY . .
 # ces ARG — remplies par Render depuis les variables d'environnement du service, à
 # condition qu'elles y soient définies sous le même nom — prennent le relais : une
 # variable déjà présente dans process.env n'est jamais écrasée par .env.local.
-ARG NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID
-ARG NEXT_PUBLIC_ENDOSCOPIE_CHU_ID
-ARG NEXT_PUBLIC_CHU_API_URL
-ARG NEXT_PUBLIC_ACCUEIL_API_URL
-ARG NEXT_PUBLIC_NOTIFICATION_API_URL
-ARG NEXT_PUBLIC_AUTH_GATEWAY_URL
-ARG NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID
+ARG NEXT_PUBLIC_GATEWAY_URL
 ARG NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 # BACKEND_URL n'est pas une NEXT_PUBLIC_* (elle n'a jamais besoin d'être inlinée dans le
 # bundle client), mais `next.config.ts` la lit au niveau module pour construire la cible du
 # rewrite `/api/*` — cette lecture se produit dès `next build` (génération du
@@ -34,16 +26,8 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 # qu'on mette ensuite dans le dashboard Render — d'où le besoin du même traitement ARG que
 # les NEXT_PUBLIC_* ci-dessus.
 ARG BACKEND_URL
-ENV NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID=$NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID \
-    NEXT_PUBLIC_ENDOSCOPIE_CHU_ID=$NEXT_PUBLIC_ENDOSCOPIE_CHU_ID \
-    NEXT_PUBLIC_CHU_API_URL=$NEXT_PUBLIC_CHU_API_URL \
-    NEXT_PUBLIC_ACCUEIL_API_URL=$NEXT_PUBLIC_ACCUEIL_API_URL \
-    NEXT_PUBLIC_NOTIFICATION_API_URL=$NEXT_PUBLIC_NOTIFICATION_API_URL \
-    NEXT_PUBLIC_AUTH_GATEWAY_URL=$NEXT_PUBLIC_AUTH_GATEWAY_URL \
-    NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID=$NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID \
+ENV NEXT_PUBLIC_GATEWAY_URL=$NEXT_PUBLIC_GATEWAY_URL \
     NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL=$NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL \
-    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
     BACKEND_URL=$BACKEND_URL
 # DOCKER_BUILD active `output: "standalone"` (voir next.config.ts) — seul ce build en a
 # besoin ; le déploiement Render en runtime Node (`next start`) ne doit pas l'activer.

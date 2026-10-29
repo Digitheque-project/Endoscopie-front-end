@@ -1,4 +1,4 @@
-import { CHU_API_URL } from "./config";
+import { GATEWAY_URL } from "./config";
 
 export interface PriseEnCharge {
   id: string;
@@ -44,7 +44,7 @@ export async function fetchPriseEnCharge(id: string): Promise<PriseEnCharge | nu
   if (!token) return null;
 
   try {
-    const res = await fetch(`${CHU_API_URL}/prise-en-charge/${encodeURIComponent(id)}`, {
+    const res = await fetch(`${GATEWAY_URL}/prise-en-charge/${encodeURIComponent(id)}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {

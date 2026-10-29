@@ -8,43 +8,36 @@ function requireEnv(name: string, value: string | undefined): string {
   return trimmed;
 }
 
-/** API CHU (services, CHU) — Railway */
-export const CHU_API_URL = requireEnv('NEXT_PUBLIC_CHU_API_URL', process.env.NEXT_PUBLIC_CHU_API_URL);
+/**
+ * Passerelle unique du CHU (auth, users, services, chu, accueil, notification,
+ * prise en charge...), chaque service sous son propre préfixe de chemin.
+ */
+export const GATEWAY_URL = requireEnv('NEXT_PUBLIC_GATEWAY_URL', process.env.NEXT_PUBLIC_GATEWAY_URL);
 
-/** API Accueil (patients) — Railway */
-export const ACCUEIL_API_URL = requireEnv('NEXT_PUBLIC_ACCUEIL_API_URL', process.env.NEXT_PUBLIC_ACCUEIL_API_URL);
-
-/** Service « Endoscopie » — unité paraclinique du CHU */
-export const ENDOSCOPIE_SERVICE_ID = requireEnv('NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID', process.env.NEXT_PUBLIC_ENDOSCOPIE_SERVICE_ID);
-
-/** chuId réel de « CHU Andrainjato Fianarantsoa » côté Service-CHU/Accueil */
-export const ENDOSCOPIE_CHU_ID = requireEnv('NEXT_PUBLIC_ENDOSCOPIE_CHU_ID', process.env.NEXT_PUBLIC_ENDOSCOPIE_CHU_ID);
+/** Page de connexion centrale (portail d'authentification). */
+export const AUTH_CLIENT_LOGIN_URL = requireEnv(
+  'NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL',
+  process.env.NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL,
+);
 
 /**
- * Gateway unique de l'écosystème CHU (auth, users, services, chu, accueil,
- * notification...), chacun sous son propre préfixe de chemin. Point d'entrée pour
- * /auth/login, /auth/register, etc.
+ * Identifiant du service « Endoscopie » de l'utilisateur connecté, lu dans son jeton
+ * (entrée services[] nommée Endoscopie) — jamais figé en variable d'environnement :
+ * le même front sert l'Endoscopie de n'importe quel CHU. Chaîne vide hors session ;
+ * le backend retombe alors sur sa propre identité, résolue par nom.
  */
-export const AUTH_GATEWAY_URL =
-  process.env.NEXT_PUBLIC_AUTH_GATEWAY_URL?.trim().replace(/\/$/, '') ||
-  'https://gateway-h36x.onrender.com';
-
-/**
- * serviceId du service « Endoscopie » tel qu'enregistré dans le registre central
- * des services (auth-service / service-service) — distinct de ENDOSCOPIE_SERVICE_ID
- * ci-dessus, qui référence l'API CHU/Accueil (Railway), pas encore synchronisée avec
- * ce registre. Utilisé uniquement pour lire le rôle de l'utilisateur dans le JWT.
- */
-export const AUTH_ENDOSCOPIE_SERVICE_ID =
-  process.env.NEXT_PUBLIC_AUTH_ENDOSCOPIE_SERVICE_ID?.trim() ||
-  'ab97eaaa-9239-4f37-b5d7-d652c4231cc7';
-
-/**
- * Portail de connexion central (auth-client) — seul point d'entrée pour se connecter.
- * Après authentification, l'utilisateur y choisit son service puis est redirigé vers
- * l'URL enregistrée pour « Endoscopie » (baseUrl du service) avec ?accessToken=<JWT>,
- * récupéré automatiquement par AuthGate.
- */
-export const AUTH_CLIENT_LOGIN_URL =
-  process.env.NEXT_PUBLIC_AUTH_CLIENT_LOGIN_URL?.trim().replace(/\/$/, '') ||
-  'https://authentification-front-psi.vercel.app/login';
+export function endoscopieServiceId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const saved = window.localStorage.getItem('current_auth_context');
+    const token = saved ? (JSON.parse(saved) as { accessToken?: string }).accessToken : undefined;
+    if (!token) return '';
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(b64)) as {
+      services?: Array<{ serviceId?: string; serviceName?: string }>;
+    };
+    return payload.services?.find((s) => /endoscop/i.test(s.serviceName ?? ''))?.serviceId ?? '';
+  } catch {
+    return '';
+  }
+}

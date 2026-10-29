@@ -26,7 +26,8 @@ interface LogAcces {
   timestamp: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://endoscopie-api.onrender.com';
+// Relatif : le front relaie /api/* vers endoscopie-back (voir next.config.ts).
+const API_URL = '';
 
 export default function ServicesExternesPage() {
   const [services, setServices] = useState<ServiceExterne[]>([]);

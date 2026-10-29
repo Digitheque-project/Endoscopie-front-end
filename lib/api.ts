@@ -1,11 +1,11 @@
-import { ENDOSCOPIE_SERVICE_ID } from './config';
+import { endoscopieServiceId } from './config';
 
 /**
  * URL de l'API clinique endoscopie (NestJS).
  * - Local : NEXT_PUBLIC_API_URL=http://127.0.0.1:3333
  * - Production : URL de votre backend endoscopie (Render, Railway, etc.)
  *
- * L'API CHU (services) est séparée : voir CHU_API_URL dans lib/config.ts
+ * Les autres services du CHU passent par la passerelle : voir GATEWAY_URL dans lib/config.ts
  */
 const rawBase =
   process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/$/, '') ||
@@ -15,12 +15,13 @@ const rawBase =
 
 export const API_BASE_URL = rawBase;
 
-export { ENDOSCOPIE_SERVICE_ID, CHU_API_URL } from './config';
+export { endoscopieServiceId, GATEWAY_URL } from './config';
 
 function appendServiceId(url: string): string {
-  if (url.includes('serviceId=')) return url;
+  const serviceId = endoscopieServiceId();
+  if (!serviceId || url.includes('serviceId=')) return url;
   const sep = url.includes('?') ? '&' : '?';
-  return `${url}${sep}serviceId=${encodeURIComponent(ENDOSCOPIE_SERVICE_ID)}`;
+  return `${url}${sep}serviceId=${encodeURIComponent(serviceId)}`;
 }
 
 /** Construit l'URL d'un endpoint API avec le serviceId endoscopie. */
@@ -38,7 +39,8 @@ export function apiUrl(path: string): string {
 export function withEndoscopieService<T extends Record<string, unknown>>(
   body: T,
 ): T & { serviceId: string } {
-  return { ...body, serviceId: ENDOSCOPIE_SERVICE_ID };
+  // Vide hors session : le backend retombe alors sur sa propre identité.
+  return { ...body, serviceId: endoscopieServiceId() };
 }
 
 export type CreatePrescriptionPayload = {

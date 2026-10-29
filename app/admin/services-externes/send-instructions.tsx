@@ -13,7 +13,10 @@ interface ServiceExterne {
   contact?: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://endoscopie-api.onrender.com';
+// Relatif : le front relaie /api/* vers endoscopie-back (voir next.config.ts).
+const API_URL = '';
+// Adresse publique à communiquer aux services externes : celle de ce front (relais /api/*).
+const adressePublique = () => (typeof window !== 'undefined' ? window.location.origin : '');
 
 export default function SendInstructionsPage() {
   const [services, setServices] = useState<ServiceExterne[]>([]);
@@ -66,12 +69,12 @@ ${selectedService.apiKey || 'N/A'}
 ====================================
 
 Méthode: GET
-URL: https://endoscopie-api.onrender.com/api/examens/resultats/:prescriptionId
+URL: ${adressePublique()}/api/examens/resultats/:prescriptionId
 Header: x-api-key: ${selectedService.apiKey || 'VOTRE_CLE_API'}
 
 Exemple:
 curl -X GET \\
-  https://endoscopie-api.onrender.com/api/examens/resultats/PRES-2024-0187 \\
+  ${adressePublique()}/api/examens/resultats/PRES-2024-0187 \\
   -H "x-api-key: ${selectedService.apiKey || 'VOTRE_CLE_API'}"
 
 ====================================
@@ -103,7 +106,7 @@ La réponse contient:
 ====================================
 
 Pour un guide détaillé avec exemples en Python, JavaScript, etc:
-${API_URL}/admin/services-externes/guide-complet
+${adressePublique()}/admin/services-externes/guide-complet
 
 Vous pouvez également:
 1. Stocker votre clé API dans vos variables d'environnement
