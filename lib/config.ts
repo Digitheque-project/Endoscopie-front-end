@@ -27,17 +27,28 @@ export const AUTH_CLIENT_LOGIN_URL = requireEnv(
  * le backend retombe alors sur sa propre identité, résolue par nom.
  */
 export function endoscopieServiceId(): string {
-  if (typeof window === 'undefined') return '';
+  return sessionEndoscopie()?.serviceId ?? '';
+}
+
+/**
+ * Utilisateur connecté et son entrée « Endoscopie » (service, rôle), lus dans son jeton.
+ * null hors session.
+ */
+export function sessionEndoscopie(): { userId: string; serviceId: string; role: string } | null {
+  if (typeof window === 'undefined') return null;
   try {
     const saved = window.localStorage.getItem('current_auth_context');
     const token = saved ? (JSON.parse(saved) as { accessToken?: string }).accessToken : undefined;
-    if (!token) return '';
+    if (!token) return null;
     const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     const payload = JSON.parse(atob(b64)) as {
-      services?: Array<{ serviceId?: string; serviceName?: string }>;
+      userId?: string;
+      services?: Array<{ serviceId?: string; serviceName?: string; roleName?: string }>;
     };
-    return payload.services?.find((s) => /endoscop/i.test(s.serviceName ?? ''))?.serviceId ?? '';
+    const entree = payload.services?.find((s) => /endoscop/i.test(s.serviceName ?? ''));
+    if (!payload.userId || !entree?.serviceId) return null;
+    return { userId: payload.userId, serviceId: entree.serviceId, role: entree.roleName ?? '' };
   } catch {
-    return '';
+    return null;
   }
 }

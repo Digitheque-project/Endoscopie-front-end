@@ -1,5 +1,5 @@
 import { apiUrl, currentRoleHeaders } from './api';
-import { endoscopieServiceId, GATEWAY_URL } from './config';
+import { endoscopieServiceId, GATEWAY_URL, sessionEndoscopie } from './config';
 
 
 export type NotificationItem = {
@@ -96,20 +96,23 @@ export async function fetchNotificationsViaBackend(
 export async function fetchNotificationsDirect(
   status = 'ENVOYE',
 ): Promise<NotificationItem[]> {
-  // Passé par le gateway CHU : jeton Bearer obligatoire, contrairement à l'ancien appel
-  // direct au service notification. Seul jeton disponible côté navigateur : celui de
-  // l'utilisateur connecté (voir currentRoleHeaders) — pas de compte de service ici.
+  // Seules les notifications de l'utilisateur connecté, de son service Endoscopie et de
+  // son rôle : jamais la liste globale de la plateforme (celle de tous les services et
+  // de tous les CHU), filtrée ensuite dans le navigateur.
+  const session = sessionEndoscopie();
+  if (!session) return [];
+  const params = new URLSearchParams({ serviceId: session.serviceId, role: session.role });
   const resp = await fetch(
-    `${GATEWAY_URL}/notifications?status=${encodeURIComponent(status)}`,
+    `${GATEWAY_URL}/notifications/user/${encodeURIComponent(session.userId)}?${params.toString()}`,
     { headers: currentRoleHeaders() },
   );
   if (!resp.ok) {
     throw new Error(`Notifications direct (${resp.status})`);
   }
   const data = await resp.json();
-  const sid = endoscopieServiceId().toLowerCase();
+  const lues = status === 'LU';
   return parseItems(data)
-    .filter((raw) => JSON.stringify(raw).toLowerCase().includes(sid))
+    .filter((raw) => Boolean(raw.read) === lues)
     .map(normalizeNotification);
 }
 
