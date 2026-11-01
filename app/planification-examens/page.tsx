@@ -63,10 +63,19 @@ function PlanificationContent() {
   // examens du groupe sont planifiés sur EXACTEMENT le même créneau, en un seul envoi.
   const [planifierEnsemble, setPlanifierEnsemble] = useState(false);
 
-  const switchActiveExam = (exam: { id: string; procedure: string }) => {
+  const switchActiveExam = (exam: { id: string; procedure: string }, planifies?: Set<string>) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("prescriptionId", exam.id);
     params.set("procedure", exam.procedure);
+    // Les examens déjà planifiés le restent dans l'URL : si la page est
+    // remontée, ils ne sont plus reproposés (sinon on revenait sans fin
+    // donner un rendez-vous au premier examen).
+    if (planifies && groupExams.length > 0) {
+      params.set(
+        "groupExams",
+        JSON.stringify(groupExams.map((ex) => (planifies.has(ex.id) ? { ...ex, status: "Planifié" } : ex))),
+      );
+    }
     router.replace(`/planification-examens?${params.toString()}`);
     // Nouvel examen = nouveau rendez-vous : on repart d'un formulaire propre plutôt que
     // de risquer de réserver la même salle/horaire pour deux examens différents.
@@ -552,7 +561,7 @@ function PlanificationContent() {
       );
       setTimeout(() => {
         if (nextExam) {
-          switchActiveExam(nextExam);
+          switchActiveExam(nextExam, updatedPlanned);
         } else {
           router.push(successUrl);
         }
@@ -702,7 +711,7 @@ function PlanificationContent() {
                   <button
                     key={exam.id}
                     type="button"
-                    onClick={() => switchActiveExam(exam)}
+                    onClick={() => switchActiveExam(exam, plannedExamIds)}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
                       isActive
                         ? "bg-primary text-white shadow-sm"

@@ -1528,10 +1528,21 @@ function ResultatEndoscopieContent() {
             )}
 
             <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-3">
+              <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
                   {sNum.conclusion}. Conclusion
                 </p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] font-semibold text-slate-500">Dicter à l&apos;oral</span>
+                  <MicButton
+                    onFinalTranscript={(text, meta) =>
+                      updateField(
+                        "conclusion",
+                        appendFinalSegment(formData.conclusion, text, Boolean(meta?.startsAfterPause)),
+                      )
+                    }
+                  />
+                </div>
               </div>
               <textarea
                 value={formData.conclusion}
