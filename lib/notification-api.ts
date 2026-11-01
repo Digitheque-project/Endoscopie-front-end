@@ -116,10 +116,34 @@ export async function fetchNotificationsDirect(
     .map(normalizeNotification);
 }
 
+/** Accusé de lecture sur le service notification (persistant, tous postes confondus). */
+export async function markCentralNotificationRead(id: string): Promise<void> {
+  const session = sessionEndoscopie();
+  if (!session || !id) return;
+  await fetch(`${GATEWAY_URL}/notifications/read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...currentRoleHeaders() },
+    body: JSON.stringify({ ids: [id], userId: session.userId }),
+  }).catch(() => undefined);
+}
+
+/**
+ * Les deux sources, toujours : la boîte locale du backend est en mémoire (vidée à chaque
+ * redémarrage du serveur, fréquent quand il s'endort), le service notification garde
+ * l'historique. Lire seulement la première faisait disparaître les nouvelles
+ * prescriptions de la cloche alors qu'elles étaient bien dans le fil de travail.
+ * Les doublons sont fusionnés par l'appelant (mergeNotifications).
+ */
 export async function loadNotifications(status = 'ENVOYE'): Promise<NotificationItem[]> {
-  try {
-    return await fetchNotificationsViaBackend(status);
-  } catch {
-    return fetchNotificationsDirect(status);
+  const [backend, central] = await Promise.allSettled([
+    fetchNotificationsViaBackend(status),
+    fetchNotificationsDirect(status),
+  ]);
+  if (backend.status === 'rejected' && central.status === 'rejected') {
+    throw central.reason;
   }
+  return [
+    ...(backend.status === 'fulfilled' ? backend.value : []),
+    ...(central.status === 'fulfilled' ? central.value : []),
+  ];
 }

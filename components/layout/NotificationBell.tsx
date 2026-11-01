@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   loadNotifications,
+  markCentralNotificationRead,
   type NotificationItem,
 } from "@/lib/notification-api";
 import {
@@ -454,6 +455,8 @@ export function NotificationBell() {
       if (item.isLocal) {
         await markInboxNotificationRead(item.id).catch(() => undefined);
       }
+      // Copie du service notification : lue pour de bon (tous postes, après rechargement).
+      if (item.externalId) void markCentralNotificationRead(item.externalId);
       // Mémorisé côté navigateur dans tous les cas (pas seulement isLocal) — sans ça,
       // une notification arrivée par le chemin direct redevient non lue à la moindre
       // navigation, le compteur ne redescend jamais (voir applyStoredReadStatus).
