@@ -6,6 +6,7 @@ import { PatientProvider } from "@/contexts/PatientContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGate } from "@/components/layout/AuthGate";
 
+import Script from "next/script";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -41,6 +42,14 @@ export default function RootLayout({
           </PatientProvider>
         </AuthProvider>
         <Toaster position="bottom-right" toastOptions={{ duration: 6000 }} />
+      
+        {/* Messagerie du CHU : bulle en bas à droite (service-messagerie, via la passerelle). */}
+        {process.env.NEXT_PUBLIC_GATEWAY_URL ? (
+          <Script
+            src={`${process.env.NEXT_PUBLIC_GATEWAY_URL.replace(/\/+$/, "")}/messagerie/widget.js?auto`}
+            strategy="afterInteractive"
+          />
+        ) : null}
       </body>
     </html>
   );
