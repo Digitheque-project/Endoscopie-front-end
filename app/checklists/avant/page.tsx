@@ -10,6 +10,7 @@ import { usePatient } from "@/contexts/PatientContext";
 import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
+import { FUSEAU_NAIF } from "@/lib/date-naive";
 
 const checklistItems = [
   {
@@ -148,7 +149,7 @@ function ChecklistAvantContent() {
           const medecin = prescription.medecinPrescripteur;
           setRdvInfo({
             date: rdv?.dateHeureDebut
-              ? new Date(rdv.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })
+              ? new Date(rdv.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short", ...FUSEAU_NAIF })
               : null,
             salle: rdv?.salle ? `${rdv.salle.nom}${rdv.salle.numero ? ` (${rdv.salle.numero})` : ""}` : null,
             prescripteur: medecin ? `Dr. ${medecin.prenom ?? ""} ${medecin.nom ?? ""}`.replace(/\s+/g, " ").trim() : null,

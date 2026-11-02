@@ -9,6 +9,7 @@ import { usePatient } from "@/contexts/PatientContext";
 import { mapProcedureToExamType, getConstatationsFields } from "@/lib/examOrgans";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { FUSEAU_NAIF } from "@/lib/date-naive";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -200,7 +201,7 @@ function DossierSeanceContent() {
               {rdv && (
                 <p className="text-sm text-on-surface-variant">
                   <span className="font-semibold">Examen :</span>{" "}
-                  {new Date(rdv.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
+                  {new Date(rdv.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short", ...FUSEAU_NAIF })}
                   {rdv.salle ? ` • ${rdv.salle.nom}` : ""}
                 </p>
               )}

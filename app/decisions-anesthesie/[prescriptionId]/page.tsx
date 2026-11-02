@@ -8,6 +8,7 @@ import { apiJson, updateRendezVous } from "@/lib/api";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import { fetchSessionSiblings, type SessionInfo } from "@/lib/exam-session";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { FUSEAU_NAIF } from "@/lib/date-naive";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -282,7 +283,7 @@ function PlanificationExamenContent() {
                       <div>
                         <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Date et heure</h4>
                         <p className="text-sm text-on-surface-variant">
-                          {new Date(prescription.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
+                          {new Date(prescription.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short", ...FUSEAU_NAIF })}
                         </p>
                       </div>
                       <div>

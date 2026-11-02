@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
 import { useState, useEffect, useRef, Fragment, type KeyboardEvent } from "react";
+import { dateNaive } from "@/lib/date-naive";
 
 /** Date locale (YYYY-MM-DD) — cohérent avec le filtrage "aujourd'hui" côté backend. */
 function toLocalDateKey(d: Date): string {
@@ -59,7 +60,7 @@ export default function Home() {
     try {
       const data = await apiJson<any[]>('/api/rendezvous');
       const mapped = data.map((rdv: any) => {
-        const start = new Date(rdv.dateHeureDebut);
+        const start = dateNaive(rdv.dateHeureDebut);
         const status = rdv.statut || "En attente";
 
         let statusClass = "bg-surface-container text-on-surface-variant";
@@ -87,7 +88,7 @@ export default function Home() {
           notesCliniques: rdv.notesCliniques || rdv.notes || "Dossier en cours",
           date: toLocalDateKey(start),
           rawStart: start,
-          rawEnd: rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000),
+          rawEnd: rdv.dateHeureFin ? dateNaive(rdv.dateHeureFin) : new Date(start.getTime() + 45 * 60000),
           salleId: rdv.salleId || rdv.salle?.id || null,
           salleName: rdv.salle?.nom || rdv.salle || "",
           typeAnesthesie: rdv.typeAnesthesie || null,

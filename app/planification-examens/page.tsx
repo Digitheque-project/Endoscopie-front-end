@@ -8,6 +8,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
 import StatBadge from "@/components/ui/StatBadge";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
+import { dateNaive } from "@/lib/date-naive";
 
 const INACTIVE_STATUTS = new Set(["Annulé", "Terminé"]);
 
@@ -346,8 +347,8 @@ function PlanificationContent() {
       // le rendez-vous de cette même prescription (cas d'une replanification).
       if (INACTIVE_STATUTS.has(app.statut)) return false;
       if (prescriptionId && app.prescriptionId === prescriptionId) return false;
-      const appStart = new Date(app.dateHeureDebut);
-      const appEnd = new Date(app.dateHeureFin);
+      const appStart = dateNaive(app.dateHeureDebut);
+      const appEnd = dateNaive(app.dateHeureFin);
       return newStart < appEnd && newEnd > appStart;
     };
     // La salle accueille jusqu'à `capacite` patients en simultané (même logique

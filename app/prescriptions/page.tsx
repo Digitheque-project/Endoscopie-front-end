@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
 import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
+import { FUSEAU_NAIF, dateNaive } from "@/lib/date-naive";
 
 const STATUS_LABELS: Record<string, string> = {
   "Planifié": "En attente de décision médecin",
@@ -385,7 +386,7 @@ function PrescriptionsContent() {
     setDecisionMode("choix");
     setDecisionError(null);
     if (req.rendezVous?.dateHeureDebut) {
-      const d = new Date(req.rendezVous.dateHeureDebut);
+      const d = dateNaive(req.rendezVous.dateHeureDebut);
       const pad = (n: number) => n.toString().padStart(2, "0");
       setDecisionDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
       setDecisionHeure(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
@@ -914,7 +915,7 @@ function PrescriptionsContent() {
                                 // Non cliquable : sert uniquement d'indicateur visuel, la date/heure
                                 // planifiée reste consultable via "Détails".
                                 const rdvLabel = r.rendezVous?.dateHeureDebut
-                                  ? `Planifié le ${new Date(r.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}${r.rendezVous.salle?.nom ? ` — ${r.rendezVous.salle.nom}` : ""}`
+                                  ? `Planifié le ${new Date(r.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short", ...FUSEAU_NAIF })}${r.rendezVous.salle?.nom ? ` — ${r.rendezVous.salle.nom}` : ""}`
                                   : STATUS_LABELS[r.status] || r.status;
                                 const label = capitalizeFirst(r.procedure);
                                 return (
@@ -1031,6 +1032,7 @@ function PrescriptionsContent() {
                     {new Date(decisionReq.rendezVous.dateHeureDebut).toLocaleString("fr-FR", {
                       dateStyle: "long",
                       timeStyle: "short",
+                      ...FUSEAU_NAIF,
                     })}
                   </p>
                 )}

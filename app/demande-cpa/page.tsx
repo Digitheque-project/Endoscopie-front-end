@@ -6,6 +6,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
 import { apiJson, apiUrl, createDossierCpa } from "@/lib/api";
+import { FUSEAU_NAIF } from "@/lib/date-naive";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -207,7 +208,7 @@ function DemandeCPAContent() {
               Rendez-vous d&apos;endoscopie planifié
             </p>
             <p className="text-base font-bold text-on-surface">
-              {new Date(rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" })}
+              {new Date(rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short", ...FUSEAU_NAIF })}
             </p>
             <p className="text-sm text-on-surface-variant mt-0.5">{rendezVous.salle?.nom || "Salle non renseignée"}</p>
           </section>

@@ -12,6 +12,7 @@ import TreatButton from "@/components/navigation/TreatButton";
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import { FUSEAU_NAIF } from "@/lib/date-naive";
 
 interface Appointment {
   id: string; // rendezVousId
@@ -119,8 +120,8 @@ function AgendaContent() {
         salle: rdv.salle?.nom || "Salle non assignée",
         typeExamen: rdv.prescription?.typeExamen || rdv.typeExamen || "Examen Endoscopique",
         typeAnesthesie: rdv.typeAnesthesie || null,
-        heureDebut: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        heureFin: end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        heureDebut: start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', ...FUSEAU_NAIF }),
+        heureFin: end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', ...FUSEAU_NAIF }),
         statut: rdv.statut || "Confirmé",
         color: rdv.statut === 'Urgent' ? 'error' : 'primary',
         date: start.toISOString().split('T')[0]

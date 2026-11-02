@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useRendezVousSync } from "@/lib/hooks/useRendezVousSync";
 import { usePatient } from "@/contexts/PatientContext";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import { FUSEAU_NAIF } from "@/lib/date-naive";
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -219,7 +220,7 @@ export default function PatientsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-2.5 text-sm font-bold text-slate-700 text-center">
-                          {new Date(rdv.dateHeureDebut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(rdv.dateHeureDebut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", ...FUSEAU_NAIF })}
                         </td>
                         <td className="px-6 py-2.5">
                           <div className="flex items-center gap-2">

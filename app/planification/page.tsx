@@ -5,6 +5,7 @@ import { apiFetch, apiJson } from "@/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
+import { dateNaive } from "@/lib/date-naive";
 
 const SLOTS = ["08:30", "09:15", "10:00", "11:30", "13:45", "14:30", "15:15", "16:00"];
 const SLOT_DURATION_MINUTES = 45;
@@ -84,8 +85,8 @@ function PlanificationContent() {
     const { start, end } = buildSlotRange(slot);
     return rendezVous.some((rdv) => {
       if (rdv.salleId !== selectedSalleId && rdv.salle?.id !== selectedSalleId) return false;
-      const rdvStart = new Date(rdv.dateHeureDebut);
-      const rdvEnd = rdv.dateHeureFin ? new Date(rdv.dateHeureFin) : new Date(rdvStart.getTime() + SLOT_DURATION_MINUTES * 60000);
+      const rdvStart = dateNaive(rdv.dateHeureDebut);
+      const rdvEnd = rdv.dateHeureFin ? dateNaive(rdv.dateHeureFin) : new Date(rdvStart.getTime() + SLOT_DURATION_MINUTES * 60000);
       return start < rdvEnd && end > rdvStart;
     });
   };

@@ -13,6 +13,7 @@ import { capitalizeFirst } from "@/components/voice/formatTranscript";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { FUSEAU_NAIF } from "@/lib/date-naive";
 
 function PendingReportsContent() {
   const router = useRouter();
@@ -204,7 +205,7 @@ const [rows, setRows] = useState<any[]>([]);
                       </td>
                       <td className="px-4 py-2.5 text-on-surface-variant">
                         {primary.rendezVous?.dateHeureDebut
-                          ? new Date(primary.rendezVous.dateHeureDebut).toLocaleDateString("fr-FR")
+                          ? new Date(primary.rendezVous.dateHeureDebut).toLocaleDateString("fr-FR", FUSEAU_NAIF)
                           : "—"}
                       </td>
                       <td className="px-4 py-2.5">
