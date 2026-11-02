@@ -12,15 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
 import { useState, useEffect, useRef, Fragment, type KeyboardEvent } from "react";
-import { dateNaive } from "@/lib/date-naive";
-
-/** Date locale (YYYY-MM-DD) — cohérent avec le filtrage "aujourd'hui" côté backend. */
-function toLocalDateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import { cleJour as toLocalDateKey, dateNaive } from "@/lib/date-naive";
 
 export default function Home() {
   const router = useRouter();

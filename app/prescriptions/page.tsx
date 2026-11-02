@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
 import { PriseEnChargeBadge, priseEnChargeStripeClass } from "@/components/patient/PriseEnChargeBadge";
-import { FUSEAU_NAIF, dateNaive } from "@/lib/date-naive";
+import { FUSEAU_NAIF, cleJour, dateNaive } from "@/lib/date-naive";
 
 const STATUS_LABELS: Record<string, string> = {
   "Planifié": "En attente de décision médecin",
@@ -1072,7 +1072,7 @@ function PrescriptionsContent() {
                     <input
                       type="date"
                       value={decisionDate}
-                      min={new Date().toISOString().split("T")[0]}
+                      min={cleJour(new Date())}
                       onChange={(e) => setDecisionDate(e.target.value)}
                       className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
                     />

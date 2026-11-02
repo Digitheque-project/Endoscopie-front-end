@@ -8,7 +8,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePatient } from "@/contexts/PatientContext";
 import StatBadge from "@/components/ui/StatBadge";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
-import { dateNaive } from "@/lib/date-naive";
+import { cleJour, dateNaive } from "@/lib/date-naive";
 
 const INACTIVE_STATUTS = new Set(["Annulé", "Terminé"]);
 
@@ -742,7 +742,7 @@ function PlanificationContent() {
                   <span className="material-symbols-outlined text-primary text-sm">calendar_today</span>
                   <p className="text-sm font-bold text-primary">{formattedCurrentDate}</p>
                   <button 
-                    onClick={() => setDate(new Date().toISOString().split('T')[0])}
+                    onClick={() => setDate(cleJour(new Date()))}
                     className="ml-2 px-2 py-0.5 rounded-md bg-primary/10 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/20 transition-all"
                   >
                     Aujourd'hui

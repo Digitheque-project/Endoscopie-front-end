@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
+import { cleJour } from "@/lib/date-naive";
 
 export interface JCalendarAppointment {
   id: string;
@@ -338,7 +339,7 @@ export function JCalendar({
                   
                   <div className="space-y-2 max-h-[500px] overflow-y-auto no-scrollbar">
                     {appointments
-                      .filter(app => app.date === date.toISOString().split('T')[0])
+                      .filter(app => app.date === cleJour(date))
                       .slice(0, 3)
                       .map(app => (
                         <div key={app.id}
@@ -391,7 +392,7 @@ export function JCalendar({
               
               const isCurrentMonth = date.getMonth() === currentDate.getMonth();
               const isToday = date.toDateString() === new Date().toDateString();
-              const iso = date.toISOString().split('T')[0];
+              const iso = cleJour(date);
               const appointmentCount = appointmentsByDate[iso] ?? dailyCounts?.[iso] ?? 0;
               
               return (

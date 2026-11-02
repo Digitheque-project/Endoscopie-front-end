@@ -12,7 +12,7 @@ import TreatButton from "@/components/navigation/TreatButton";
 import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
-import { FUSEAU_NAIF } from "@/lib/date-naive";
+import { FUSEAU_NAIF, cleJour } from "@/lib/date-naive";
 
 interface Appointment {
   id: string; // rendezVousId
@@ -68,9 +68,7 @@ function AgendaContent() {
     });
   }, []);
 
-  const getCurrentDateISO = useCallback(() => {
-    return currentDate.toISOString().split('T')[0];
-  }, [currentDate]);
+  const getCurrentDateISO = useCallback(() => cleJour(currentDate), [currentDate]);
 
   const {
     rendezVous: syncedRendezVous,
@@ -128,7 +126,7 @@ function AgendaContent() {
       };
     });
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = cleJour(new Date());
 
     const filtered = convertedApps.filter(a => {
       const s = a.statut?.toString().toUpperCase() || "";
@@ -138,21 +136,21 @@ function AgendaContent() {
       if (a.date === todayStr && (s.includes("TERMINE") || s.includes("DONE"))) return false;
 
       if (!a.date) return true;
-      const selectedDateStr = currentDate.toISOString().split('T')[0];
+      // Comparaisons sur des jours « AAAA-MM-JJ » (a.date = jour planifié) : comparer des
+      // dates locales à des dates UTC décalait les rendez-vous d'un jour.
+      const selectedDateStr = cleJour(currentDate);
 
       if (viewMode === "day") {
         return a.date === selectedDateStr;
       } else if (viewMode === "week") {
-        const startOfWeek = new Date(currentDate);
-        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-        const appDate = new Date(a.date);
-        return appDate >= startOfWeek && appDate <= endOfWeek;
+        // Même semaine que les colonnes de JCalendar (lundi → dimanche).
+        const lundi = new Date(currentDate);
+        lundi.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+        const dimanche = new Date(lundi);
+        dimanche.setDate(lundi.getDate() + 6);
+        return a.date >= cleJour(lundi) && a.date <= cleJour(dimanche);
       } else if (viewMode === "month") {
-        const appDate = new Date(a.date);
-        return appDate.getMonth() === currentDate.getMonth() && appDate.getFullYear() === currentDate.getFullYear();
+        return a.date.slice(0, 7) === selectedDateStr.slice(0, 7);
       }
 
       return true;

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { apiJson } from "@/lib/api";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
+import { cleJour } from "@/lib/date-naive";
 
 type Period = "week" | "month";
 
@@ -36,7 +37,7 @@ export default function RapportPage() {
     let cancelled = false;
     setIsLoading(true);
     setError(null);
-    const dateParam = refDate.toISOString().split("T")[0];
+    const dateParam = cleJour(refDate);
     apiJson<RapportStats>(`/api/rapport/stats?period=${period}&date=${dateParam}`)
       .then((data) => {
         if (!cancelled) setStats(data);

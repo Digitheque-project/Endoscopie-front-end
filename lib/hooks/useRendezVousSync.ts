@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
+import { cleJour } from "@/lib/date-naive";
 
 /**
  * Hook personnalisé pour synchroniser automatiquement les rendez-vous
@@ -86,7 +87,7 @@ export function useRendezVousSync(options: UseRendezVousSyncOptions = {}) {
   // Obtenir la date du jour au format YYYY-MM-DD
   const getTodayISO = useCallback(() => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    return cleJour(today);
   }, []);
 
   const date = options.date || getTodayISO();
