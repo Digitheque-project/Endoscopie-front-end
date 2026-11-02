@@ -16,6 +16,8 @@ export type NotificationItem = {
   serviceId?: string;
   entiteRefType?: string;
   entiteRefId?: string;
+  /** Nouvelle demande publiée par prescription_back : id de la prescription (voir NotificationBell). */
+  nouvellePrescriptionId?: string;
 };
 
 type RawNotification = Record<string, unknown>;
@@ -62,8 +64,22 @@ function normalizeNotification(raw: RawNotification): NotificationItem {
     // (silencieux : les conditions de navigation ne correspondaient jamais).
     entiteRefType: (raw.entiteRefType as string) ?? (payload?.entiteRefType as string) ?? undefined,
     entiteRefId: (raw.entiteRefId as string) ?? (payload?.entiteRefId as string) ?? undefined,
+    // Création (ni statut ni rendez-vous) : les mises à jour d'une même prescription
+    // restent des notifications à part entière.
+    nouvellePrescriptionId:
+      raw.source === 'prescription_back' && !payload?.statut && !payload?.rdvDate
+        ? ((payload?.prescriptionId as string) ?? undefined)
+        : undefined,
   };
 }
+
+/**
+ * Copie « Nouvelle prescription endoscopie » que notre backend publiait en plus de celle
+ * de prescription_back, pour la même demande (doublon au texte différent) : il ne la
+ * publie plus, les anciennes sont écartées.
+ */
+const estAncienDoublon = (raw: RawNotification) =>
+  raw.source === 'endoscopie-back' && raw.type === 'DEMANDE_EXAMEN';
 
 function parseItems(data: unknown): RawNotification[] {
   if (Array.isArray(data)) return data as RawNotification[];
@@ -112,7 +128,7 @@ export async function fetchNotificationsDirect(
   const data = await resp.json();
   const lues = status === 'LU';
   return parseItems(data)
-    .filter((raw) => Boolean(raw.read) === lues)
+    .filter((raw) => Boolean(raw.read) === lues && !estAncienDoublon(raw))
     .map(normalizeNotification);
 }
 

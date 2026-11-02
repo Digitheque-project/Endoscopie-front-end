@@ -42,6 +42,10 @@ type DisplayNotification = {
   isLocal: boolean;
   entiteRefType?: string;
   entiteRefId?: string;
+  // Prescription (id prescription_back) d'une notification « nouvelle demande » : la même
+  // demande arrive par prescription_back (service notification) et par l'alerte en direct
+  // du backend, sous deux textes différents — une seule doit rester (voir mergeNotifications).
+  nouvellePrescriptionId?: string;
 };
 
 function typeLabel(type: string): string {
@@ -179,6 +183,7 @@ function fromRemote(n: NotificationItem): DisplayNotification {
     isLocal: false,
     entiteRefType: n.entiteRefType,
     entiteRefId: n.entiteRefId,
+    nouvellePrescriptionId: n.nouvellePrescriptionId,
   };
 }
 
@@ -194,6 +199,10 @@ function fromInbox(n: InboxNotification): DisplayNotification {
     isLocal: true,
     entiteRefType: n.entiteRefType,
     entiteRefId: n.entiteRefId,
+    nouvellePrescriptionId:
+      n.type === "DEMANDE_EXAMEN" && typeof n.payload?.prescriptionId === "string"
+        ? n.payload.prescriptionId
+        : undefined,
   };
 }
 
@@ -210,15 +219,18 @@ function mergeNotifications(
 ): DisplayNotification[] {
   const byKey = new Map<string, DisplayNotification>();
   const byContent = new Set<string>();
+  const byPrescription = new Set<string>();
   // `local` en premier : en cas de doublon (même externalId), on garde la version de la
   // boîte locale — motif toujours correctement rempli — plutôt que celle du secours direct
   // au service externe, dont le mapping peut laisser motif vide (voir normalizeNotification).
   for (const n of [...local, ...remote]) {
     const key = n.externalId ?? n.id;
     const content = contentKey(n);
-    if (byKey.has(key) || byContent.has(content)) continue;
+    const presc = n.nouvellePrescriptionId;
+    if (byKey.has(key) || byContent.has(content) || (presc && byPrescription.has(presc))) continue;
     byKey.set(key, n);
     byContent.add(content);
+    if (presc) byPrescription.add(presc);
   }
   return [...byKey.values()].sort(
     (a, b) => Date.parse(b.receivedAt) - Date.parse(a.receivedAt),
