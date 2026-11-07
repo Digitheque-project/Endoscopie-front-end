@@ -37,6 +37,10 @@ function PlanificationExamenContent() {
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [selectedAnesthesie, setSelectedAnesthesie] = useState<"Locale" | "Générale" | "Refuser" | null>(null);
   const [motifRefus, setMotifRefus] = useState("");
+  // Décalage facultatif du rendez-vous fixé par le Major, au moment de la décision.
+  const [decaler, setDecaler] = useState(false);
+  const [nouvelleDate, setNouvelleDate] = useState("");
+  const [nouvelleHeure, setNouvelleHeure] = useState("");
   const [showRefusConfirm, setShowRefusConfirm] = useState(false);
   const [chainingMessage, setChainingMessage] = useState<string | null>(null);
   const [propagationMessage, setPropagationMessage] = useState<string | null>(null);
@@ -106,9 +110,15 @@ function PlanificationExamenContent() {
           rendezVous: { ...prev.rendezVous, ...updated },
         }));
       } else {
+        // Heure naïve (composants UTC = heure planifiée), comme le décalage du Fil.
+        const actuel = String(prescription.rendezVous.dateHeureDebut ?? "");
+        const deplace =
+          decaler && nouvelleDate && nouvelleHeure &&
+          `${nouvelleDate}T${nouvelleHeure}` !== `${actuel.slice(0, 10)}T${actuel.slice(11, 16)}`;
         const updated = await updateRendezVous(prescription.rendezVous.id, {
           typeAnesthesie: selectedAnesthesie,
           statut: "Décision rendue",
+          ...(deplace ? { dateHeureDebut: `${nouvelleDate}T${nouvelleHeure}:00` } : {}),
         });
         setPrescription((prev: any) => ({
           ...prev,
@@ -382,6 +392,47 @@ function PlanificationExamenContent() {
                           Refuser
                         </button>
                       </div>
+                      {(selectedAnesthesie === "Locale" || selectedAnesthesie === "Générale") && (
+                        <div className="w-full space-y-2 rounded-xl border border-outline-variant/30 bg-surface-container-low/50 px-3 py-2.5">
+                          <label className="flex items-center gap-2 text-sm font-semibold text-on-surface cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={decaler}
+                              disabled={isDeciding}
+                              onChange={(e) => {
+                                setDecaler(e.target.checked);
+                                const actuel = String(prescription.rendezVous.dateHeureDebut ?? "");
+                                if (e.target.checked && !nouvelleDate) {
+                                  setNouvelleDate(actuel.slice(0, 10));
+                                  setNouvelleHeure(actuel.slice(11, 16));
+                                }
+                              }}
+                            />
+                            Décaler le rendez-vous fixé par le Major
+                          </label>
+                          {decaler && (
+                            <div className="flex flex-wrap gap-2">
+                              <input
+                                type="date"
+                                value={nouvelleDate}
+                                disabled={isDeciding}
+                                onChange={(e) => setNouvelleDate(e.target.value)}
+                                className="rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm"
+                              />
+                              <input
+                                type="time"
+                                value={nouvelleHeure}
+                                disabled={isDeciding}
+                                onChange={(e) => setNouvelleHeure(e.target.value)}
+                                className="rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm"
+                              />
+                              <p className="w-full text-xs text-on-surface-variant">
+                                Le service demandeur sera prévenu du nouveau créneau.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {selectedAnesthesie === "Refuser" && (
                         <div className="w-full space-y-1.5">
                           <textarea
