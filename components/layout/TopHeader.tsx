@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiJson } from "@/lib/api";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
+import PointServeur from "@/components/PointServeur";
 
 const SEARCH_MIN_LENGTH = 2;
 const SEARCH_MAX_RESULTS = 8;
@@ -214,7 +215,7 @@ export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
         <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 lg:pl-4 border-l border-outline-variant/30">
           <div className="text-right hidden lg:block">
             <p className="text-xs font-bold text-on-surface">
-              {role === "MEDECIN" ? `Dr. ${medecinName}` : ROLE_LABELS[role ?? ""] || "—"}
+              <PointServeur />{role === "MEDECIN" ? `Dr. ${medecinName}` : ROLE_LABELS[role ?? ""] || "—"}
             </p>
             <p className="text-[10px] text-on-surface-variant">
               {role ? ROLE_LABELS[role] : ""}
