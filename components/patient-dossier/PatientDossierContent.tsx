@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiJson } from "@/lib/api";
+import { apiJson, updateRendezVous } from "@/lib/api";
 import { usePatient } from "@/contexts/PatientContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
@@ -46,6 +46,9 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [examensGroupe, setExamensGroupe] = useState<{ id: string; typeExamen: string; statut: string }[]>([]);
+  // Action « Notifier Prescripteur » depuis le détail (décision rendue, anesthésie locale).
+  const [confirmationEnCours, setConfirmationEnCours] = useState(false);
+  const [erreurAction, setErreurAction] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +144,36 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
   const anesthesiste = prescription.dossierCPA?.anesthesiste
     ? `Dr. ${prescription.dossierCPA.anesthesiste.prenom} ${prescription.dossierCPA.anesthesiste.nom}`
     : null;
+
+  // Décision d'anesthésie rendue par le médecin : mêmes actions que le Fil de
+  // prescription, directement depuis le détail (ouvert depuis la notification).
+  const decisionRendue = role !== "MEDECIN" && prescription.statut === "Décision rendue";
+  const typeAnesthesie = prescription.rendezVous?.typeAnesthesie;
+  const handleDemanderCpa = () => {
+    const params = new URLSearchParams();
+    if (prescription.patientId) params.set("patientId", String(prescription.patientId));
+    params.set("prescriptionId", String(prescription.id));
+    const patientName = patient ? `${patient.nom} ${patient.prenom}` : "";
+    if (patientName) params.set("patientName", patientName);
+    if (prescription.typeExamen) params.set("procedure", String(prescription.typeExamen));
+    if (prescripteur) params.set("prescriber", prescripteur);
+    if (prescription.priorite) params.set("priority", String(prescription.priorite));
+    router.push(`/demande-cpa?${params.toString()}`);
+  };
+
+  const handleNotifierPrescripteur = async () => {
+    if (!prescription.rendezVous?.id) return;
+    setConfirmationEnCours(true);
+    setErreurAction(null);
+    try {
+      await updateRendezVous(prescription.rendezVous.id, { statut: "Confirmé" });
+      setPrescription({ ...prescription, statut: "Confirmé", rendezVous: { ...prescription.rendezVous, statut: "Confirmé" } });
+    } catch (err) {
+      setErreurAction(err instanceof Error ? err.message : "Erreur lors de l'envoi de la confirmation.");
+    } finally {
+      setConfirmationEnCours(false);
+    }
+  };
 
   const handlePlanifier = () => {
     const patientName = patient ? `${patient.nom} ${patient.prenom}` : "";
@@ -278,6 +311,24 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
               >
                 Décider
               </button>
+            ) : decisionRendue && typeAnesthesie === "Générale" ? (
+              <button
+                type="button"
+                onClick={handleDemanderCpa}
+                title="Demander la consultation pré-anesthésique au Bloc"
+                className="px-4 py-1.5 rounded-full bg-[#EA580C] text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                Demander CPA
+              </button>
+            ) : decisionRendue && typeAnesthesie === "Locale" ? (
+              <button
+                type="button"
+                disabled={confirmationEnCours}
+                onClick={handleNotifierPrescripteur}
+                className="px-4 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {confirmationEnCours ? "Envoi…" : "Notifier Prescripteur"}
+              </button>
             ) : prescription.statut === "A planifier" ? (
               <button
                 type="button"
@@ -293,6 +344,7 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
               </span>
             )}
           </div>
+          {erreurAction && <p className="mt-2 text-right text-xs font-semibold text-error">{erreurAction}</p>}
         </div>
 
         {/* Précautions & alertes saisies par le prescripteur d'origine (allergies,
