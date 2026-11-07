@@ -99,12 +99,9 @@ const lastSavedTranscriptionRef = useRef("");
   // jamais quand on a recliqué en arrière pour compléter un organe précédent.
   const highestOrganIndexRef = useRef(organIndex);
   if (organIndex > highestOrganIndexRef.current) highestOrganIndexRef.current = organIndex;
-  // Avancement automatique vers l'organe suivant, mais seulement après un silence
-  // VRAIMENT prolongé (pas la simple pause de réflexion en pleine phrase) : on
-  // programme l'avancement après chaque segment final, et on l'annule si le médecin
-  // recommence à parler (voir handleObservationActivity) avant l'échéance.
+  // Ancienne minuterie d'avancement sur silence (retirée : on reste sur l'organe
+  // jusqu'à la pause) — gardée pour annuler proprement tout délai en cours.
   const organAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const ORGAN_AUTO_ADVANCE_SILENCE_MS = 4500;
 
   // Écrit automatiquement le nom de l'organe directement dans le champ "Observation
   // durant l'examen" dès que c'est son tour — le médecin n'a plus qu'à dicter
@@ -206,14 +203,11 @@ const lastSavedTranscriptionRef = useRef("");
       // Dictée guidée : le nom de l'organe est déjà écrit dans le champ (voir l'effet
       // ci-dessus) — on complète SON bloc avec l'observation dictée (pas forcément la
       // fin du texte : après un clic sur un organe déjà décrit, ce bloc peut être suivi
-      // d'autres organes déjà remplis). Le micro finalise un segment dès la moindre
-      // pause naturelle (même en pleine phrase) : on n'avance donc PAS immédiatement
-      // vers l'organe suivant ici, on programme l'avancement après un vrai silence
-      // prolongé (voir scheduleOrganAdvance) — annulé si le médecin recommence à parler
-      // avant l'échéance.
+      // d'autres organes déjà remplis).
+      // On reste sur cet organe, même après un long silence : on ne passe au suivant
+      // qu'à la pause du micro, au bouton « Organe suivant » ou au clic sur un organe.
       const answer = capitalizeFirst(normalized);
       setTranscriptText((cur) => insertAnswerIntoOrganBlock(cur, fields, organIndexRef.current, answer));
-      scheduleOrganAdvance();
       return;
     }
 
@@ -227,22 +221,13 @@ const lastSavedTranscriptionRef = useRef("");
     }
   };
 
-  // Avance vers l'organe suivant — appelé automatiquement après un silence prolongé
-  // (scheduleOrganAdvance) ou immédiatement via le bouton "Organe suivant".
+  // Avance vers l'organe suivant — à la pause du micro ou via le bouton "Organe suivant".
   const advanceToNextOrgan = () => {
     clearOrganAdvanceTimer();
     const fields = organFieldsRef.current;
     const nextIndex = Math.min(organIndexRef.current + 1, fields.length);
     organIndexRef.current = nextIndex;
     setOrganIndex(nextIndex);
-  };
-
-  const scheduleOrganAdvance = () => {
-    clearOrganAdvanceTimer();
-    organAdvanceTimerRef.current = setTimeout(() => {
-      organAdvanceTimerRef.current = null;
-      advanceToNextOrgan();
-    }, ORGAN_AUTO_ADVANCE_SILENCE_MS);
   };
 
   // Clic direct sur un organe de la liste — permet au médecin de revenir sur un organe
@@ -509,7 +494,15 @@ const lastSavedTranscriptionRef = useRef("");
                 className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
                 placeholder=""
                 rows={8}
-                onChange={(event) => setTranscriptText(event.target.value)}
+                onChange={(event) => {
+                  const suivant = event.target.value;
+                  // Les noms d'organes (« Label : ») écrits automatiquement ne se
+                  // modifient pas : une frappe qui en abîme un est ignorée.
+                  const abime = organFieldsRef.current.some(
+                    (f) => transcriptText.includes(`${f.label} :`) && !suivant.includes(`${f.label} :`),
+                  );
+                  if (!abime) setTranscriptText(suivant);
+                }}
                 value={transcriptText}
               />
 
