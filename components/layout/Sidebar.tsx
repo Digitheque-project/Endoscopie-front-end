@@ -101,6 +101,65 @@ function ServiceSwitcher() {
   );
 }
 
+/** Numéros de flotte du personnel (comme l'Anapath) — liste à compléter. */
+const CONTACTS_PERSONNEL: { id: string; nom: string; fonction: string; telephone: string }[] = [];
+
+/** « Numéro flotte personnel » : liste de contact du personnel, au-dessus de la déconnexion. */
+function NumeroFlotte() {
+  const [ouvert, setOuvert] = useState(false);
+  return (
+    <>
+      <div className="rounded-xl bg-white/5 p-3">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Numéro flotte personnel</p>
+        <p className="mt-0.5 text-[11px] leading-tight text-white/70">Liste de contact de personnel</p>
+        <button
+          type="button"
+          onClick={() => setOuvert(true)}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+        >
+          <span className="material-symbols-outlined text-sm">groups</span>
+          voir
+        </button>
+      </div>
+      {ouvert && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setOuvert(false)}>
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
+                <span className="material-symbols-outlined text-primary">contacts</span>
+                Liste de contact de personnel
+              </h3>
+              <button type="button" onClick={() => setOuvert(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100" aria-label="Fermer">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-4">
+              {CONTACTS_PERSONNEL.length === 0 ? (
+                <p className="py-8 text-center text-sm text-slate-500">Aucun numéro flotte disponible pour le moment.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {CONTACTS_PERSONNEL.map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">{c.nom}</p>
+                        <p className="truncate text-xs text-slate-500">{c.fonction}</p>
+                      </div>
+                      <a href={`tel:${c.telephone}`} className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/20">
+                        <span className="material-symbols-outlined text-sm">call</span>
+                        {c.telephone}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /** Bas du menu : changer de service (si applicable) au-dessus de la déconnexion. */
 function SidebarFooter({ onLinkClick }: { onLinkClick?: () => void }) {
   const router = useRouter();
@@ -115,6 +174,7 @@ function SidebarFooter({ onLinkClick }: { onLinkClick?: () => void }) {
   return (
     <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
       <ServiceSwitcher />
+      <NumeroFlotte />
       <button
         type="button"
         onClick={handleLogout}
