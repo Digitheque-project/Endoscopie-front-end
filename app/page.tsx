@@ -74,7 +74,14 @@ export default function Home() {
           // "Dr. Antoine Moreau" était un nom de démo codé en dur, affiché à la place de
           // TOUT rendez-vous sans médecin Endoscopie encore assigné (le cas le plus
           // courant) — donnait l'impression trompeuse d'un vrai médecin assigné.
-          doctor: rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Non assigné",
+          // Médecin prescripteur, comme le Fil de prescription ; à défaut le médecin
+          // assigné au rendez-vous.
+          doctor: (() => {
+            const p = rdv.prescription?.medecinPrescripteur;
+            const nom = p ? [p.prenom, p.nom].filter(Boolean).join(" ").trim() : "";
+            if (nom) return `Dr. ${nom}`;
+            return rdv.medecin ? `Dr. ${rdv.medecin.nom}` : "Non assigné";
+          })(),
           status: status,
           statusClass: statusClass,
           notesCliniques: rdv.notesCliniques || rdv.notes || "Dossier en cours",
