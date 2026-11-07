@@ -207,9 +207,53 @@ function DossierCpaContent() {
                 <div>
                   <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Observations</h4>
                   <p className="text-sm text-on-surface-variant whitespace-pre-wrap">
-                    {dossier.observations || "Aucune observation."}
+                    {dossier.observations || dossier.bloc?.observations || "Aucune observation."}
                   </p>
                 </div>
+
+                {/* Ce que le Bloc a saisi, lu en direct au Bloc (rien de stocké ici). */}
+                {dossier.bloc && (() => {
+                  const b = dossier.bloc;
+                  const jour = (v?: string | null) =>
+                    v ? new Date(v).toLocaleDateString("fr-FR", { timeZone: "UTC", dateStyle: "long" }) : null;
+                  const libelleStatut: Record<string, string> = {
+                    EN_ATTENTE: "En attente de planification",
+                    CPA_PLANIFIEE: "CPA planifiée",
+                    CPA_REALISEE: "CPA réalisée",
+                    VPA_PLANIFIEE: "Vérification veille planifiée",
+                    VPA_REALISEE: "Vérification veille réalisée",
+                    CONFIRMEE: "Confirmée",
+                    REPORTEE: "Reportée",
+                    ANNULEE: "Annulée",
+                  };
+                  const lignes: [string, string | null][] = [
+                    ["Statut au Bloc", b.statut ? libelleStatut[b.statut] ?? b.statut : null],
+                    ["CPA planifiée le", jour(b.dateCpaPlanifiee)],
+                    ["CPA réalisée le", jour(b.dateCpa)],
+                    ["Vérification veille planifiée le", jour(b.dateVpaPlanifiee)],
+                    ["Décision du Bloc", b.decision],
+                    ["Motif (inapte / report)", b.motifRefus],
+                    ["Observations du Bloc", b.observations && b.observations !== dossier.observations ? b.observations : null],
+                  ];
+                  const visibles = lignes.filter(([, v]) => v);
+                  if (visibles.length === 0) return null;
+                  return (
+                    <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
+                      <h4 className="font-bold text-on-surface mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-lg">local_hospital</span>
+                        Informations du Bloc opératoire
+                      </h4>
+                      <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {visibles.map(([label, valeur]) => (
+                          <div key={label}>
+                            <dt className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">{label}</dt>
+                            <dd className={`text-sm whitespace-pre-wrap ${label.startsWith("Motif") ? "font-semibold text-error" : "text-on-surface"}`}>{valeur}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  );
+                })()}
 
                 {role === "MAJOR" && !dossier.blocDemandeId && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-center justify-between gap-4 flex-wrap">
