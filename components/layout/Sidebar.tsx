@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionsCompte } from "@/components/ActionsCompte";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -33,70 +34,6 @@ function SidebarBrand() {
           CHU Andrainjato
         </p>
       </div>
-    </div>
-  );
-}
-
-/** Bouton "Changer de service" + son menu déroulant (ouvert vers le haut, en bas du menu). */
-function ServiceSwitcher() {
-  const { otherServices, accessToken } = useAuth();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
-  if (!otherServices || otherServices.length === 0) return null;
-
-  const handleSwitchService = (baseUrl: string) => {
-    const separator = baseUrl.includes("?") ? "&" : "?";
-    window.location.href = `${baseUrl}${separator}accessToken=${accessToken}`;
-  };
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-3 p-3 rounded-lg transition-all font-inter text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white"
-      >
-        <span className="material-symbols-outlined">switch_account</span>
-        <span>Changer de service</span>
-      </button>
-      {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow-xl z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-100">
-            <p className="text-sm font-bold text-slate-800">Changer de service</p>
-            <p className="text-[11px] text-slate-500">Accès rapide aux autres services disponibles pour votre compte</p>
-          </div>
-          <div className="max-h-72 overflow-y-auto">
-            {otherServices.map((s) => (
-              <button
-                key={s.serviceId}
-                type="button"
-                onClick={() => handleSwitchService(s.baseUrl)}
-                className="w-full px-4 py-3 border-b border-slate-50 last:border-b-0 hover:bg-slate-50 text-left flex items-center gap-3"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <span className="material-symbols-outlined text-[18px]">business_center</span>
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-800 truncate">{s.serviceName}</p>
-                  <p className="text-[11px] text-slate-500 truncate">{s.roleName}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -173,8 +110,8 @@ function SidebarFooter({ onLinkClick }: { onLinkClick?: () => void }) {
 
   return (
     <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
-      <ServiceSwitcher />
       <NumeroFlotte />
+      <ActionsCompte className="flex w-full items-center gap-3 p-3 rounded-lg transition-all font-inter text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white" />
       <button
         type="button"
         onClick={handleLogout}
