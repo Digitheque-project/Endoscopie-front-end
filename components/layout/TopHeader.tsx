@@ -1,5 +1,6 @@
 "use client";
 
+import { PastilleAutresServices } from "@/components/ActionsCompte";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_HEADER, HEADER_BY_PATH } from "@/components/layout/navigation";
@@ -208,6 +209,7 @@ export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
           )}
         </div>
 
+        <PastilleAutresServices />
         <NotificationBell />
 
         <LiveClock />
