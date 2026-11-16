@@ -19,7 +19,7 @@ export function RequireRole({
 
   if (currentRole !== role) {
     return (
-      <div className="bg-white p-10 rounded-2xl border border-outline-variant/20 shadow-sm text-center space-y-4">
+      <div className="bg-white p-10 rounded-2xl border border-[#F1F5F9] shadow-sm text-center space-y-4">
         <span className="material-symbols-outlined text-4xl text-error">block</span>
         <h3 className="text-xl font-bold text-on-surface">
           Accès réservé au rôle {ROLE_LABELS[role]}

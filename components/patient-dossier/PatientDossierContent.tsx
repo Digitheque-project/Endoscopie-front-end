@@ -110,7 +110,7 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
 
   if (isLoading) {
     return (
-      <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-8 animate-pulse space-y-4">
+      <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-8 animate-pulse space-y-4">
         <div className="h-6 w-48 bg-surface-container rounded" />
         <div className="h-4 w-72 bg-surface-container rounded" />
       </section>
@@ -119,7 +119,7 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
 
   if (error || !prescription) {
     return (
-      <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-8 text-center text-on-surface-variant">
+      <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-8 text-center text-on-surface-variant">
         {error || "Dossier introuvable."}
       </section>
     );
@@ -211,7 +211,7 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
 
   return (
     <>
-      <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+      <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex items-center gap-5 min-w-0">
           <div className="w-16 h-16 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
             <span className="material-symbols-outlined text-3xl">person</span>
@@ -238,17 +238,17 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6 space-y-4">
           <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">DETAILS DE LA PRESCRIPTION</p>
 
           <div className="space-y-6 text-sm text-on-surface-variant overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
             <section>
-              <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Renseignements cliniques</h4>
+              <h4 className="font-bold text-on-surface mb-2 border-b border-[#F1F5F9] pb-1">Renseignements cliniques</h4>
               <p>{prescription.motif || "Aucun renseignement clinique."}</p>
             </section>
 
             <section>
-              <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Examen demandé</h4>
+              <h4 className="font-bold text-on-surface mb-2 border-b border-[#F1F5F9] pb-1">Examen demandé</h4>
               {examensGroupe.length > 1 ? (
                 <ul className="space-y-2">
                   {examensGroupe.map((exam) => {
@@ -274,7 +274,7 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className={`bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-3 flex flex-col ${!prescription.alertes ? "sm:col-span-2" : ""}`}>
+        <div className={`bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6 space-y-3 flex flex-col ${!prescription.alertes ? "sm:col-span-2" : ""}`}>
           <p className="text-lg font-bold">{prescripteur}</p>
           <p className="text-sm text-on-surface-variant">Médecin prescripteur</p>
           {prescription.serviceSourceName && (
@@ -307,7 +307,7 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
                 onClick={() =>
                   router.push(`/decisions-anesthesie/${encodeURIComponent(prescription.id)}?tab=${encodeURIComponent(tab || "a-decider")}`)
                 }
-                className="px-4 py-1.5 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider hover:bg-[#005a76] hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
                 Décider
               </button>
@@ -334,7 +334,7 @@ export function PatientDossierContent({ prescriptionId, tab }: PatientDossierCon
                 type="button"
                 onClick={handlePlanifier}
                 title="Planifier le rendez-vous de cet examen"
-                className="px-3 py-1 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="px-3 py-1 rounded-full bg-primary text-white text-xs font-bold uppercase tracking-wider hover:bg-[#005a76] hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
                 Planifier
               </button>

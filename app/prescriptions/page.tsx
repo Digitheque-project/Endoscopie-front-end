@@ -438,13 +438,13 @@ function PrescriptionsContent() {
           <>
             <button
               onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(req.id)}?tab=${medecinTab}`)}
-              className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+              className="rounded-xl bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:bg-[#005a76]"
             >
               Décider
             </button>
             <button
               onClick={() => handleDetail(req.id)}
-              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+              className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
             >
               Détails
             </button>
@@ -461,28 +461,28 @@ function PrescriptionsContent() {
             />
             <button
               onClick={() => handleDetail(req.id)}
-              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+              className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
             >
               Détails
             </button>
           </>
         ) : medecinRowState(req) === "cpa-bloquee" ? (
           <>
-            <span className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error">
+            <span className="inline-flex items-center gap-1 rounded-xl bg-error-container px-2.5 py-1 text-[11px] font-bold text-error">
               <span className="material-symbols-outlined text-[14px]">block</span>
               {req.dossierCPA?.decisionCpa === "REPORT" ? "CPA reportée" : "CPA défavorable"}
             </span>
             {req.dossierCPA?.id && (
               <button
                 onClick={() => router.push(`/dossier-cpa/${encodeURIComponent(req.dossierCPA.id)}`)}
-                className="rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-primary/10"
+                className="rounded-xl border border-primary/30 bg-primary/5 px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-primary/10"
               >
                 Voir la CPA
               </button>
             )}
             <button
               onClick={() => handleDetail(req.id)}
-              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+              className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
             >
               Détails
             </button>
@@ -490,7 +490,7 @@ function PrescriptionsContent() {
         ) : medecinRowState(req) === "refusee" ? (
           <button
             onClick={() => setRefusReq(req)}
-            className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error transition-all duration-200 hover:opacity-90"
+            className="inline-flex items-center gap-1 rounded-xl bg-error-container px-2.5 py-1 text-[11px] font-bold text-error transition-all duration-200 hover:opacity-90"
           >
             <span className="material-symbols-outlined text-[14px]">cancel</span>
             Refusé
@@ -498,7 +498,7 @@ function PrescriptionsContent() {
         ) : (
           <button
             onClick={() => handleDetail(req.id)}
-            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
           >
             Détails
           </button>
@@ -506,7 +506,7 @@ function PrescriptionsContent() {
       ) : req.status === "Annulé" ? (
         <button
           onClick={() => setRefusReq(req)}
-          className="inline-flex items-center gap-1 rounded-lg bg-error-container px-2.5 py-1 text-[11px] font-bold text-error transition-all duration-200 hover:opacity-90"
+          className="inline-flex items-center gap-1 rounded-xl bg-error-container px-2.5 py-1 text-[11px] font-bold text-error transition-all duration-200 hover:opacity-90"
         >
           <span className="material-symbols-outlined text-[14px]">cancel</span>
           Refusé
@@ -515,14 +515,14 @@ function PrescriptionsContent() {
         <button
           disabled={confirmingId === req.id}
           onClick={() => handleEnvoyerConfirmation(req)}
-          className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50"
         >
           {confirmingId === req.id ? "Envoi…" : "Notifier Prescripteur"}
         </button>
       ) : req.status === "Décision rendue" && req.rendezVous?.typeAnesthesie === "Générale" ? (
         <button
           onClick={() => handleDemandeCpaFromFil(req)}
-          className="rounded-lg bg-[#EA580C] px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+          className="rounded-xl bg-[#EA580C] px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
         >
           Demande CPA
         </button>
@@ -530,13 +530,13 @@ function PrescriptionsContent() {
         <>
           <button
             onClick={() => handlePlanifier(req, group)}
-            className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+            className="rounded-xl bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:bg-[#005a76]"
           >
             Planifier
           </button>
           <button
             onClick={() => handleDetail(req.id)}
-            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
           >
             Détails
           </button>
@@ -547,14 +547,14 @@ function PrescriptionsContent() {
             disabled={verifyingCpaId === req.id}
             onClick={() => handleVerifierStatutCpa(req)}
             title="Interroger le Bloc Opératoire (filet de sécurité si la notification automatique n'est pas arrivée)"
-            className="inline-flex items-center gap-1 rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-surface-container-high disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-surface-container-high disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[13px]">sync</span>
             {verifyingCpaId === req.id ? "Vérification…" : "Vérifier CPA"}
           </button>
           <button
             onClick={() => handleDetail(req.id)}
-            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
           >
             Détails
           </button>
@@ -567,14 +567,14 @@ function PrescriptionsContent() {
             <button
               onClick={() => router.push(`/dossier-cpa/${encodeURIComponent(req.dossierCPA.id)}`)}
               title="Revoir la décision du Bloc Opératoire pour cette CPA"
-              className="rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-primary/10"
+              className="rounded-xl border border-primary/30 bg-primary/5 px-2.5 py-1 text-[11px] font-bold text-primary transition-all duration-200 hover:bg-primary/10"
             >
               Voir la CPA
             </button>
           )}
           <button
             onClick={() => handleDetail(req.id)}
-            className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
+            className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[11px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high"
           >
             Détails
           </button>
@@ -662,10 +662,10 @@ function PrescriptionsContent() {
               <button
                 ref={filterButtonRef}
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 rounded-lg border px-4 py-2 font-semibold transition-all ${
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2 font-semibold transition-all ${
                   showFilters
                     ? "bg-primary text-white border-primary shadow-md"
-                    : "border-outline-variant/10 bg-surface-container text-on-surface hover:bg-surface-container-high"
+                    : "border-[#F1F5F9] bg-surface-container text-on-surface hover:bg-surface-container-high"
                 }`}
               >
                 <span className="material-symbols-outlined text-lg">filter_list</span>
@@ -676,8 +676,8 @@ function PrescriptionsContent() {
               </button>
 
               {showFilters && (
-                <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-5 z-30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
-                  <div className="flex items-center justify-between border-b border-outline-variant/10 pb-3">
+                <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F1F5F9] p-5 z-30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+                  <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
                     <h5 className="font-bold text-sm">Filtres de recherche</h5>
                     <button
                       onClick={() => {
@@ -697,7 +697,7 @@ function PrescriptionsContent() {
                       <div className="relative">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">person</span>
                         <input
-                          className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg pl-9 pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
+                          className="w-full bg-white border border-[#F1F5F9] rounded-xl pl-9 pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
                           type="text"
                           placeholder="Rechercher un patient..."
                           value={filters.nom}
@@ -731,7 +731,7 @@ function PrescriptionsContent() {
                       <div className="relative">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">calendar_today</span>
                         <input
-                          className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg pl-9 pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
+                          className="w-full bg-white border border-[#F1F5F9] rounded-xl pl-9 pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
                           type="date"
                           value={filters.date}
                           onChange={(e) => {
@@ -749,7 +749,7 @@ function PrescriptionsContent() {
                   fetchPrescriptions();
                   closeFilterPanel();
                 }}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 font-semibold text-white shadow-sm transition-opacity hover:bg-[#005a76]"
               >
                 <span className="material-symbols-outlined text-lg">sync</span>
                 Actualiser
@@ -768,7 +768,7 @@ function PrescriptionsContent() {
                   className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
                     medecinTab === tab.key
                       ? "bg-primary text-white shadow-md"
-                      : "bg-surface-container text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-high hover:text-on-surface"
+                      : "bg-surface-container text-on-surface-variant border border-[#F1F5F9] hover:bg-surface-container-high hover:text-on-surface"
                   }`}
                 >
                   {tab.label}
@@ -778,32 +778,32 @@ function PrescriptionsContent() {
           )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Total En attente</p>
+            <div className="rounded-2xl border border-[#F1F5F9] bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Total En attente</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-blue-900">{totalEnAttente}</span>
-                <span className="text-xs font-medium text-blue-700/70">{priorityRequests.length} demandes</span>
+                <span className="text-2xl font-extrabold text-[#004A66]">{totalEnAttente}</span>
+                <span className="text-xs font-medium text-[#64748B]">{priorityRequests.length} demandes</span>
               </div>
             </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">TRES URGENT</p>
+            <div className="rounded-2xl border border-[#F1F5F9] bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">TRES URGENT</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-blue-900">{String(totalUrgents).padStart(2, "0")}</span>
-                <span className="text-xs font-medium text-blue-700/70">Priorité immédiate</span>
+                <span className="text-2xl font-extrabold text-[#004A66]">{String(totalUrgents).padStart(2, "0")}</span>
+                <span className="text-xs font-medium text-[#64748B]">Priorité immédiate</span>
               </div>
             </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Salles Disponibles</p>
+            <div className="rounded-2xl border border-[#F1F5F9] bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Salles Disponibles</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-blue-900">{String(sallesDisponibles.length).padStart(2, "0")}</span>
-                <span className="text-xs font-medium text-blue-700/70 truncate">Prêtes à l&apos;usage</span>
+                <span className="text-2xl font-extrabold text-[#004A66]">{String(sallesDisponibles.length).padStart(2, "0")}</span>
+                <span className="text-xs font-medium text-[#64748B] truncate">Prêtes à l&apos;usage</span>
               </div>
             </div>
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Taux de traitement</p>
+            <div className="rounded-2xl border border-[#F1F5F9] bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Taux de traitement</p>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-headline font-extrabold text-blue-900">{tauxTraitement}%</span>
-                <span className="text-xs font-medium text-blue-700/70">Efficacité</span>
+                <span className="text-2xl font-extrabold text-[#004A66]">{tauxTraitement}%</span>
+                <span className="text-xs font-medium text-[#64748B]">Efficacité</span>
               </div>
             </div>
           </div>
@@ -832,27 +832,27 @@ function PrescriptionsContent() {
                   <p className="text-on-surface-variant mb-4">{error}</p>
                   <button
                     onClick={() => fetchPrescriptions()}
-                    className="rounded-lg bg-error px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                    className="rounded-xl bg-error px-4 py-2 text-sm font-bold text-white hover:opacity-90"
                   >
                     Réessayer
                   </button>
                 </div>
               ) : priorityRequests.length === 0 ? (
-                <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest p-8 text-center">
+                <div className="rounded-2xl border border-[#F1F5F9] bg-white p-8 text-center">
                   <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">inbox</span>
                   <p className="text-on-surface-variant">
                     {role === "MEDECIN" ? "Aucun patient dans cette vue." : "Aucune prescription en attente."}
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
+                <div className="overflow-x-auto rounded-2xl border border-[#F1F5F9] bg-white shadow-sm">
                   <table className="w-full table-fixed border-collapse text-left text-sm">
                     <colgroup>
                       {columnWidths.map((w, i) => (
                         <col key={i} style={{ width: w }} />
                       ))}
                     </colgroup>
-                    <thead className="bg-surface-container-lowest text-xs uppercase tracking-wider text-on-surface-variant">
+                    <thead className="bg-[#F8FAFC] border-b border-[#F1F5F9] text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       <tr>
                         <th className="px-4 py-2.5">Reçu</th>
                         <th className="px-4 py-2.5">Patient</th>
@@ -902,7 +902,7 @@ function PrescriptionsContent() {
                               group.find((r) => medecinRowState(r) === "cpa-bloquee") ||
                               primary;
                             return (
-                        <tr key={primary.prescriptionExternalId || primary.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${priseEnChargeStripeClass(!!primary.priseEnChargeId)}`}>
+                        <tr key={primary.prescriptionExternalId || primary.id} className={`border-t border-[#F1F5F9] hover:bg-surface-container/50 ${priseEnChargeStripeClass(!!primary.priseEnChargeId)}`}>
                           <td className="px-4 py-2.5 text-on-surface-variant truncate" title={primary.receivedTime}>{primary.receivedTime}</td>
                           <td className="px-4 py-2.5 font-semibold text-on-surface">
                             <div className="truncate" title={primary.name}>{primary.name}</div>
@@ -940,7 +940,7 @@ function PrescriptionsContent() {
                                 // indication de planification groupée.
                                 <span
                                   title="Ces examens sont planifiés sur le même créneau (une seule séance)"
-                                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600"
+                                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-1 text-[10px] font-bold text-[#475569]"
                                 >
                                   <span className="material-symbols-outlined text-[12px]">layers</span>
                                   Même créneau
@@ -982,7 +982,7 @@ function PrescriptionsContent() {
                                   type="button"
                                   onClick={() => openDecisionModal(primary)}
                                   title="Cliquer pour maintenir ou décaler la date prévue"
-                                  className="flex w-full items-center justify-between gap-1.5 rounded-lg border border-primary/20 bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
+                                  className="flex w-full items-center justify-between gap-1.5 rounded-xl border border-primary/20 bg-primary/10 px-2 py-1 text-primary hover:bg-primary/20 transition-colors cursor-pointer"
                                 >
                                   <span className="flex flex-col items-start gap-0.5 min-w-0">
                                     <span className="text-[9px] font-bold uppercase tracking-wide leading-tight underline decoration-primary/40 underline-offset-2">
@@ -1059,7 +1059,7 @@ function PrescriptionsContent() {
                 <button
                   type="button"
                   onClick={() => setDecisionMode("decaler")}
-                  className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity"
+                  className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-[#005a76] transition-opacity"
                 >
                   Décaler la date
                 </button>
@@ -1074,7 +1074,7 @@ function PrescriptionsContent() {
                       value={decisionDate}
                       min={cleJour(new Date())}
                       onChange={(e) => setDecisionDate(e.target.value)}
-                      className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
+                      className="bg-surface-container-low rounded-xl px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-[#006A8C]/20"
                     />
                   </div>
                   <div className="flex-1 flex flex-col gap-1">
@@ -1083,7 +1083,7 @@ function PrescriptionsContent() {
                       type="time"
                       value={decisionHeure}
                       onChange={(e) => setDecisionHeure(e.target.value)}
-                      className="bg-surface-container-low rounded-lg px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-primary"
+                      className="bg-surface-container-low rounded-xl px-3 py-2 text-sm font-bold text-on-surface border-none focus:ring-2 focus:ring-[#006A8C]/20"
                     />
                   </div>
                 </div>
@@ -1092,7 +1092,7 @@ function PrescriptionsContent() {
                   <button
                     type="button"
                     onClick={() => setDecisionMode("choix")}
-                    className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                    className="px-4 py-2 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
                   >
                     Retour
                   </button>
@@ -1100,7 +1100,7 @@ function PrescriptionsContent() {
                     type="button"
                     disabled={isDecisionSaving || !decisionDate || !decisionHeure}
                     onClick={handleConfirmDecalage}
-                    className="px-5 py-2 rounded-lg bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-primary text-white font-bold text-sm hover:bg-[#005a76] transition-opacity disabled:opacity-50"
                   >
                     {isDecisionSaving ? "Décalage…" : "Confirmer le décalage"}
                   </button>
@@ -1144,7 +1144,7 @@ function PrescriptionsContent() {
 
 export default function PrescriptionsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[#64748B]">Chargement...</div>}>
       <PrescriptionsContent />
     </Suspense>
   );

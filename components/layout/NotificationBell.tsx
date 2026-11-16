@@ -550,11 +550,11 @@ export function NotificationBell() {
                 {toast.id === CATCHUP_TOAST_ID ? "Pendant votre absence" : "Nouvelle notification"}
               </p>
               {toast.id !== CATCHUP_TOAST_ID && (
-                <p className="text-sm font-semibold text-slate-800 mt-0.5 truncate">
+                <p className="text-sm font-semibold text-[#0F172A] mt-0.5 truncate">
                   {typeLabel(toast.type)}
                 </p>
               )}
-              <p className="text-sm text-slate-600 mt-1 line-clamp-2">{splitMotifProcedures(toast.motif).text}</p>
+              <p className="text-sm text-[#475569] mt-1 line-clamp-2">{splitMotifProcedures(toast.motif).text}</p>
               <ProcedureBadges procedures={splitMotifProcedures(toast.motif).procedures} />
             </div>
             <button
@@ -581,21 +581,21 @@ export function NotificationBell() {
             setOpen((v) => !v);
             if (!open) refresh();
           }}
-          className="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-full relative"
+          className="p-2 text-[#334155] hover:bg-[#F0F7FF] hover:text-[#006A8C] transition-colors rounded-full relative"
           aria-label="Notifications"
         >
           <span className="material-symbols-outlined">notifications</span>
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-100 text-red-600 border border-red-200 text-[10px] font-bold rounded-full">
+            <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-[#E11D48] text-white border-2 border-white text-[10px] font-bold rounded-full">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </button>
 
         {open && (
-          <div ref={panelRef} className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-80 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl z-50">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-800">Notifications Endoscopie</p>
+          <div ref={panelRef} className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-80 max-h-96 overflow-y-auto rounded-2xl border border-[#F1F5F9] bg-white shadow-xl z-50">
+            <div className="px-4 py-3 border-b border-[#F1F5F9] flex items-center justify-between">
+              <p className="text-sm font-bold text-[#0F172A]">Notifications Endoscopie</p>
               <button
                 type="button"
                 onClick={refresh}
@@ -604,12 +604,12 @@ export function NotificationBell() {
                 Actualiser
               </button>
             </div>
-            <div className="px-4 pt-2 flex items-center gap-2 border-b border-slate-100 pb-2">
+            <div className="px-4 pt-2 flex items-center gap-2 border-b border-[#F1F5F9] pb-2">
               <button
                 type="button"
                 onClick={() => setShowRead(false)}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
-                  !showRead ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
+                  !showRead ? "bg-primary text-white" : "bg-slate-100 text-[#64748B]"
                 }`}
               >
                 Non lues{unreadCount > 0 ? ` (${unreadCount})` : ""}
@@ -618,7 +618,7 @@ export function NotificationBell() {
                 type="button"
                 onClick={() => setShowRead(true)}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
-                  showRead ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
+                  showRead ? "bg-primary text-white" : "bg-slate-100 text-[#64748B]"
                 }`}
               >
                 Déjà lues
@@ -626,7 +626,7 @@ export function NotificationBell() {
             </div>
             {error && <p className="px-4 py-3 text-xs text-red-600">{error}</p>}
             {!error && visibleItems.length === 0 && (
-              <p className="px-4 py-3 text-xs text-slate-500">
+              <p className="px-4 py-3 text-xs text-[#64748B]">
                 {showRead ? "Aucune notification déjà lue." : "Aucune notification."}
               </p>
             )}
@@ -639,7 +639,7 @@ export function NotificationBell() {
                   className={`w-full px-4 py-3 border-b border-slate-50 hover:brightness-95 text-left transition-[filter] ${getNotificationBgClass(n.type)} ${getNotificationBorderClass(n.type)}`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                    <p className="flex items-center gap-1.5 text-xs font-bold text-[#334155]">
                       {!n.readAt && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-hidden />}
                       {CPA_BLOC_TYPES.has(n.type) && (
                         <span className={`material-symbols-outlined text-sm ${getNotificationIconClass(n.type)}`}>
@@ -652,7 +652,7 @@ export function NotificationBell() {
                           className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
                             typeOrigin(n.type) === "externe"
                               ? "bg-violet-100 text-violet-700"
-                              : "bg-slate-100 text-slate-600"
+                              : "bg-slate-100 text-[#475569]"
                           }`}
                         >
                           {typeOrigin(n.type)}
@@ -663,7 +663,7 @@ export function NotificationBell() {
                       {formatTime(n.receivedAt)}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-600 mt-0.5">{splitMotifProcedures(n.motif).text}</p>
+                  <p className="text-sm text-[#475569] mt-0.5">{splitMotifProcedures(n.motif).text}</p>
                   <ProcedureBadges procedures={splitMotifProcedures(n.motif).procedures} />
                   {n.emitterName && (
                     <p className="text-[10px] text-slate-400 mt-1">{n.emitterName}</p>

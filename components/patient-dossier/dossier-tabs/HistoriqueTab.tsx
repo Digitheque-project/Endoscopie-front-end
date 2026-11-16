@@ -37,7 +37,7 @@ export function HistoriqueTab({ patientId }: HistoriqueTabProps) {
   return (
     <>
       {hasError && (
-        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+        <p className="mb-3 rounded-xl border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
           Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
         </p>
       )}
@@ -52,7 +52,7 @@ export function HistoriqueTab({ patientId }: HistoriqueTabProps) {
             const action = (h.action || h.type || "").toLowerCase();
             const icon = MODULE_ICONS[action] || "history";
             return (
-              <li key={h.id ?? i} className="flex items-start gap-3 rounded-lg border border-outline-variant/20 p-3 text-xs">
+              <li key={h.id ?? i} className="flex items-start gap-3 rounded-xl border border-[#F1F5F9] p-3 text-xs">
                 <span className="material-symbols-outlined text-[18px] text-primary shrink-0">{icon}</span>
                 <div className="flex-1">
                   <div className="flex items-center justify-between gap-3">

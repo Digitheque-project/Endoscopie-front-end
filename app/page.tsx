@@ -356,9 +356,9 @@ export default function Home() {
                 <button
                   ref={filterButtonRef}
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all font-semibold text-sm ${showFilters
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all font-semibold text-sm ${showFilters
                     ? "bg-primary text-white border-primary shadow-md"
-                    : "bg-white border-outline-variant/30 text-on-surface hover:bg-surface-container-low"
+                    : "bg-white border-[#F1F5F9] text-on-surface hover:bg-surface-container-low"
                     }`}
                 >
                   <span className="material-symbols-outlined text-lg">filter_list</span>
@@ -369,8 +369,8 @@ export default function Home() {
                 </button>
 
                 {showFilters && (
-                  <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-outline-variant/10 p-5 z-30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between border-b border-outline-variant/10 pb-3">
+                  <div ref={filterPanelRef} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F1F5F9] p-5 z-30 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
                       <h5 className="font-bold text-sm">Filtres de recherche</h5>
                       <button
                         onClick={() => {
@@ -436,35 +436,35 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-surface-container-lowest rounded-2xl shadow-sm overflow-visible">
+            <div className="bg-white rounded-2xl shadow-sm overflow-visible">
               <div className="relative overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[720px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-low/95 backdrop-blur-sm shadow-sm">
                   <tr className="bg-surface-container-low/50">
-                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       HEURE & PATIENT
                     </th>
-                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       PROCEDURE
                     </th>
-                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       MEDECIN
                     </th>
-                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       MOTIF
                     </th>
-                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       STATUT
                     </th>
-                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       DÉTAILS
                     </th>
-                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant text-right">
+                    <th className="px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-[#64748B] text-right">
                       ACTION
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/10">
+                <tbody className="divide-y divide-[#F1F5F9]">
                   {groupedSchedule.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-8 text-center">
@@ -513,7 +513,7 @@ export default function Home() {
                             {isGrouped && (
                               <span
                                 title="Ces examens sont planifiés sur le même créneau (une seule séance)"
-                                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600"
+                                className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-[#475569]"
                               >
                                 <span className="material-symbols-outlined text-[12px]">layers</span>
                                 {group.length}
@@ -566,7 +566,7 @@ export default function Home() {
                             <button
                               type="button"
                               onClick={() => router.push(`/patient-dossier/${encodeURIComponent(item.prescriptionId)}?from=dashboard`)}
-                              className="rounded-lg border border-outline-variant/20 bg-surface-container px-2.5 py-1 text-[10px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high hover:text-primary"
+                              className="rounded-xl border border-[#F1F5F9] bg-surface-container px-2.5 py-1 text-[10px] font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container-high hover:text-primary"
                             >
                               Voir détails
                             </button>
@@ -581,7 +581,7 @@ export default function Home() {
                                 type="button"
                                 onClick={() => router.push(`/decisions-anesthesie/${encodeURIComponent(item.prescriptionId)}?from=dashboard`)}
                                 aria-label={`Décider de l'anesthésie pour ${item.patient}`}
-                                className="rounded-lg bg-primary px-3 py-1 text-[10px] font-bold text-white transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
+                                className="rounded-xl bg-primary px-3 py-1 text-[10px] font-bold text-white transition-all duration-200 hover:bg-[#005a76] hover:scale-105 active:scale-95"
                               >
                                 Décider
                               </button>
@@ -613,7 +613,7 @@ export default function Home() {
               </div>
               <button
                 onClick={() => setShowAddRoom(true)}
-                className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+                className="w-8 h-8 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-primary/90 transition-colors"
                 title="Ajouter une salle"
               >
                 <span className="material-symbols-outlined text-sm">add</span>
@@ -639,7 +639,7 @@ export default function Home() {
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center">
                           <span className="material-symbols-outlined text-on-surface-variant">{statusInfo.icon}</span>
                         </div>
                         <div>
@@ -667,7 +667,7 @@ export default function Home() {
                 <h3 className="text-lg font-bold text-on-surface">Ajouter une salle</h3>
                 <button
                   onClick={() => setShowAddRoom(false)}
-                  className="w-8 h-8 rounded-lg hover:bg-surface-container flex items-center justify-center"
+                  className="w-8 h-8 rounded-xl hover:bg-surface-container flex items-center justify-center"
                 >
                   <span className="material-symbols-outlined text-sm">close</span>
                 </button>
@@ -675,12 +675,12 @@ export default function Home() {
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Nom de la salle *</label>
+                  <label className="text-xs font-bold text-[#475569] uppercase tracking-wider">Nom de la salle *</label>
                   <input
                     type="text"
                     value={newSalleData.nom}
                     onChange={(e) => setNewSalleData({ ...newSalleData, nom: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-slate-800"
+                    className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-[#0F172A]"
                     placeholder="ex: Salle Endoscopie 4"
                     autoFocus
                   />
@@ -688,34 +688,34 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Numéro *</label>
+                    <label className="text-xs font-bold text-[#475569] uppercase tracking-wider">Numéro *</label>
                     <input
                       type="text"
                       value={newSalleData.numero}
                       onChange={(e) => setNewSalleData({ ...newSalleData, numero: e.target.value })}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-slate-800"
+                      className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-[#0F172A]"
                       placeholder="ex: S04"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Capacité</label>
+                    <label className="text-xs font-bold text-[#475569] uppercase tracking-wider">Capacité</label>
                     <input
                       type="text"
                       value={newSalleData.capacite}
                       onChange={(e) => setNewSalleData({ ...newSalleData, capacite: e.target.value })}
-                      className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-slate-800"
+                      className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-[#0F172A]"
                       placeholder="ex: 2"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1 pt-2">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Équipement spécifique (Optionnel)</label>
+                  <label className="text-xs font-bold text-[#475569] uppercase tracking-wider">Équipement spécifique (Optionnel)</label>
                   <input
                     type="text"
                     value={newSalleData.equipement}
                     onChange={(e) => setNewSalleData({ ...newSalleData, equipement: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-slate-800"
+                    className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all font-medium text-[#0F172A]"
                     placeholder="ex: Appareil RX Mobile"
                   />
                 </div>
@@ -724,14 +724,14 @@ export default function Home() {
               <div className="flex items-center justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowAddRoom(false)}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all"
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-[#475569] hover:bg-slate-100 transition-all"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleSaveSalle}
                   disabled={isSubmitting}
-                  className="bg-blue-600 text-white rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-[#006A8C] text-white rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -748,7 +748,7 @@ export default function Home() {
 
       {/* Success notification */}
       {isSuccess && (
-        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50">
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 z-50">
           <span className="material-symbols-outlined">check_circle</span>
           <span className="text-sm font-medium">Salle ajoutée avec succès !</span>
         </div>

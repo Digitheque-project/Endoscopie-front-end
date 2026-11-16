@@ -71,7 +71,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     // Redirection en cours vers /connexion (voir l'effet ci-dessus) — un écran vide
     // sans texte laissait croire à une page bloquée/plantée.
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-container-lowest px-4">
+      <div className="flex min-h-screen items-center justify-center bg-white px-4">
         <div className="text-center space-y-2">
           <p className="text-sm font-semibold text-on-surface-variant">Redirection vers la connexion…</p>
           {loginError && (

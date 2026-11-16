@@ -94,7 +94,7 @@ function DossierCpaContent() {
     return (
       <AppShell>
         <div className={PAGE_CONTENT_CLASS}>
-          <div className="bg-white p-10 rounded-2xl border border-outline-variant/20 shadow-sm text-center space-y-4">
+          <div className="bg-white p-10 rounded-2xl border border-[#F1F5F9] shadow-sm text-center space-y-4">
             <span className="material-symbols-outlined text-4xl text-error">block</span>
             <h3 className="text-xl font-bold text-on-surface">Accès non autorisé</h3>
             <Link
@@ -120,7 +120,7 @@ function DossierCpaContent() {
             <button
               type="button"
               onClick={() => router.push("/prescriptions")}
-              className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-4 py-2 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#F1F5F9] px-4 py-2 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all"
             >
               <span className="material-symbols-outlined text-lg">arrow_back</span>
               Retour au fil de prescription
@@ -128,17 +128,17 @@ function DossierCpaContent() {
           </div>
 
           {isLoading ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 animate-pulse space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6 animate-pulse space-y-4">
               <div className="h-6 w-48 bg-surface-container rounded" />
               <div className="h-4 w-72 bg-surface-container rounded" />
             </div>
           ) : error || !dossier ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 text-center text-on-surface-variant">
+            <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6 text-center text-on-surface-variant">
               {error || "Dossier CPA introuvable."}
             </div>
           ) : (
             <>
-              <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-4 flex items-center justify-between gap-4">
+              <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-4 flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-0.5">Patient</p>
                   <h2 className="font-headline text-lg font-extrabold tracking-tight">
@@ -177,7 +177,7 @@ function DossierCpaContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Date de la CPA</h4>
+                    <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Date de la CPA</h4>
                     <p className="text-sm text-on-surface-variant">
                       {dossier.dateCpa
                         ? new Date(dossier.dateCpa).toLocaleDateString("fr-FR", { dateStyle: "long" })
@@ -185,13 +185,13 @@ function DossierCpaContent() {
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Anesthésiste</h4>
+                    <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Anesthésiste</h4>
                     <p className="text-sm text-on-surface-variant">
                       {dossier.anesthesiste ? `Dr. ${dossier.anesthesiste.prenom} ${dossier.anesthesiste.nom}` : "Non renseigné"}
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Visite pré-anesthésique (VPA)</h4>
+                    <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Visite pré-anesthésique (VPA)</h4>
                     <p className="text-sm text-on-surface-variant">
                       {dossier.dateVpa
                         ? `Réalisée le ${new Date(dossier.dateVpa).toLocaleDateString("fr-FR", { dateStyle: "long" })}`
@@ -199,13 +199,13 @@ function DossierCpaContent() {
                     </p>
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Statut du dossier</h4>
+                    <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Statut du dossier</h4>
                     <p className="text-sm text-on-surface-variant">{dossier.statut}</p>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Observations</h4>
+                  <h4 className="font-bold text-on-surface mb-2 border-b border-[#F1F5F9] pb-1">Observations</h4>
                   <p className="text-sm text-on-surface-variant whitespace-pre-wrap">
                     {dossier.observations || dossier.bloc?.observations || "Aucune observation."}
                   </p>
@@ -279,7 +279,7 @@ function DossierCpaContent() {
                       type="button"
                       disabled={isVerifying}
                       onClick={handleVerifier}
-                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white hover:bg-[#005a76] transition-opacity disabled:opacity-50"
                     >
                       <span className="material-symbols-outlined text-lg">refresh</span>
                       {isVerifying ? "Vérification…" : "Vérifier à nouveau auprès du Bloc"}

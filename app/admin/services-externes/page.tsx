@@ -178,7 +178,7 @@ export default function ServicesExternesPage() {
 
       {/* Affichage de la clé API nouvellement générée */}
       {newApiKey && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
           <h3 className="text-lg font-semibold text-green-900 mb-4">
             ✅ Service créé avec succès!
           </h3>
@@ -214,7 +214,7 @@ export default function ServicesExternesPage() {
       {!showNewForm && (
         <button
           onClick={() => setShowNewForm(true)}
-          className="mb-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+          className="mb-6 bg-[#006A8C] text-white px-6 py-2 rounded-xl hover:bg-[#005a76] transition"
         >
           + Créer un nouveau service
         </button>
@@ -222,7 +222,7 @@ export default function ServicesExternesPage() {
 
       {/* Formulaire de création */}
       {showNewForm && (
-        <div className="bg-white border rounded-lg p-6 mb-8">
+        <div className="bg-white border rounded-xl p-6 mb-8">
           <h3 className="text-xl font-semibold mb-4">Nouveau Service Externe</h3>
           <div className="space-y-4">
             <input
@@ -256,7 +256,7 @@ export default function ServicesExternesPage() {
               </button>
               <button
                 onClick={() => setShowNewForm(false)}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition"
+                className="bg-gray-300 text-[#0F172A] px-4 py-2 rounded hover:bg-gray-400 transition"
               >
                 Annuler
               </button>
@@ -266,13 +266,13 @@ export default function ServicesExternesPage() {
       )}
 
       {/* Liste des services */}
-      <div className="bg-white border rounded-lg overflow-hidden mb-8">
-        <div className="bg-gray-100 px-6 py-4 border-b">
+      <div className="bg-white border rounded-xl overflow-hidden mb-8">
+        <div className="bg-[#F1F5F9] px-6 py-4 border-b">
           <h3 className="text-lg font-semibold">Services Enregistrés</h3>
         </div>
         <div className="divide-y">
           {services.length === 0 ? (
-            <div className="px-6 py-4 text-gray-500">Aucun service enregistré</div>
+            <div className="px-6 py-4 text-[#64748B]">Aucun service enregistré</div>
           ) : (
             services.map((service) => (
               <div key={service.id} className="px-6 py-4">
@@ -280,12 +280,12 @@ export default function ServicesExternesPage() {
                   <div className="flex-1">
                     <h4 className="font-semibold text-lg">{service.nom}</h4>
                     {service.hopital && (
-                      <p className="text-sm text-gray-600">{service.hopital}</p>
+                      <p className="text-sm text-[#475569]">{service.hopital}</p>
                     )}
                     {service.contact && (
-                      <p className="text-sm text-gray-600">{service.contact}</p>
+                      <p className="text-sm text-[#475569]">{service.contact}</p>
                     )}
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-[#64748B] mt-2">
                       Créé: {new Date(service.createdAt).toLocaleDateString()}
                       {service.lastUsedAt &&
                         ` | Dernier accès: ${new Date(service.lastUsedAt).toLocaleString()}`}
@@ -317,15 +317,15 @@ export default function ServicesExternesPage() {
       </div>
 
       {/* Dashboard de monitoring des logs */}
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="bg-gray-100 px-6 py-4 border-b">
+      <div className="bg-white border rounded-xl overflow-hidden">
+        <div className="bg-[#F1F5F9] px-6 py-4 border-b">
           <h3 className="text-lg font-semibold">
             📊 Monitoring des Accès Externes (Derniers 50)
           </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-[#F8F9FB] border-b">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-semibold">Service</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold">Prescription</th>
@@ -337,7 +337,7 @@ export default function ServicesExternesPage() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-4 text-center text-[#64748B]">
                     Aucun accès enregistré
                   </td>
                 </tr>
@@ -347,21 +347,21 @@ export default function ServicesExternesPage() {
                     <td className="px-6 py-3 text-sm">
                       <strong>{log.serviceExterne.nom}</strong>
                       {log.serviceExterne.hopital && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-[#64748B]">
                           {log.serviceExterne.hopital}
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-3 text-sm font-mono">{log.prescriptionId}</td>
-                    <td className="px-6 py-3 text-sm font-mono text-gray-600">
-                      {log.patientId}
+                    <td className="px-6 py-3 text-sm">{log.prescriptionId ? "Demande liée" : "—"}</td>
+                    <td className="px-6 py-3 text-sm text-[#475569]">
+                      {log.patientId ? "Patient lié" : "—"}
                     </td>
                     <td className="px-6 py-3 text-sm">
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(log.statut)}`}>
                         {log.statut}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-600">
+                    <td className="px-6 py-3 text-sm text-[#475569]">
                       {new Date(log.timestamp).toLocaleString()}
                     </td>
                   </tr>

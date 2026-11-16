@@ -71,10 +71,10 @@ export default function ResultatPublicPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement du résultat...</p>
+          <p className="text-[#475569]">Chargement du résultat...</p>
         </div>
       </div>
     );
@@ -82,7 +82,7 @@ export default function ResultatPublicPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center p-4">
         <Alert variant="destructive" className="max-w-md">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -92,7 +92,7 @@ export default function ResultatPublicPage() {
 
   if (!resultat) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
         <Alert>
           <AlertDescription>Résultat non trouvé</AlertDescription>
         </Alert>
@@ -111,14 +111,14 @@ export default function ResultatPublicPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F8F9FB]">
       {/* Header public */}
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-[#0F172A]">
             Résultat d'Endoscopie
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-[#475569] mt-2">
             Accès public - Document médical
           </p>
         </div>
@@ -128,43 +128,43 @@ export default function ResultatPublicPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Info box */}
         <Alert className="mb-8 bg-blue-50 border-blue-200">
-          <AlertDescription className="text-blue-900">
+          <AlertDescription className="text-[#004A66]">
             Ce document est partagé en ligne. Conservez l'URL en sécurité si vous souhaitez y accéder ultérieurement.
           </AlertDescription>
         </Alert>
 
         {/* Patient & Prescription Info */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white rounded-xl shadow p-6 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">
+              <h3 className="text-sm font-semibold text-[#64748B] uppercase">
                 Type d'examen
               </h3>
-              <p className="text-lg text-gray-900 mt-1">
+              <p className="text-lg text-[#0F172A] mt-1">
                 {resultat.prescription?.typeExamen || "Non spécifié"}
               </p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">
+              <h3 className="text-sm font-semibold text-[#64748B] uppercase">
                 Date de l'examen
               </h3>
-              <p className="text-lg text-gray-900 mt-1">
+              <p className="text-lg text-[#0F172A] mt-1">
                 {formatDate(resultat.dateCreation)}
               </p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">
+              <h3 className="text-sm font-semibold text-[#64748B] uppercase">
                 Médecin
               </h3>
-              <p className="text-lg text-gray-900 mt-1">
+              <p className="text-lg text-[#0F172A] mt-1">
                 {resultat.doctorName || "Non spécifié"}
               </p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">
+              <h3 className="text-sm font-semibold text-[#64748B] uppercase">
                 Prescripteur
               </h3>
-              <p className="text-lg text-gray-900 mt-1">
+              <p className="text-lg text-[#0F172A] mt-1">
                 {resultat.prescription?.medecinPrescripteur
                   ? `Dr. ${resultat.prescription.medecinPrescripteur.prenom} ${resultat.prescription.medecinPrescripteur.nom}`
                   : "Non spécifié"}
@@ -175,84 +175,84 @@ export default function ResultatPublicPage() {
 
         {/* Results sections */}
         {resultat.mainDiagnosis && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#0F172A] mb-4">
               Diagnostic Principal
             </h2>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-[#334155] whitespace-pre-wrap">
               {resultat.mainDiagnosis}
             </p>
           </div>
         )}
 
         {resultat.reportText && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#0F172A] mb-4">
               Compte Rendu
             </h2>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-[#334155] whitespace-pre-wrap">
               {resultat.reportText}
             </p>
           </div>
         )}
 
         {resultat.observations && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#0F172A] mb-4">
               Observations
             </h2>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-[#334155] whitespace-pre-wrap">
               {resultat.observations}
             </p>
           </div>
         )}
 
         {resultat.conclusion && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#0F172A] mb-4">
               Conclusion
             </h2>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-[#334155] whitespace-pre-wrap">
               {resultat.conclusion}
             </p>
           </div>
         )}
 
         {resultat.biopsy && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#0F172A] mb-4">
               Biopsies
             </h2>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-[#334155] whitespace-pre-wrap">
               {resultat.biopsy}
             </p>
           </div>
         )}
 
         {resultat.complication && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#0F172A] mb-4">
               Complications
             </h2>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-[#334155] whitespace-pre-wrap">
               {resultat.complication}
             </p>
           </div>
         )}
 
         {resultat.followUp && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h2 className="text-xl font-bold text-[#0F172A] mb-4">
               Suivi Recommandé
             </h2>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-[#334155] whitespace-pre-wrap">
               {resultat.followUp}
             </p>
           </div>
         )}
 
         {/* Footer */}
-        <div className="text-center text-gray-500 text-sm mt-12 pb-8">
+        <div className="text-center text-[#64748B] text-sm mt-12 pb-8">
           <p>
             Document généré le {formatDate(resultat.dateCreation)}
           </p>

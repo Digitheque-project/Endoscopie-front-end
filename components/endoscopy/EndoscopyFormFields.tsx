@@ -35,8 +35,8 @@ export function EndoscopyField({
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             disabled={disabled}
-            className={`w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary/20 resize-none ${
-              error ? 'ring-2 ring-error' : 'border border-outline-variant/15'
+            className={`w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-primary/20 resize-none ${
+              error ? 'ring-2 ring-error' : 'border border-[#F1F5F9]'
             }`}
             rows={4}
           />
@@ -55,8 +55,8 @@ export function EndoscopyField({
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className={`w-full bg-surface-container-lowest border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary/20 ${
-              error ? 'ring-2 ring-error' : 'border border-outline-variant/15'
+            className={`w-full bg-white border-none rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary/20 ${
+              error ? 'ring-2 ring-error' : 'border border-[#F1F5F9]'
             }`}
           >
             <option value="">-- Sélectionner --</option>
@@ -72,7 +72,7 @@ export function EndoscopyField({
 
     case 'boolean':
       return (
-        <div className="flex items-center gap-3 p-3 bg-surface-container-low/50 rounded-lg border border-outline-variant/10">
+        <div className="flex items-center gap-3 p-3 bg-surface-container-low/50 rounded-xl border border-[#F1F5F9]">
           <input
             type="checkbox"
             id={field.id}
@@ -134,8 +134,8 @@ export function EndoscopyField({
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             disabled={disabled}
-            className={`w-full bg-surface-container-lowest border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary/20 ${
-              error ? 'ring-2 ring-error' : 'border border-outline-variant/15'
+            className={`w-full bg-white border-none rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-primary/20 ${
+              error ? 'ring-2 ring-error' : 'border border-[#F1F5F9]'
             }`}
           />
           {error && <p className="text-xs text-error font-semibold">{error}</p>}
@@ -171,7 +171,7 @@ export function EndoscopyFieldGroup({
       <h3 className="text-sm font-headline font-bold text-on-surface uppercase tracking-widest">
         {groupTitle}
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface-container-low/20 p-6 rounded-xl border border-outline-variant/10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface-container-low/20 p-6 rounded-xl border border-[#F1F5F9]">
         {fields.map(field => (
           <div key={field.id} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
             <EndoscopyField

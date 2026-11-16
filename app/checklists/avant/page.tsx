@@ -255,20 +255,20 @@ function ChecklistAvantContent() {
             </div>
           )}
 
-          <section className="bg-white rounded-xl shadow-sm border border-slate-100 p-3">
+          <section className="bg-white rounded-xl shadow-sm border border-[#F1F5F9] p-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="flex items-start gap-3 pl-3 border-l-4 border-l-blue-300">
                 <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-[18px] text-on-primary-fixed-variant">person</span>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Patient</p>
-                  <h2 className="font-headline text-base text-blue-900">{patientName}</h2>
+                  <p className="text-[10px] uppercase tracking-widest text-[#64748B] font-bold mb-0.5">Patient</p>
+                  <h2 className="font-headline text-base text-[#004A66]">{patientName}</h2>
                 </div>
               </div>
               <div className="space-y-2 pl-3 border-l-4 border-l-slate-200">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">
+                  <p className="text-[10px] uppercase tracking-widest text-[#64748B] font-bold mb-0.5">
                     {session?.sameSlot && session.exams.length > 1 ? "Procédures" : "Procédure"}
                   </p>
                   {session?.sameSlot && session.exams.length > 1 ? (
@@ -287,22 +287,22 @@ function ChecklistAvantContent() {
                       {capitalizeFirst(procedure || "")}
                     </span>
                   )}
-                  <p className="text-sm text-slate-600 mt-1">Date : {rdvInfo?.date ?? "non planifiée"}</p>
+                  <p className="text-sm text-[#475569] mt-1">Date : {rdvInfo?.date ?? "non planifiée"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Salle</p>
-                  <p className="text-sm text-slate-800">{rdvInfo?.salle ?? "Non renseignée"}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-[#64748B] font-bold mb-0.5">Salle</p>
+                  <p className="text-sm text-[#0F172A]">{rdvInfo?.salle ?? "Non renseignée"}</p>
                 </div>
               </div>
               <div className="space-y-2 pl-3 border-l-4 border-l-violet-200">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Médecin prescripteur</p>
-                  <p className="text-sm text-slate-800">{rdvInfo?.prescripteur ?? "Non renseigné"}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-[#64748B] font-bold mb-0.5">Médecin prescripteur</p>
+                  <p className="text-sm text-[#0F172A]">{rdvInfo?.prescripteur ?? "Non renseigné"}</p>
                 </div>
                 {rdvInfo?.serviceSource && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">Service prescripteur</p>
-                    <p className="text-sm text-slate-800">{rdvInfo.serviceSource}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-[#64748B] font-bold mb-0.5">Service prescripteur</p>
+                    <p className="text-sm text-[#0F172A]">{rdvInfo.serviceSource}</p>
                   </div>
                 )}
               </div>
@@ -313,9 +313,9 @@ function ChecklistAvantContent() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold">1</span>
-                <h3 className="font-headline text-xl text-blue-900">1. AVANT L'ENDOSCOPIE</h3>
+                <h3 className="font-headline text-xl text-[#004A66]">1. AVANT L'ENDOSCOPIE</h3>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-[#475569] text-xs font-bold">
                 <span className="material-symbols-outlined text-sm">checklist</span>
                 {Object.keys(answers).filter((k) => answers[k]).length} / {checklistItems.length} complétés
               </span>
@@ -326,7 +326,7 @@ function ChecklistAvantContent() {
                 const isAnswered = !!answers[item.title];
                 const borderAccent = item.danger ? "border-l-red-300" : "border-l-blue-300";
                 return (
-                <div key={item.title} className={`relative bg-white p-4 rounded-xl border border-slate-100 border-l-4 ${borderAccent} shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow`}>
+                <div key={item.title} className={`relative bg-white p-4 rounded-xl border border-[#F1F5F9] border-l-4 ${borderAccent} shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow`}>
                   {isAnswered && (
                     <span className="absolute top-2.5 right-2.5 flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600" title="Renseigné">
                       <span className="material-symbols-outlined text-[14px]">check</span>
@@ -334,7 +334,7 @@ function ChecklistAvantContent() {
                   )}
                   <div className="flex items-start gap-3 mb-2 pr-6">
                     <span className={`material-symbols-outlined ${item.danger ? "text-error" : "text-blue-700"}`}>{item.icon}</span>
-                    <span className="text-sm font-medium text-slate-800">{item.title}</span>
+                    <span className="text-sm font-medium text-[#0F172A]">{item.title}</span>
                   </div>
                   <div className={`flex gap-2 ${item.buttons.length === 3 ? "gap-1" : ""}`}>
                     {item.buttons.map((label) => {
@@ -358,7 +358,7 @@ function ChecklistAvantContent() {
                           type="button"
                           disabled={isCpaBlocked}
                           onClick={() => updateAnswer(item.title, label)}
-                          className={`flex-1 py-1.5 text-center rounded-lg border text-sm font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none ${buttonColorClass}`}
+                          className={`flex-1 py-1.5 text-center rounded-xl border text-sm font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none ${buttonColorClass}`}
                         >
                           {label}
                         </button>
@@ -373,10 +373,10 @@ function ChecklistAvantContent() {
         </div>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
+      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-[#E2E8F0] p-4 shadow-xl z-50">
         <div className="max-w-[896px] mx-auto flex items-center justify-end">
 
-          <button onClick={handleRetourWorkflow} className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4">
+          <button onClick={handleRetourWorkflow} className="px-6 py-3 border border-[#E2E8F0] text-[#475569] rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4">
             <span className="material-symbols-outlined">arrow_back</span>
             Retour au programme du jour
           </button>
@@ -402,7 +402,7 @@ export default function ChecklistAvantPage() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-        <Suspense fallback={<div className="py-8 text-center text-slate-500 font-bold uppercase tracking-widest">Chargement des données...</div>}>
+        <Suspense fallback={<div className="py-8 text-center text-[#64748B] font-bold uppercase tracking-widest">Chargement des données...</div>}>
           <ChecklistAvantContent />
         </Suspense>
       </div>

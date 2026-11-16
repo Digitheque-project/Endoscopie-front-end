@@ -133,9 +133,9 @@ export function JCalendar({
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-sm border border-outline-variant/10 overflow-hidden transition-all duration-500">
+    <div className="w-full bg-white rounded-2xl shadow-sm border border-[#F1F5F9] overflow-hidden transition-all duration-500">
       {/* Vue mobile — liste, remplace la grille sous md */}
-      <div className="md:hidden divide-y divide-outline-variant/10">
+      <div className="md:hidden divide-y divide-[#F1F5F9]">
         {sortedForMobile.length === 0 ? (
           <p className="p-6 text-center text-sm text-on-surface-variant">Aucun rendez-vous sur cette période.</p>
         ) : (
@@ -203,8 +203,8 @@ export function JCalendar({
       {viewMode === "day" && (
         <div className="flex flex-col">
           {/* Day Header */}
-          <div className="grid grid-cols-[100px_1fr] border-b border-outline-variant/15 bg-surface-container-high/40 backdrop-blur-md sticky top-0 z-30">
-            <div className="p-4 border-r border-outline-variant/15 flex items-center justify-center">
+          <div className="grid grid-cols-[100px_1fr] border-b border-[#F1F5F9] bg-surface-container-high/40 backdrop-blur-md sticky top-0 z-30">
+            <div className="p-4 border-r border-[#F1F5F9] flex items-center justify-center">
               <span className="material-symbols-outlined text-primary-fixed-dim">schedule</span>
             </div>
             <div className="p-4 text-center">
@@ -216,15 +216,15 @@ export function JCalendar({
             {/* Grid lines */}
             <div className="absolute inset-0 grid grid-rows-10 pointer-events-none">
               {hours.map((_, i) => (
-                <div key={i} className="border-b border-outline-variant/5 h-24" />
+                <div key={i} className="border-b border-[#F1F5F9] h-24" />
               ))}
             </div>
 
             <div className="grid grid-cols-[100px_1fr] h-full relative z-10">
               {/* Timeline */}
-              <div className="flex flex-col border-r border-outline-variant/15 text-on-surface-variant text-[11px] font-bold text-center pt-2 bg-white/50">
+              <div className="flex flex-col border-r border-[#F1F5F9] text-on-surface-variant text-[11px] font-bold text-center pt-2 bg-white/50">
                 {hours.map((slot) => (
-                  <div key={slot} className="h-24 flex items-start justify-center pt-2 border-b border-outline-variant/5">
+                  <div key={slot} className="h-24 flex items-start justify-center pt-2 border-b border-[#F1F5F9]">
                     {slot}
                   </div>
                 ))}
@@ -251,7 +251,7 @@ export function JCalendar({
                         ? 'border-tertiary bg-tertiary-fixed/40 animate-pulse' :
                       app.statut.toUpperCase() === 'CONFIRMÉ'
                         ? 'border-primary bg-primary/5' :
-                      'border-outline-variant/40 bg-white'
+                      'border-[#F1F5F9] bg-white'
                     }`}
                     style={{
                       top: `${calculateTop(app.heureDebut)}px`,
@@ -279,7 +279,7 @@ export function JCalendar({
                       <span className="text-[11px] font-bold text-on-surface truncate min-w-0">{app.patient}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-1.5 text-[9px] font-bold text-on-surface-variant mt-auto pt-1.5 border-t border-outline-variant/10">
+                    <div className="flex items-center justify-between gap-1.5 text-[9px] font-bold text-on-surface-variant mt-auto pt-1.5 border-t border-[#F1F5F9]">
                       {app.medecin && app.medecin !== "Médecin non assigné" ? (
                         <span className="flex items-center gap-1 min-w-0 truncate">
                           <span className="material-symbols-outlined text-[12px] shrink-0">medical_information</span>
@@ -298,7 +298,7 @@ export function JCalendar({
                         }}
                         title="Supprimer ce rendez-vous"
                         aria-label="Supprimer ce rendez-vous"
-                        className="mt-1.5 w-full flex items-center justify-center gap-1.5 rounded-lg border border-error/30 bg-error/5 text-error text-[10px] font-bold tracking-wide py-1.5 shadow-sm hover:bg-error hover:text-white hover:shadow transition-all z-20 relative"
+                        className="mt-1.5 w-full flex items-center justify-center gap-1.5 rounded-xl border border-error/30 bg-error/5 text-error text-[10px] font-bold tracking-wide py-1.5 shadow-sm hover:bg-error hover:text-white hover:shadow transition-all z-20 relative"
                       >
                         <span className="material-symbols-outlined text-[13px]">delete</span>
                         Supprimer
@@ -319,7 +319,7 @@ export function JCalendar({
         <div className="p-6 bg-surface-container-low/10">
           <div className="grid grid-cols-7 gap-4 mb-4">
             {["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"].map(day => (
-              <div key={day} className="text-center p-3 rounded-xl bg-white/50 border border-outline-variant/5">
+              <div key={day} className="text-center p-3 rounded-xl bg-white/50 border border-[#F1F5F9]">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">{day}</span>
               </div>
             ))}
@@ -331,7 +331,7 @@ export function JCalendar({
               const isToday = date.toDateString() === new Date().toDateString();
               
               return (
-                <div key={i} className={`bg-white rounded-2xl border-2 transition-all p-3 relative group hover:border-primary/40 shadow-sm ${isToday ? 'border-primary ring-4 ring-primary/5' : 'border-outline-variant/10'}`}>
+                <div key={i} className={`bg-white rounded-2xl border-2 transition-all p-3 relative group hover:border-primary/40 shadow-sm ${isToday ? 'border-primary ring-4 ring-primary/5' : 'border-[#F1F5F9]'}`}>
                   <div className="flex justify-between items-center mb-4">
                     <span className={`text-xs font-black ${isToday ? 'text-primary' : 'text-on-surface-variant'}`}>{date.getDate()}</span>
                     {isToday && <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />}
@@ -345,7 +345,7 @@ export function JCalendar({
                         <div key={app.id}
                              onClick={() => onAppointmentClick?.(app)}
                              title={`${app.patient} — ${app.typeExamen}`}
-                             className="bg-surface-container-low/50 hover:bg-white border-l-2 border-primary p-2 rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] min-w-0">
+                             className="bg-surface-container-low/50 hover:bg-white border-l-2 border-primary p-2 rounded-xl cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] min-w-0">
                           <p className="text-[10px] font-extrabold truncate text-on-surface">{app.patient}</p>
                           <p className="text-[9px] font-bold text-primary/70 tabular-nums">{app.heureDebut}</p>
                           {onDeleteClick && (
@@ -379,7 +379,7 @@ export function JCalendar({
 
       {viewMode === "month" && (
         <div className="p-6 bg-surface-container-low/10">
-          <div className="grid grid-cols-7 gap-px bg-outline-variant/10 rounded-2xl overflow-hidden border border-outline-variant/10 shadow-inner">
+          <div className="grid grid-cols-7 gap-px bg-outline-variant/10 rounded-2xl overflow-hidden border border-[#F1F5F9] shadow-inner">
             {["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"].map(day => (
               <div key={day} className="bg-white/80 p-4 text-center">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">{day}</span>
@@ -398,7 +398,7 @@ export function JCalendar({
               return (
                 <div key={i} 
                      onClick={() => onSlotClick?.(date, "08:00")}
-                     className={`min-h-[120px] p-3 bg-white transition-all hover:bg-primary/[0.02] cursor-pointer relative group border ${appointmentCount > 0 && isCurrentMonth ? 'border-primary/40 ring-1 ring-primary/10' : 'border-outline-variant/5'} ${!isCurrentMonth ? 'opacity-30 bg-surface-container-low/20' : ''}`}>
+                     className={`min-h-[120px] p-3 bg-white transition-all hover:bg-primary/[0.02] cursor-pointer relative group border ${appointmentCount > 0 && isCurrentMonth ? 'border-primary/40 ring-1 ring-primary/10' : 'border-[#F1F5F9]'} ${!isCurrentMonth ? 'opacity-30 bg-surface-container-low/20' : ''}`}>
                   <div className="flex justify-between items-start mb-2">
                     <span className={`text-xs font-black w-7 h-7 flex items-center justify-center rounded-full transition-all ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-on-surface-variant group-hover:text-primary'} ${isCurrentMonth && appointmentCount > 0 ? 'bg-primary/10 text-primary' : ''}`}>
                       {date.getDate()}

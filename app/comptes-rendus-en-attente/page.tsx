@@ -103,13 +103,13 @@ const [rows, setRows] = useState<any[]>([]);
         <RequireRole role="MEDECIN">
           <PageToolbar />
 
-          <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4">
+          <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-[#F1F5F9] bg-surface-container-low p-4">
             <div className="flex flex-col gap-1.5 min-w-[180px]">
               <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
                 Nom du Patient
               </label>
               <input
-                className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
+                className="w-full bg-white border border-[#F1F5F9] rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
                 type="text"
                 placeholder="Rechercher un patient..."
                 value={filters.nom}
@@ -143,19 +143,19 @@ const [rows, setRows] = useState<any[]>([]);
             <div className="rounded-xl border border-error/20 bg-error-container/10 p-6 text-center">
               <span className="material-symbols-outlined text-4xl text-error mb-2">cloud_off</span>
               <p className="text-on-surface-variant mb-4">{error}</p>
-              <button onClick={load} className="rounded-lg bg-error px-4 py-2 text-sm font-bold text-white hover:opacity-90">
+              <button onClick={load} className="rounded-xl bg-error px-4 py-2 text-sm font-bold text-white hover:opacity-90">
                 Réessayer
               </button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-xl border border-outline-variant/10 bg-surface-container-lowest p-8 text-center">
+            <div className="rounded-2xl border border-[#F1F5F9] bg-white p-8 text-center">
               <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-2">task_alt</span>
               <p className="text-on-surface-variant">Aucun compte-rendu en attente.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-outline-variant/10 bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-2xl border border-[#F1F5F9] bg-white shadow-sm">
               <table className="min-w-full border-collapse text-left text-sm">
-                <thead className="bg-surface-container-lowest text-xs uppercase tracking-wider text-on-surface-variant">
+                <thead className="bg-[#F8FAFC] border-b border-[#F1F5F9] text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                   <tr>
                     <th className="px-4 py-2.5">Patient</th>
                     <th className="px-4 py-2.5">Procédure</th>
@@ -183,7 +183,7 @@ const [rows, setRows] = useState<any[]>([]);
                     const interrompu = !!interrompuEntry;
                     const aFinaliserEntry = withStatus.find((e) => e.checklistAFinaliser);
                     return (
-                    <tr key={primary.prescriptionExternalId || primary.id} className={`border-t border-outline-variant/10 hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""} ${priseEnChargeStripeClass(!!primary.patient?.priseEnChargeId)}`}>
+                    <tr key={primary.prescriptionExternalId || primary.id} className={`border-t border-[#F1F5F9] hover:bg-surface-container/50 ${interrompu ? "bg-amber-50" : ""} ${priseEnChargeStripeClass(!!primary.patient?.priseEnChargeId)}`}>
                       <td className="px-4 py-2.5 font-semibold text-on-surface">
                         <div>{`${primary.patient?.nom || ""} ${primary.patient?.prenom || ""}`.trim() || "Patient inconnu"}</div>
                         <PriseEnChargeBadge priseEnChargeId={primary.patient?.priseEnChargeId} className="mt-0.5" />
@@ -231,14 +231,14 @@ const [rows, setRows] = useState<any[]>([]);
                           {interrompuEntry && (
                             <button
                               onClick={() => handleReprendre(interrompuEntry.row)}
-                              className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800 transition-all duration-200 hover:bg-amber-100"
+                              className="rounded-xl border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800 transition-all duration-200 hover:bg-amber-100"
                             >
                               Reprendre l'examen
                             </button>
                           )}
                           <button
                             onClick={() => handleRediger(primary)}
-                            className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:opacity-90"
+                            className="rounded-xl bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-all duration-200 hover:bg-[#005a76]"
                           >
                             {aFinaliserEntry ? "Finaliser le dossier" : "Rédiger le compte-rendu"}
                           </button>

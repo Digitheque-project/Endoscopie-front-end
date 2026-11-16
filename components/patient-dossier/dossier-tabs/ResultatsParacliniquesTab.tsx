@@ -48,7 +48,7 @@ export function ResultatsParacliniquesTab({ patientId }: ResultatsParacliniquesT
   return (
     <>
       {hasError && (
-        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+        <p className="mb-3 rounded-xl border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
           Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
         </p>
       )}
@@ -77,7 +77,7 @@ export function ResultatsParacliniquesTab({ patientId }: ResultatsParacliniquesT
             {filtered.map((r, i) => {
               const statut = (r.statut || "").toLowerCase();
               return (
-                <li key={r.id ?? i} className="rounded-lg border border-outline-variant/20 p-3 text-xs space-y-1">
+                <li key={r.id ?? i} className="rounded-xl border border-[#F1F5F9] p-3 text-xs space-y-1">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-bold text-on-surface">{r.titre || TYPE_LABELS[(r.type || "").toLowerCase()] || "Résultat"}</span>
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${STATUT_COLORS[statut] || "bg-surface-container text-on-surface-variant"}`}>

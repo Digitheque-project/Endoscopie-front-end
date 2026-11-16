@@ -109,14 +109,14 @@ export default function ArchivesPage() {
       <div className={PAGE_CONTENT_CLASS}>
         <PageToolbar />
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/10">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-[#F1F5F9]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-headline text-xl font-bold">Recherche archive</h2>
             <button
               type="button"
               onClick={() => exportCsv(rows)}
               disabled={rows.length === 0}
-              className="px-4 py-2 rounded-lg border border-outline-variant/20 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              className="px-4 py-2 rounded-xl border border-[#F1F5F9] text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
             >
               Exporter
             </button>
@@ -131,7 +131,7 @@ export default function ArchivesPage() {
                 onChange={(e) => setFilters({ ...filters, nom: e.target.value })}
                 placeholder="Nom ou prénom"
                 title={filters.nom}
-                className="truncate bg-blue-50 border border-blue-200 text-blue-900 placeholder:text-blue-400 rounded-lg px-3 py-2 text-xs font-medium w-28 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
+                className="truncate bg-blue-50 border border-blue-200 text-[#004A66] placeholder:text-blue-400 rounded-xl px-3 py-2 text-xs font-medium w-28 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
               />
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
@@ -140,7 +140,7 @@ export default function ArchivesPage() {
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                className="truncate bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none"
+                className="truncate bg-amber-50 border border-amber-200 text-amber-900 rounded-xl px-2 py-2 text-xs font-medium w-28 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none"
               />
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
@@ -149,7 +149,7 @@ export default function ArchivesPage() {
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                className="truncate bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none"
+                className="truncate bg-amber-50 border border-amber-200 text-amber-900 rounded-xl px-2 py-2 text-xs font-medium w-28 focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none"
               />
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
@@ -158,7 +158,7 @@ export default function ArchivesPage() {
                 value={filters.typeExamen}
                 onChange={(e) => setFilters({ ...filters, typeExamen: e.target.value })}
                 title={filters.typeExamen || "Tous les examens"}
-                className="truncate bg-violet-50 border border-violet-200 text-violet-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none"
+                className="truncate bg-violet-50 border border-violet-200 text-violet-900 rounded-xl px-2 py-2 text-xs font-medium w-28 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none"
               >
                 <option value="">Tous les examens</option>
                 {examTypes.map((t) => (
@@ -172,7 +172,7 @@ export default function ArchivesPage() {
                 value={filters.typeAnesthesie}
                 onChange={(e) => setFilters({ ...filters, typeAnesthesie: e.target.value })}
                 title={filters.typeAnesthesie || "Locale ou générale"}
-                className="truncate bg-rose-50 border border-rose-200 text-rose-900 rounded-lg px-2 py-2 text-xs font-medium w-28 focus:border-rose-400 focus:ring-2 focus:ring-rose-100 outline-none"
+                className="truncate bg-rose-50 border border-rose-200 text-rose-900 rounded-xl px-2 py-2 text-xs font-medium w-28 focus:border-rose-400 focus:ring-2 focus:ring-rose-100 outline-none"
               >
                 <option value="">Locale ou générale</option>
                 {ANESTHESIE_OPTIONS.map((a) => (
@@ -188,16 +188,16 @@ export default function ArchivesPage() {
                 onChange={(e) => setFilters({ ...filters, motCle: e.target.value })}
                 placeholder="Ex : polype..."
                 title={filters.motCle}
-                className="truncate bg-emerald-50 border border-emerald-200 text-emerald-900 placeholder:text-emerald-400 rounded-lg px-3 py-2 text-xs font-medium w-28 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none"
+                className="truncate bg-emerald-50 border border-emerald-200 text-emerald-900 placeholder:text-emerald-400 rounded-xl px-3 py-2 text-xs font-medium w-28 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 outline-none"
               />
             </div>
-            <button type="submit" className="shrink-0 whitespace-nowrap px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-opacity">
+            <button type="submit" className="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-[#005a76] transition-opacity">
               Rechercher
             </button>
             <button
               type="button"
               onClick={handleReset}
-              className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+              className="shrink-0 whitespace-nowrap px-3 py-2 rounded-xl text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
             >
               Réinitialiser
             </button>
@@ -208,7 +208,7 @@ export default function ArchivesPage() {
           {isLoading ? (
             <div className="space-y-2 animate-pulse">
               {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-surface-container rounded-lg" />
+                <div key={i} className="h-12 bg-surface-container rounded-xl" />
               ))}
             </div>
           ) : rows.length === 0 ? (
@@ -220,19 +220,19 @@ export default function ArchivesPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-low/50">
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Date</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Patient</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Examen</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Anesthésie</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Prescripteur</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">CPA</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Checklists</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Résultat</th>
-                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Statut</th>
+                  <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Date</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Patient</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Examen</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Anesthésie</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Prescripteur</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">CPA</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Checklists</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Résultat</th>
+                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">Statut</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant/10">
+                <tbody className="divide-y divide-[#F1F5F9]">
                   {rows.map((row) => {
                     const openResultat = () => {
                       if (row.resultatDisponible) {

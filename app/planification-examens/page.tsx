@@ -596,7 +596,7 @@ function PlanificationContent() {
   return (
     <div className={PAGE_CONTENT_CLASS}>
       {/* Back Button */}
-      <a href={returnUrl} className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
+      <a href={returnUrl} className="inline-flex items-center gap-2 rounded-xl border border-[#F1F5F9] px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
         <span className="material-symbols-outlined text-lg">arrow_back</span>
         <span className="font-semibold">
           {from === "agenda" ? "Retour à l'agenda" : from === "patient-dossier" ? "Retour au dossier patient" : "Retour au fil de prescription"}
@@ -605,12 +605,12 @@ function PlanificationContent() {
 
       {/* Patient Header */}
       {!patientId && (
-        <div className="mt-4 p-4 rounded-lg border border-error/20 bg-error-container/10 text-error text-sm">
+        <div className="mt-4 p-4 rounded-xl border border-error/20 bg-error-container/10 text-error text-sm">
           <strong>Attention :</strong> Aucune identité patient fiable fournie. Veuillez sélectionner une prescription depuis la file de prescription pour préremplir les informations, ou renseigner manuellement le patient.
         </div>
       )}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 bg-white rounded-xl border border-outline-variant/30 border-l-4 border-l-blue-300 p-6 flex gap-6 items-start shadow-sm">
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-[#F1F5F9] border-l-4 border-l-blue-300 p-6 flex gap-6 items-start shadow-sm">
           <div className="w-20 h-20 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-3xl text-primary">person</span>
@@ -631,7 +631,7 @@ function PlanificationContent() {
           </div>
         </div>
 
-        <div className="lg:col-span-4 bg-secondary-fixed p-6 rounded-xl flex flex-col justify-between border border-outline-variant/10 border-l-4 border-l-violet-300 shadow-sm">
+        <div className="lg:col-span-4 bg-secondary-fixed p-6 rounded-xl flex flex-col justify-between border border-[#F1F5F9] border-l-4 border-l-violet-300 shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">MÉDECIN PRESCRIPTEUR</p>
             <p className="font-headline font-bold text-on-secondary-fixed text-lg">
@@ -669,7 +669,7 @@ function PlanificationContent() {
       </section>
 
       {groupExams.length > 1 && (
-        <section className="bg-white rounded-xl border border-outline-variant/30 p-6 shadow-sm space-y-4">
+        <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm space-y-4">
           <div>
             <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">
               Prescription multi-examens — {plannedExamIds.size}/{groupExams.length} planifiés
@@ -686,7 +686,7 @@ function PlanificationContent() {
               type="checkbox"
               checked={planifierEnsemble}
               onChange={(e) => setPlanifierEnsemble(e.target.checked)}
-              className="h-4 w-4 rounded border-outline-variant/50 text-primary focus:ring-primary/30"
+              className="h-4 w-4 rounded border-[#F1F5F9] text-primary focus:ring-primary/30"
             />
             Planifier tous les examens sur le même créneau (même séance)
           </label>
@@ -734,7 +734,7 @@ function PlanificationContent() {
       {/* Main Content */}
       <div className="grid grid-cols-1 gap-8 items-start">
         <div>
-          <div className="bg-white p-8 rounded-xl border border-outline-variant/30 shadow-md space-y-8">
+          <div className="bg-white p-8 rounded-xl border border-[#F1F5F9] shadow-md space-y-8">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">Planification du créneau</h4>
@@ -761,7 +761,7 @@ function PlanificationContent() {
               {/* Salle / Date / Heure côte à côte — évite de faire défiler pour planifier un
                   créneau, les trois informations tiennent dans le même champ de vision. */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                <div className="space-y-2 rounded-3xl border border-outline-variant/20 border-l-4 border-l-violet-300 bg-surface-container-low p-6 shadow-sm">
+                <div className="space-y-2 rounded-3xl border border-[#F1F5F9] border-l-4 border-l-violet-300 bg-surface-container-low p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="material-symbols-outlined text-primary">meeting_room</span>
                     <div>
@@ -797,7 +797,7 @@ function PlanificationContent() {
                                   ? "border-primary bg-primary text-white shadow-md"
                                   : slotError
                                   ? "border-error/30 bg-surface-container-low text-on-surface hover:border-primary/50"
-                                  : "border-outline-variant bg-surface-container-low text-on-surface hover:border-primary/50"
+                                  : "border-[#E2E8F0] bg-surface-container-low text-on-surface hover:border-primary/50"
                               }`}
                             >
                               <span className={`material-symbols-outlined text-[16px] shrink-0 ${isSelected ? "" : "text-primary"}`}>meeting_room</span>
@@ -816,7 +816,7 @@ function PlanificationContent() {
                   )}
                 </div>
 
-                <div className="rounded-3xl border border-outline-variant/20 border-l-4 border-l-blue-300 bg-surface-container-low p-6 shadow-sm">
+                <div className="rounded-3xl border border-[#F1F5F9] border-l-4 border-l-blue-300 bg-surface-container-low p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <span className="material-symbols-outlined text-primary">calendar_month</span>
                     <div>
@@ -831,12 +831,12 @@ function PlanificationContent() {
                       value={date}
                       min={getTodayLocal()}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full appearance-none bg-white border border-outline-variant/50 px-4 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full appearance-none bg-white border border-[#F1F5F9] px-4 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-outline-variant/20 border-l-4 border-l-amber-300 bg-surface-container-low p-6 shadow-sm">
+                <div className="rounded-3xl border border-[#F1F5F9] border-l-4 border-l-amber-300 bg-surface-container-low p-6 shadow-sm">
                   <div className="flex items-center justify-between gap-2 mb-4">
                     <div className="flex items-center gap-3">
                       <span className="material-symbols-outlined text-primary">schedule</span>
@@ -859,7 +859,7 @@ function PlanificationContent() {
                         router.push(`/agenda-rendez-vous?${params.toString()}`);
                       }}
                       title="Voir l'agenda pour repérer un créneau libre"
-                      className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/10 transition-colors"
+                      className="shrink-0 inline-flex items-center gap-1 rounded-xl border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-[11px] font-bold text-primary hover:bg-primary/10 transition-colors"
                     >
                       <span className="material-symbols-outlined text-[14px]">calendar_month</span>
                       Voir l&apos;agenda
@@ -872,7 +872,7 @@ function PlanificationContent() {
                         type="time"
                         value={heureDebut}
                         onChange={(e) => setHeureDebut(e.target.value)}
-                        className="w-full appearance-none bg-white border border-outline-variant/50 px-3 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full appearance-none bg-white border border-[#F1F5F9] px-3 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
                     </div>
                     <div className="space-y-2">
@@ -881,7 +881,7 @@ function PlanificationContent() {
                         type="time"
                         value={heureFin}
                         onChange={(e) => setHeureFin(e.target.value)}
-                        className={`w-full appearance-none bg-white border ${dateError ? 'border-error' : 'border-outline-variant/50'} px-3 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10`}
+                        className={`w-full appearance-none bg-white border ${dateError ? 'border-error' : 'border-[#F1F5F9]'} px-3 py-3 rounded-2xl text-sm font-bold text-on-surface transition-all focus:border-primary focus:ring-2 focus:ring-primary/10`}
                       />
                     </div>
                   </div>
@@ -915,7 +915,7 @@ function PlanificationContent() {
               </div>
             </div>
 
-            <div className="p-6 rounded-xl bg-surface border border-dashed border-outline-variant/40 border-l-4 border-l-emerald-300 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="p-6 rounded-xl bg-surface border border-dashed border-[#F1F5F9] border-l-4 border-l-emerald-300 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg">
                   <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -934,7 +934,7 @@ function PlanificationContent() {
                 <div className="flex items-center gap-4 w-full md:w-auto">
                   <button
                     onClick={handleCancel}
-                    className="flex-1 md:flex-none bg-gray-200 text-gray-700 rounded-xl px-6 py-3 text-sm font-bold transition-all duration-200 hover:bg-gray-300 hover:scale-105 active:scale-95 shadow-sm"
+                    className="flex-1 md:flex-none bg-gray-200 text-[#334155] rounded-xl px-6 py-3 text-sm font-bold transition-all duration-200 hover:bg-gray-300 hover:scale-105 active:scale-95 shadow-sm"
                   >
                     Annuler
                   </button>
@@ -944,7 +944,7 @@ function PlanificationContent() {
                     className={`flex-[2] md:flex-none px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-center flex items-center justify-center gap-2 disabled:opacity-60 ${
                       isSuccess
                         ? 'bg-green-500 text-white shadow-lg'
-                        : 'bg-blue-600 text-white hover:scale-105 active:scale-95 hover:shadow-lg'
+                        : 'bg-[#006A8C] text-white hover:scale-105 active:scale-95 hover:shadow-lg'
                     }`}
                   >
                     {isSubmitting ? (
@@ -984,7 +984,7 @@ export default function PlanificationPage() {
   return (
     <AppShell>
       <RequireRole role="MAJOR">
-        <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+        <Suspense fallback={<div className="p-8 text-center text-[#64748B]">Chargement...</div>}>
           <PlanificationContent />
         </Suspense>
       </RequireRole>

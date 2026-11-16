@@ -74,32 +74,32 @@ export default function PatientsPage() {
         <PageToolbar />
 
         <div className="flex gap-4 overflow-x-auto pb-2">
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-[#F1F5F9] flex-1 min-w-[140px]">
             <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">TOTAL AUJOURD&apos;HUI</p>
-            <p className="text-2xl font-headline font-extrabold text-blue-900">{totalToday}</p>
+            <p className="text-2xl font-headline font-extrabold text-[#004A66]">{totalToday}</p>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-[#F1F5F9] flex-1 min-w-[140px]">
             <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">EN ATTENTE</p>
             <p className="text-2xl font-headline font-extrabold text-orange-600">{enAttente}</p>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-[#F1F5F9] flex-1 min-w-[140px]">
             <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">EN COURS</p>
             <p className="text-2xl font-headline font-extrabold text-blue-600">{enCours}</p>
           </div>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex-1 min-w-[140px]">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-[#F1F5F9] flex-1 min-w-[140px]">
             <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">TERMINÉ</p>
             <p className="text-2xl font-headline font-extrabold text-green-600">{termine}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-6 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h3 className="font-headline font-bold text-blue-900">Programmation du Jour</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-[#F1F5F9] overflow-hidden">
+          <div className="px-6 py-2.5 border-b border-[#F1F5F9] flex justify-between items-center bg-slate-50/50">
+            <h3 className="font-headline font-bold text-[#004A66]">Programmation du Jour</h3>
             <div className="flex gap-2 relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-2 ${
-                  showFilters ? "bg-primary text-white border-primary" : "border-slate-200 text-slate-600 hover:bg-white"
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center gap-2 ${
+                  showFilters ? "bg-primary text-white border-primary" : "border-[#E2E8F0] text-[#475569] hover:bg-white"
                 }`}
               >
                 <span className="material-symbols-outlined text-sm">filter_list</span>
@@ -110,9 +110,9 @@ export default function PatientsPage() {
               </button>
 
               {showFilters && (
-                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 p-5 z-30 space-y-4 text-left">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <h5 className="font-bold text-xs text-slate-700">Filtres</h5>
+                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-[#E2E8F0] p-5 z-30 space-y-4 text-left">
+                  <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-2">
+                    <h5 className="font-bold text-xs text-[#334155]">Filtres</h5>
                     <button
                       onClick={() => setFilters({ nom: "", procedure: "", medecin: "", date: "" })}
                       className="text-[10px] font-bold text-blue-600 uppercase hover:underline"
@@ -125,7 +125,7 @@ export default function PatientsPage() {
                     <div className="flex flex-col gap-1">
                       <label className="text-[10px] font-bold uppercase text-slate-400">Nom</label>
                       <input
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        className="w-full bg-[#F8F9FB] border border-[#E2E8F0] rounded-xl px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
                         type="text"
                         placeholder="Nom du patient..."
                         value={filters.nom}
@@ -136,7 +136,7 @@ export default function PatientsPage() {
                     <div className="flex flex-col gap-1">
                       <label className="text-[10px] font-bold uppercase text-slate-400">Procédure</label>
                       <input
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        className="w-full bg-[#F8F9FB] border border-[#E2E8F0] rounded-xl px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
                         type="text"
                         placeholder="Ex: Coloscopie..."
                         value={filters.procedure}
@@ -147,7 +147,7 @@ export default function PatientsPage() {
                     <div className="flex flex-col gap-1">
                       <label className="text-[10px] font-bold uppercase text-slate-400">Médecin</label>
                       <input
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                        className="w-full bg-[#F8F9FB] border border-[#E2E8F0] rounded-xl px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
                         type="text"
                         placeholder="Rechercher..."
                         value={filters.medecin}
@@ -162,24 +162,24 @@ export default function PatientsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-surface-container-low">
-                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500">Nom du Patient</th>
-                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500">Type d&apos;Examen</th>
-                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Heure prévue</th>
-                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500">Statut</th>
-                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
+                <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#64748B]">Nom du Patient</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#64748B]">Type d&apos;Examen</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#64748B] text-center">Heure prévue</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#64748B]">Statut</th>
+                  <th className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-[#64748B] text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 text-sm">
+                    <td colSpan={5} className="px-6 py-8 text-center text-[#64748B] text-sm">
                       Chargement…
                     </td>
                   </tr>
                 ) : filteredPatients.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 text-sm">
+                    <td colSpan={5} className="px-6 py-8 text-center text-[#64748B] text-sm">
                       Aucun patient ne correspond à vos filtres.
                     </td>
                   </tr>
@@ -198,11 +198,11 @@ export default function PatientsPage() {
                             disabled={!rdv.prescriptionId}
                             className="flex items-center gap-3 group text-left disabled:cursor-default"
                           >
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-slate-200 text-slate-600">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-slate-200 text-[#475569]">
                               {initials}
                             </div>
                             <div>
-                              <p className="font-bold text-slate-800 text-sm group-hover:text-primary transition-colors">
+                              <p className="font-bold text-[#0F172A] text-sm group-hover:text-primary transition-colors">
                                 {rdv.patient ? `${rdv.patient.nom} ${rdv.patient.prenom}` : "Patient inconnu"}
                               </p>
                               <PriseEnChargeBadge priseEnChargeId={rdv.patient?.priseEnChargeId} className="mt-0.5" />
@@ -219,7 +219,7 @@ export default function PatientsPage() {
                             {rdv.typeExamen || "Non spécifié"}
                           </span>
                         </td>
-                        <td className="px-6 py-2.5 text-sm font-bold text-slate-700 text-center">
+                        <td className="px-6 py-2.5 text-sm font-bold text-[#334155] text-center">
                           {new Date(rdv.dateHeureDebut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", ...FUSEAU_NAIF })}
                         </td>
                         <td className="px-6 py-2.5">
@@ -233,7 +233,7 @@ export default function PatientsPage() {
                             <button
                               type="button"
                               onClick={() => goToChecklist(rdv)}
-                              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-[10px] px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all font-bold flex items-center gap-1.5"
+                              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-[10px] px-3 py-1.5 rounded-xl shadow-sm hover:shadow-md transition-all font-bold flex items-center gap-1.5"
                             >
                               <span className="material-symbols-outlined text-[14px]">playlist_add_check</span> Check-list
                             </button>
@@ -241,7 +241,7 @@ export default function PatientsPage() {
                               type="button"
                               onClick={() => rdv.prescriptionId && router.push(`/patient-dossier/${rdv.prescriptionId}`)}
                               disabled={!rdv.prescriptionId}
-                              className="p-2 text-blue-900 hover:bg-blue-100 rounded-lg transition-all disabled:opacity-30"
+                              className="p-2 text-[#004A66] hover:bg-blue-100 rounded-xl transition-all disabled:opacity-30"
                               title="Voir dossier"
                             >
                               <span className="material-symbols-outlined">folder_shared</span>
@@ -255,8 +255,8 @@ export default function PatientsPage() {
               </tbody>
             </table>
           </div>
-          <div className="px-6 py-2.5 border-t border-slate-100">
-            <p className="text-xs text-slate-500">
+          <div className="px-6 py-2.5 border-t border-[#F1F5F9]">
+            <p className="text-xs text-[#64748B]">
               Affichage de {filteredPatients.length} patient{filteredPatients.length === 1 ? "" : "s"} sur {totalToday} aujourd&apos;hui
             </p>
           </div>

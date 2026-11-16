@@ -262,7 +262,7 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
           <div className="relative">
             <button
               aria-label="microphone"
-              className={`flex h-12 w-12 items-center justify-center rounded-full transition-shadow ${isRecording ? "bg-rose-600 text-white shadow-lg" : "bg-blue-600 text-white shadow-md"}`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-shadow ${isRecording ? "bg-rose-600 text-white shadow-lg" : "bg-[#006A8C] text-white shadow-md"}`}
               onClick={() => (isRecording ? pause() : start(true))}
               type="button"
             >
@@ -278,7 +278,7 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
 
           <div>
             <div className="text-sm font-semibold">{status === "recording" ? "Enregistrement…" : status === "paused" ? "En pause" : status === "stopped" ? "Terminé" : status === "permission-request" ? "Demande d'accès micro" : status === "error" ? "Erreur" : statusIdleText}</div>
-            <div className="text-xs text-slate-500">Durée : {new Date(duration * 1000).toISOString().substr(14, 5)}</div>
+            <div className="text-xs text-[#64748B]">Durée : {new Date(duration * 1000).toISOString().substr(14, 5)}</div>
           </div>
         </div>
 
@@ -307,7 +307,7 @@ export default function VoiceRecorder({ onTranscriptChange, onFinalTranscript, o
       {!hideTextArea && (
         <div className="mt-4">
           <textarea
-            className="w-full min-h-[260px] sm:min-h-[340px] md:min-h-[420px] rounded-2xl border border-slate-200 p-4 sm:p-5 md:p-5 text-sm leading-5 overflow-auto"
+            className="w-full min-h-[260px] sm:min-h-[340px] md:min-h-[420px] rounded-2xl border border-[#E2E8F0] p-4 sm:p-5 md:p-5 text-sm leading-5 overflow-auto"
             value={transcript}
             readOnly
           />

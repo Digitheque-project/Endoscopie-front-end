@@ -161,7 +161,7 @@ export default function ServiceSourcesPage() {
         <h1 className="text-3xl font-bold">🔔 Services Sources (Webhook)</h1>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 bg-[#006A8C] text-white px-4 py-2 rounded-xl hover:bg-[#005a76]"
         >
           <Plus className="w-5 h-5" />
           Ajouter service
@@ -169,7 +169,7 @@ export default function ServiceSourcesPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white border rounded-lg p-6 mb-8">
+        <div className="bg-white border rounded-xl p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">📋 Nouveau Service Source</h2>
           <form onSubmit={handleCreateService}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -207,14 +207,14 @@ export default function ServiceSourcesPage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
               >
                 Créer
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
+                className="bg-gray-400 text-white px-4 py-2 rounded-xl hover:bg-gray-500"
               >
                 Annuler
               </button>
@@ -224,14 +224,14 @@ export default function ServiceSourcesPage() {
       )}
 
       {/* Services List */}
-      <div className="bg-white border rounded-lg p-6 mb-8">
+      <div className="bg-white border rounded-xl p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4">📍 Services Enregistrés</h2>
         {services.length === 0 ? (
-          <p className="text-gray-600">Aucun service enregistré</p>
+          <p className="text-[#475569]">Aucun service enregistré</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-100">
+              <thead className="bg-[#F8FAFC] text-[11px] uppercase tracking-wider text-[#64748B]">
                 <tr>
                   <th className="px-4 py-2 text-left">Service</th>
                   <th className="px-4 py-2 text-left">URL Webhook</th>
@@ -244,7 +244,7 @@ export default function ServiceSourcesPage() {
                 {services.map((service) => (
                   <tr key={service.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2 font-semibold">{service.nom}</td>
-                    <td className="px-4 py-2 text-xs text-gray-600 truncate">
+                    <td className="px-4 py-2 text-xs text-[#475569] truncate">
                       {service.urlWebhook}
                     </td>
                     <td className="px-4 py-2">
@@ -254,7 +254,7 @@ export default function ServiceSourcesPage() {
                         <span className="text-red-600 font-semibold">✕ Inactif</span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-xs text-gray-600">
+                    <td className="px-4 py-2 text-xs text-[#475569]">
                       {service.lastNotifiedAt
                         ? new Date(service.lastNotifiedAt).toLocaleString('fr-FR')
                         : 'Jamais'}
@@ -294,15 +294,15 @@ export default function ServiceSourcesPage() {
       </div>
 
       {/* Webhook Logs */}
-      <div className="bg-white border rounded-lg p-6">
+      <div className="bg-white border rounded-xl p-6">
         <h2 className="text-xl font-semibold mb-4">📊 Logs Webhooks (Temps réel)</h2>
-        <p className="text-sm text-gray-600 mb-4">Auto-refresh toutes les 5 secondes</p>
+        <p className="text-sm text-[#475569] mb-4">Auto-refresh toutes les 5 secondes</p>
         {logs.length === 0 ? (
-          <p className="text-gray-600">Aucun log</p>
+          <p className="text-[#475569]">Aucun log</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-100">
+              <thead className="bg-[#F8FAFC] text-[11px] uppercase tracking-wider text-[#64748B]">
                 <tr>
                   <th className="px-4 py-2 text-left">Service</th>
                   <th className="px-4 py-2 text-left">Prescription</th>
@@ -315,12 +315,12 @@ export default function ServiceSourcesPage() {
                 {logs.map((log) => (
                   <tr key={log.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-2 font-semibold">{log.serviceSource.nom}</td>
-                    <td className="px-4 py-2 text-xs">{log.prescriptionId}</td>
+                    <td className="px-4 py-2 text-xs">{log.prescriptionId ? "Demande liée" : "—"}</td>
                     <td className="px-4 py-2 text-xs">{log.eventType}</td>
                     <td className={`px-4 py-2 text-center font-semibold ${getStatusColor(log.httpStatus)}`}>
                       {log.httpStatus || 'ERR'}
                     </td>
-                    <td className="px-4 py-2 text-xs text-gray-600">
+                    <td className="px-4 py-2 text-xs text-[#475569]">
                       {new Date(log.timestamp).toLocaleString('fr-FR')}
                     </td>
                   </tr>

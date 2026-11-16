@@ -62,7 +62,7 @@ export default function RapportPage() {
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
         <section className="flex flex-wrap items-center justify-between gap-4 bg-surface-container-low p-5 rounded-xl">
-          <div className="flex items-center gap-2 bg-surface-container-lowest rounded-full p-1 border border-outline-variant/15">
+          <div className="flex items-center gap-2 bg-white rounded-full p-1 border border-[#F1F5F9]">
             <button
               onClick={() => setPeriod("week")}
               className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
@@ -84,7 +84,7 @@ export default function RapportPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setRefDate((d) => shiftDate(d, period, -1))}
-              className="w-9 h-9 flex items-center justify-center rounded-full border border-outline-variant/15 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-high transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-[#F1F5F9] bg-white text-on-surface-variant hover:bg-surface-container-high transition-colors"
               aria-label="Période précédente"
             >
               <span className="material-symbols-outlined">chevron_left</span>
@@ -94,14 +94,14 @@ export default function RapportPage() {
             </p>
             <button
               onClick={() => setRefDate((d) => shiftDate(d, period, 1))}
-              className="w-9 h-9 flex items-center justify-center rounded-full border border-outline-variant/15 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-high transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-[#F1F5F9] bg-white text-on-surface-variant hover:bg-surface-container-high transition-colors"
               aria-label="Période suivante"
             >
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
             <button
               onClick={() => setRefDate(new Date())}
-              className="text-xs font-bold text-primary px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors"
+              className="text-xs font-bold text-primary px-3 py-2 rounded-xl hover:bg-primary/10 transition-colors"
             >
               Aujourd&apos;hui
             </button>
@@ -125,21 +125,21 @@ export default function RapportPage() {
                 <p className="text-[10px] opacity-70 mt-1">Examens terminés (checklist après validée) sur la période</p>
               </div>
 
-              <div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-outline-variant/5 flex flex-col justify-between">
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-[#F1F5F9] flex flex-col justify-between">
                 <p className="text-sm text-on-surface-variant font-medium mb-1">Hommes</p>
                 <h3 className="text-3xl font-headline font-bold text-on-surface">
                   {isLoading ? "…" : stats?.parGenre.homme ?? 0}
                 </h3>
               </div>
 
-              <div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-outline-variant/5 flex flex-col justify-between">
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-[#F1F5F9] flex flex-col justify-between">
                 <p className="text-sm text-on-surface-variant font-medium mb-1">Femmes</p>
                 <h3 className="text-3xl font-headline font-bold text-on-surface">
                   {isLoading ? "…" : stats?.parGenre.femme ?? 0}
                 </h3>
               </div>
 
-              <div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-outline-variant/5 flex flex-col justify-between">
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-[#F1F5F9] flex flex-col justify-between">
                 <p className="text-sm text-on-surface-variant font-medium mb-1">Enfants</p>
                 <h3 className="text-3xl font-headline font-bold text-on-surface">
                   {isLoading ? "…" : stats?.parGenre.enfant ?? 0}
@@ -147,7 +147,7 @@ export default function RapportPage() {
               </div>
             </section>
 
-            <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 p-5 space-y-4">
+            <section className="bg-white rounded-xl shadow-sm border border-[#F1F5F9] p-5 space-y-4">
               <h4 className="font-headline font-bold text-on-surface">Examens par type</h4>
 
               {isLoading ? (

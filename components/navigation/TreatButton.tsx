@@ -57,7 +57,7 @@ export default function TreatButton({ patient, id, rendezVousId, prescriptionId,
     <button
       onClick={handleTreat}
       aria-label={`Commencer l'examen ${patient}`}
-      className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 ${loading ? "bg-primary/30 text-white" : "bg-primary/5 text-primary hover:bg-primary/10"}`}
+      className={`px-3 py-1 rounded-xl text-[10px] font-bold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 flex items-center gap-2 ${loading ? "bg-primary/30 text-white" : "bg-primary/5 text-primary hover:bg-primary/10"}`}
     >
       {loading ? (
         <span className="material-symbols-outlined animate-spin">autorenew</span>

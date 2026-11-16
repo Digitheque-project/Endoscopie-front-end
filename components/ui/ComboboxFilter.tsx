@@ -54,7 +54,7 @@ export default function ComboboxFilter({
           </span>
         )}
         <input
-          className={`w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg ${icon ? "pl-9" : "pl-3"} pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface`}
+          className={`w-full bg-white border border-[#F1F5F9] rounded-xl ${icon ? "pl-9" : "pl-3"} pr-4 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface`}
           type="text"
           placeholder={placeholder}
           value={value}
@@ -62,7 +62,7 @@ export default function ComboboxFilter({
           onFocus={() => setOpen(true)}
         />
         {open && suggestions.length > 0 && (
-          <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-outline-variant/20 bg-white shadow-lg">
+          <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-2xl border border-[#F1F5F9] bg-white shadow-lg">
             {suggestions.map((opt) => (
               <li key={opt}>
                 <button

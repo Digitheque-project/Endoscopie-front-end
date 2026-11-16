@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { PatientProvider } from "@/contexts/PatientContext";
@@ -7,13 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGate } from "@/components/layout/AuthGate";
 
 import Script from "next/script";
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
 const manrope = Manrope({
-  variable: "--font-manrope",
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
@@ -28,14 +23,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${manrope.variable} h-full antialiased`}>
+    <html lang="fr" className={`${manrope.variable} font-sans h-full antialiased`}>
       <head>
         <link
           rel="stylesheet"
           href="/polices/material-symbols.css"
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-[#F8F9FB]">
         <AuthProvider>
           <PatientProvider>
             <AuthGate>{children}</AuthGate>

@@ -32,7 +32,7 @@ export default function SelectFilter({
           </span>
         )}
         <select
-          className={`w-full appearance-none bg-surface-container-lowest border border-outline-variant/30 rounded-lg ${icon ? "pl-9" : "pl-3"} pr-8 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface`}
+          className={`w-full appearance-none bg-white border border-[#F1F5F9] rounded-xl ${icon ? "pl-9" : "pl-3"} pr-8 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >

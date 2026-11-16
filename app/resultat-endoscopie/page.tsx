@@ -725,14 +725,14 @@ function ResultatEndoscopieContent() {
   };
 
   return (
-    <div className="bg-slate-50 text-slate-900 pb-24">
+    <div className="bg-[#F8F9FB] text-[#0F172A] pb-24">
       <div className="flex justify-center">
         <div className="max-w-[1100px] w-full px-4 py-8">
-          <div className="mb-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mb-8 rounded-3xl border border-[#E2E8F0] bg-white p-8 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">Service d'endoscopie — CHU Fianarantsoa</p>
-                <h1 className="mt-3 text-3xl font-bold text-slate-900">{dynamicTitle}</h1>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">Service d'endoscopie — CHU Fianarantsoa</p>
+                <h1 className="mt-3 text-3xl font-bold text-[#0F172A]">{dynamicTitle}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {session?.sameSlot && session.exams.length > 1 && (
                     // Choix manuel de l'examen à rédiger — pas seulement un indicateur de
@@ -754,14 +754,14 @@ function ResultatEndoscopieContent() {
                     ))
                   )}
                   {!hasExistingResult && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-[#475569]">
                       <span className="material-symbols-outlined text-[14px]">format_list_numbered</span>
                       Formulaire en {totalSections} sections
                     </span>
                   )}
                 </div>
               </div>
-              <div className="text-right text-sm text-slate-600">
+              <div className="text-right text-sm text-[#475569]">
                 <p>Patient : <span className="font-semibold">{patientName || '—'}</span></p>
                 <p>Âge : <span className="font-semibold">{age || '—'}</span></p>
               </div>
@@ -775,7 +775,7 @@ function ResultatEndoscopieContent() {
           )}
 
           {hasExistingResult && (
-            <div className="mb-6 flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 p-4 text-slate-700 shadow-sm">
+            <div className="mb-6 flex items-center gap-2 rounded-2xl border border-[#E2E8F0] bg-slate-100 p-4 text-[#334155] shadow-sm">
               <span className="material-symbols-outlined text-lg">lock</span>
               Compte rendu déjà enregistré — lecture seule.
             </div>
@@ -784,78 +784,78 @@ function ResultatEndoscopieContent() {
           <fieldset disabled={hasExistingResult} className="space-y-5 border-0 p-0 m-0 min-w-0">
 
             <div className="grid gap-5 lg:grid-cols-2">
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
               <div className="mb-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">2. Responsable</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">2. Responsable</p>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-2">
                 {/* Colonne gauche : Responsable */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-slate-900">Responsable</h3>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <h3 className="text-sm font-semibold text-[#0F172A]">Responsable</h3>
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Nom de la responsable
                     <input
                       value={formData.responsableExamen}
                       onChange={(e) => updateField("responsableExamen", e.target.value)}
                       placeholder="Copier ou saisir le nom"
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700 md:col-span-2">
+                  <label className="space-y-1 text-sm text-[#334155] md:col-span-2">
                     Indication
                     <input
                       value={formData.responsable.indication}
                       onChange={(e) => updateNested("responsable", "indication", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700 md:col-span-2">
+                  <label className="space-y-1 text-sm text-[#334155] md:col-span-2">
                     Prescripteur
                     <input
                       value={formData.responsable.prescripteur}
                       onChange={(e) => updateNested("responsable", "prescripteur", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
                 </div>
 
                 {/* Colonne droite : Infos Patient */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-slate-900">Informations du patient</h3>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <h3 className="text-sm font-semibold text-[#0F172A]">Informations du patient</h3>
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Nom
                     <input
                       value={formData.responsable.nom}
                       onChange={(e) => updateNested("responsable", "nom", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Prénom(s)
                     <input
                       value={formData.responsable.prenoms}
                       onChange={(e) => updateNested("responsable", "prenoms", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="space-y-1 text-sm text-slate-700">
+                    <label className="space-y-1 text-sm text-[#334155]">
                       Âge
                       <input
                         type="number"
                         min={0}
                         value={formData.responsable.age}
                         onChange={(e) => updateNested("responsable", "age", e.target.value ? Number(e.target.value) : 0)}
-                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
                     </label>
-                    <label className="space-y-1 text-sm text-slate-700">
+                    <label className="space-y-1 text-sm text-[#334155]">
                       Genre
                       <select
                         value={formData.responsable.genre}
                         onChange={(e) => updateNested("responsable", "genre", e.target.value as Genre)}
-                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                       >
                         <option value="Masculin">Masculin</option>
                         <option value="Féminin">Féminin</option>
@@ -866,9 +866,9 @@ function ResultatEndoscopieContent() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
               <div className="mb-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">3. Endoscopistes</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">3. Endoscopistes</p>
               </div>
               <div className="grid gap-3">
                 {decidedAnesthesie ? (
@@ -880,7 +880,7 @@ function ResultatEndoscopieContent() {
                     <span className="font-semibold">Anesthésie {decidedAnesthesie}</span>
                   </div>
                 ) : hasExistingResult ? (
-                  <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700">
+                  <div className="flex items-center gap-2 rounded-2xl border border-[#E2E8F0] bg-[#F8F9FB] px-4 py-3 text-[#334155]">
                     <span className="material-symbols-outlined text-lg">info</span>
                     <span className="font-semibold">
                       {formData.endoscopistes.conditionExamen === "anesthesie_generale" ? "Anesthésie générale" : "Anesthésie locale"}
@@ -888,7 +888,7 @@ function ResultatEndoscopieContent() {
                   </div>
                 ) : (
                   <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer">
+                    <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-[#F8F9FB] px-4 py-3 cursor-pointer">
                       <input
                         type="radio"
                         name="conditionExamen"
@@ -899,7 +899,7 @@ function ResultatEndoscopieContent() {
                       />
                       <span>Anesthésie locale</span>
                     </label>
-                    <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 cursor-pointer">
+                    <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-[#F8F9FB] px-4 py-3 cursor-pointer">
                       <input
                         type="radio"
                         name="conditionExamen"
@@ -913,28 +913,28 @@ function ResultatEndoscopieContent() {
                   </div>
                 )}
 
-                <label className="space-y-1 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-[#334155]">
                   Opérateur
                   <input
                     value={formData.endoscopistes.operateur}
                     onChange={(e) => updateNested("endoscopistes", "operateur", e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
-                <label className="space-y-1 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-[#334155]">
                   Infirmière(s)
                   <input
                     value={formData.endoscopistes.infirmieres}
                     onChange={(e) => updateNested("endoscopistes", "infirmieres", e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
-                <label className="space-y-1 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-[#334155]">
                   Médecin anesthésiste
                   <input
                     value={formData.endoscopistes.medecinAnesthesiste}
                     onChange={(e) => updateNested("endoscopistes", "medecinAnesthesiste", e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
               </div>
@@ -942,15 +942,15 @@ function ResultatEndoscopieContent() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
               <div className="mb-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">4. Rendez-vous & Matériel</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">4. Rendez-vous & Matériel</p>
               </div>
               <div className="grid gap-3">
-                <label className="space-y-1 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-[#334155]">
                   <div className="flex items-center justify-between gap-2">
                     <span>Endoscope</span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">OLYMPUS*</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#64748B]">OLYMPUS*</span>
                   </div>
                 </label>
               </div>
@@ -958,8 +958,8 @@ function ResultatEndoscopieContent() {
               {(
                 <div className="mt-6">
                   <div className="mb-4 flex items-center justify-between gap-4">
-                    <p className="text-sm font-semibold text-slate-900">Sélectionner un ou plusieurs endoscopes</p>
-                    <span className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                    <p className="text-sm font-semibold text-[#0F172A]">Sélectionner un ou plusieurs endoscopes</p>
+                    <span className="text-xs uppercase tracking-[0.22em] text-[#64748B]">
                       {formData.rendezVous.endoscope.length} sélection{formData.rendezVous.endoscope.length > 1 ? 's' : ''}
                     </span>
                   </div>
@@ -979,12 +979,12 @@ function ResultatEndoscopieContent() {
                                 : [...formData.rendezVous.endoscope, endoscope.id],
                             )
                           }
-                          className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
+                          className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-[#E2E8F0] bg-white hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="font-semibold text-slate-900">{endoscope.modele}</p>
-                              <p className="text-sm text-slate-500">{endoscope.serie ?? 'Série non précisée'}</p>
+                              <p className="font-semibold text-[#0F172A]">{endoscope.modele}</p>
+                              <p className="text-sm text-[#64748B]">{endoscope.serie ?? 'Série non précisée'}</p>
                             </div>
                             <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md border text-sm ${selected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white text-slate-400'}`}>
                               {selected ? '✓' : ''}
@@ -998,30 +998,30 @@ function ResultatEndoscopieContent() {
               )}
 
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                <label className="space-y-1 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-[#334155]">
                   <div className="flex items-center justify-between gap-2">
                     <span>Pré-désinfection</span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">HEXANIOS*</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#64748B]">HEXANIOS*</span>
                   </div>
                   <select
                     value={formData.rendezVous.preDesinfection}
                     onChange={(e) => updateNested("rendezVous", "preDesinfection", e.target.value as PreDesinfection)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   >
                     <option value="Effectuée">Effectuée</option>
                     <option value="Non effectuée">Non effectuée</option>
                   </select>
                 </label>
-                <label className="space-y-1 text-sm text-slate-700">
+                <label className="space-y-1 text-sm text-[#334155]">
                   <div className="flex items-center justify-between gap-2">
                     <span>Désinfection</span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">STERANIOS*</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#64748B]">STERANIOS*</span>
                   </div>
                   <input
                     value={formData.rendezVous.desinfection}
                     onChange={(e) => updateNested("rendezVous", "desinfection", e.target.value)}
                     placeholder="Saisir la désinfection"
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </label>
               </div>
@@ -1029,8 +1029,8 @@ function ResultatEndoscopieContent() {
               {isLigature && (
                 <div className="mt-6 grid gap-4">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="text-sm font-semibold text-slate-900">Kit ligature</div>
-                    <span className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                    <div className="text-sm font-semibold text-[#0F172A]">Kit ligature</div>
+                    <span className="text-xs uppercase tracking-[0.22em] text-[#64748B]">
                       {(formData.rendezVous.kitLigature ?? []).length} sélection{(formData.rendezVous.kitLigature ?? []).length > 1 ? 's' : ''}
                     </span>
                   </div>
@@ -1054,12 +1054,12 @@ function ResultatEndoscopieContent() {
                               selected ? current.filter((o) => o !== option) : [...current, option],
                             )
                           }
-                          className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}
+                          className={`rounded-3xl border p-4 text-left transition-all ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-[#E2E8F0] bg-white hover:border-slate-300 hover:bg-slate-50'}`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="font-semibold text-slate-900">{option}</p>
-                              <p className="text-sm text-slate-500">&nbsp;</p>
+                              <p className="font-semibold text-[#0F172A]">{option}</p>
+                              <p className="text-sm text-[#64748B]">&nbsp;</p>
                             </div>
                             <span className={`inline-flex h-6 w-6 items-center justify-center rounded-md border text-sm ${selected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 bg-white text-slate-400'}`}>
                               {selected ? '✓' : ''}
@@ -1070,23 +1070,23 @@ function ResultatEndoscopieContent() {
                     })}
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="space-y-1 text-sm text-slate-700">
+                    <label className="space-y-1 text-sm text-[#334155]">
                       Nombre d'élastiques chargés
                       <input
                         type="number"
                         min={0}
                         value={formData.rendezVous.elastiquesCharges ?? ''}
                         onChange={(e) => updateNested("rendezVous", "elastiquesCharges", e.target.value ? Number(e.target.value) : undefined)}
-                        className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
                     </label>
-                    <label className="space-y-1 text-sm text-slate-700">
+                    <label className="space-y-1 text-sm text-[#334155]">
                       Élastiques utilisés
                       <input
                           type="text"
                           value={formData.rendezVous.elastiquesUtilises ?? ''}
                           onChange={(e) => updateNested("rendezVous", "elastiquesUtilises", e.target.value)}
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                          className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                         />
                     </label>
                   </div>
@@ -1094,14 +1094,14 @@ function ResultatEndoscopieContent() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">5. Images de l'examen</p>
-                  <h2 className="mt-2 text-xl font-semibold text-slate-900">Captures endoscopiques</h2>
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">5. Images de l'examen</p>
+                  <h2 className="mt-2 text-xl font-semibold text-[#0F172A]">Captures endoscopiques</h2>
                 </div>
                 {images.length > 0 && (
-                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#64748B]">
                     {images.length} image{images.length > 1 ? 's' : ''}
                   </span>
                 )}
@@ -1109,7 +1109,7 @@ function ResultatEndoscopieContent() {
 
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {images.map((img) => (
-                  <div key={img.id} className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                  <div key={img.id} className="group relative aspect-square overflow-hidden rounded-2xl border border-[#E2E8F0] bg-slate-100">
                     <img src={img.url} alt={img.name} className="h-full w-full object-cover" />
                     <button
                       type="button"
@@ -1125,9 +1125,9 @@ function ResultatEndoscopieContent() {
                   </div>
                 ))}
 
-                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 text-center transition-colors hover:border-primary hover:bg-primary/5">
+                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-[#F8F9FB] text-center transition-colors hover:border-primary hover:bg-primary/5">
                   <span className="text-2xl leading-none text-slate-400">+</span>
-                  <span className="text-xs font-semibold text-slate-600">Importer une image</span>
+                  <span className="text-xs font-semibold text-[#475569]">Importer une image</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -1140,13 +1140,13 @@ function ResultatEndoscopieContent() {
                   />
                 </label>
               </div>
-              <p className="mt-4 text-xs text-slate-500">Formats acceptés : JPG, PNG. Les images sont jointes au compte rendu de l'examen.</p>
+              <p className="mt-4 text-xs text-[#64748B]">Formats acceptés : JPG, PNG. Les images sont jointes au compte rendu de l'examen.</p>
             </section>
             </div>
 
             {isColoscopie && (
-              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+              <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.3em] text-[#64748B]">
                   <span className="font-bold">{sNum.preparationColique}. Quantité de la préparation colique</span>
                   <span className="font-normal"> : Score de Boston 9/9</span>
                 </p>
@@ -1154,9 +1154,9 @@ function ResultatEndoscopieContent() {
             )}
 
             <div className={`grid grid-cols-1 gap-4 items-start ${formData.observations.trim() ? "lg:grid-cols-[1fr_260px]" : ""}`}>
-              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
                 <div className="mb-3">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">
                     {sNum.constatations}. Observation
                   </p>
                 </div>
@@ -1166,8 +1166,8 @@ function ResultatEndoscopieContent() {
                     <div key={item.key} className="space-y-2">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm font-semibold text-slate-900">{item.label}</h3>
-                          <p className="text-xs text-slate-500">[au besoin]</p>
+                          <h3 className="text-sm font-semibold text-[#0F172A]">{item.label}</h3>
+                          <p className="text-xs text-[#64748B]">[au besoin]</p>
                           {parsedOrganNotes[item.key] && (
                             <span className="text-xs text-primary bg-primary/5 rounded-full px-2 py-0.5">
                               note : {parsedOrganNotes[item.key]}
@@ -1175,7 +1175,7 @@ function ResultatEndoscopieContent() {
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-[10px] font-semibold text-slate-500">Dicter à l&apos;oral</span>
+                          <span className="text-[10px] font-semibold text-[#64748B]">Dicter à l&apos;oral</span>
                           <MicButton
                             onFinalTranscript={(text, meta) =>
                               updateNested(
@@ -1192,7 +1192,7 @@ function ResultatEndoscopieContent() {
                         onChange={(e) => updateNested("constatations", item.key, e.target.value)}
                         placeholder="[à remplir]"
                         rows={2}
-                        className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                        className="w-full rounded-2xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
                       />
                     </div>
                   ))}
@@ -1200,9 +1200,9 @@ function ResultatEndoscopieContent() {
               </section>
 
               {formData.observations.trim() && (
-                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
                   <div className="mb-3">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                    <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">
                       Note(s) complémentaire(s)
                     </p>
                     <p className="text-[11px] text-slate-400 mt-1">
@@ -1214,7 +1214,7 @@ function ResultatEndoscopieContent() {
                     onChange={(e) => updateField("observations", e.target.value)}
                     placeholder="[à remplir]"
                     rows={10}
-                    className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    className="w-full rounded-2xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
                   />
                 </section>
               )}
@@ -1229,12 +1229,12 @@ function ResultatEndoscopieContent() {
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Grade des varices
                     <select
                       value={formData.ligatureSpecifique.gradeVarices}
                       onChange={(e) => updateNested("ligatureSpecifique", "gradeVarices", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Grade I</option>
@@ -1242,7 +1242,7 @@ function ResultatEndoscopieContent() {
                       <option>Grade III</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Nombre de ligatures posées
                     <input
                       type="number"
@@ -1250,27 +1250,27 @@ function ResultatEndoscopieContent() {
                       value={formData.ligatureSpecifique.nombreLigatures}
                       onChange={(e) => updateNested("ligatureSpecifique", "nombreLigatures", e.target.value)}
                       placeholder="ex. 6"
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Saignement actif
                     <select
                       value={formData.ligatureSpecifique.saignementActif}
                       onChange={(e) => updateNested("ligatureSpecifique", "saignementActif", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Oui</option>
                       <option>Non</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Résultat de la procédure
                     <select
                       value={formData.ligatureSpecifique.resultat}
                       onChange={(e) => updateNested("ligatureSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Hémostase obtenue</option>
@@ -1291,12 +1291,12 @@ function ResultatEndoscopieContent() {
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Site d'injection
                     <select
                       value={formData.injectionSpecifique.siteInjection}
                       onChange={(e) => updateNested("injectionSpecifique", "siteInjection", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Cardial</option>
@@ -1304,16 +1304,16 @@ function ResultatEndoscopieContent() {
                       <option>Oesophagien</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Type de colle
                     <input
                       value={formData.injectionSpecifique.typeColle}
                       onChange={(e) => updateNested("injectionSpecifique", "typeColle", e.target.value)}
                       placeholder="ex. Histoacryl, Cyanoacrylate"
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Volume injecté (ml)
                     <input
                       type="number"
@@ -1322,25 +1322,25 @@ function ResultatEndoscopieContent() {
                       value={formData.injectionSpecifique.volumeInjecte}
                       onChange={(e) => updateNested("injectionSpecifique", "volumeInjecte", e.target.value)}
                       placeholder="ex. 2"
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Nombre de séances
                     <input
                       type="number"
                       min={1}
                       value={formData.injectionSpecifique.nombreSeances}
                       onChange={(e) => updateNested("injectionSpecifique", "nombreSeances", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
+                  <label className="space-y-1 text-sm text-[#334155] sm:col-span-2">
                     Résultat
                     <select
                       value={formData.injectionSpecifique.resultat}
                       onChange={(e) => updateNested("injectionSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Hémostase obtenue</option>
@@ -1361,12 +1361,12 @@ function ResultatEndoscopieContent() {
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Indication
                     <select
                       value={formData.dilatationSpecifique.indication}
                       onChange={(e) => updateNested("dilatationSpecifique", "indication", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Sténose peptique</option>
@@ -1376,41 +1376,41 @@ function ResultatEndoscopieContent() {
                       <option>Autre</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Localisation de la sténose
                     <input
                       value={formData.dilatationSpecifique.localisationStenose}
                       onChange={(e) => updateNested("dilatationSpecifique", "localisationStenose", e.target.value)}
                       placeholder="ex. Tiers inférieur oesophage à 35 cm"
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Calibre avant dilatation (mm)
                     <input
                       type="number"
                       min={1}
                       value={formData.dilatationSpecifique.calibreAvant}
                       onChange={(e) => updateNested("dilatationSpecifique", "calibreAvant", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Calibre après dilatation (mm)
                     <input
                       type="number"
                       min={1}
                       value={formData.dilatationSpecifique.calibreApres}
                       onChange={(e) => updateNested("dilatationSpecifique", "calibreApres", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Type de dilatateur
                     <select
                       value={formData.dilatationSpecifique.typeDilatateur}
                       onChange={(e) => updateNested("dilatationSpecifique", "typeDilatateur", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Bougie de Savary-Gilliard</option>
@@ -1418,12 +1418,12 @@ function ResultatEndoscopieContent() {
                       <option>Sonde de Maloney</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Résultat
                     <select
                       value={formData.dilatationSpecifique.resultat}
                       onChange={(e) => updateNested("dilatationSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Bon résultat</option>
@@ -1431,12 +1431,12 @@ function ResultatEndoscopieContent() {
                       <option>Résultat insuffisant</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
+                  <label className="space-y-1 text-sm text-[#334155] sm:col-span-2">
                     Complication
                     <select
                       value={formData.dilatationSpecifique.complication}
                       onChange={(e) => updateNested("dilatationSpecifique", "complication", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Aucune</option>
@@ -1458,21 +1458,21 @@ function ResultatEndoscopieContent() {
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Nature du corps étranger
                     <input
                       value={formData.extractionSpecifique.natureCE}
                       onChange={(e) => updateNested("extractionSpecifique", "natureCE", e.target.value)}
                       placeholder="ex. Bol alimentaire, pile bouton, arête"
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     />
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Localisation
                     <select
                       value={formData.extractionSpecifique.localisation}
                       onChange={(e) => updateNested("extractionSpecifique", "localisation", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Oesophage — tiers supérieur</option>
@@ -1482,12 +1482,12 @@ function ResultatEndoscopieContent() {
                       <option>Duodénum</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Technique d'extraction
                     <select
                       value={formData.extractionSpecifique.technique}
                       onChange={(e) => updateNested("extractionSpecifique", "technique", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Pince à corps étranger</option>
@@ -1496,12 +1496,12 @@ function ResultatEndoscopieContent() {
                       <option>Sonde à panier de Dormia</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700">
+                  <label className="space-y-1 text-sm text-[#334155]">
                     Résultat
                     <select
                       value={formData.extractionSpecifique.resultat}
                       onChange={(e) => updateNested("extractionSpecifique", "resultat", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Extraction complète</option>
@@ -1509,12 +1509,12 @@ function ResultatEndoscopieContent() {
                       <option>Abandon — orientation chirurgicale</option>
                     </select>
                   </label>
-                  <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
+                  <label className="space-y-1 text-sm text-[#334155] sm:col-span-2">
                     Complication
                     <select
                       value={formData.extractionSpecifique.complication}
                       onChange={(e) => updateNested("extractionSpecifique", "complication", e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      className="w-full rounded-xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="">— Sélectionner —</option>
                       <option>Aucune</option>
@@ -1527,13 +1527,13 @@ function ResultatEndoscopieContent() {
               </section>
             )}
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">
                   {sNum.conclusion}. Conclusion
                 </p>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[10px] font-semibold text-slate-500">Dicter à l&apos;oral</span>
+                  <span className="text-[10px] font-semibold text-[#64748B]">Dicter à l&apos;oral</span>
                   <MicButton
                     onFinalTranscript={(text, meta) =>
                       updateField(
@@ -1549,14 +1549,14 @@ function ResultatEndoscopieContent() {
                 onChange={(e) => updateField("conclusion", e.target.value)}
                 placeholder="[à remplir]"
                 rows={4}
-                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                className="w-full rounded-2xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
               />
             </section>
 
             {!isRectosigmoidoscopie && (
-              <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <section className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
                 <div className="mb-3">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500 font-bold">
+                  <p className="text-xs uppercase tracking-[0.3em] text-[#64748B] font-bold">
                     {sNum.recommandations}. Recommandations
                   </p>
                 </div>
@@ -1565,7 +1565,7 @@ function ResultatEndoscopieContent() {
                   onChange={(e) => updateField("recommandations", e.target.value)}
                   placeholder="[à remplir]"
                   rows={3}
-                  className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  className="w-full rounded-2xl border border-slate-300 bg-[#F8F9FB] px-3 py-2 text-sm leading-relaxed focus:border-primary focus:ring-2 focus:ring-primary/10"
                 />
               </section>
             )}
@@ -1573,7 +1573,7 @@ function ResultatEndoscopieContent() {
 
         </div>
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 py-4 shadow-[0_-1px_10px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E2E8F0] bg-white/95 py-4 shadow-[0_-1px_10px_rgba(15,23,42,0.08)] backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
@@ -1583,7 +1583,7 @@ function ResultatEndoscopieContent() {
                 // Seule action de ce footer (consultation d'un compte rendu existant) :
                 // reprend la place et le style bien visible du bouton Enregistrer retiré.
                 ? "inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary-dark"
-                : "inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                : "inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-[#334155] transition hover:bg-slate-50"
             }
           >
             Retour

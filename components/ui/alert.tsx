@@ -8,7 +8,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ({ className = "", variant = "default", ...props }, ref) => (
     <div
       ref={ref}
-      className={`rounded-lg border px-4 py-3 text-sm ${
+      className={`rounded-xl border px-4 py-3 text-sm ${
         variant === "destructive"
           ? "border-red-200 bg-red-50 text-red-800"
           : "border-blue-200 bg-blue-50 text-blue-800"

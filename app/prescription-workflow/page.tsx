@@ -431,10 +431,10 @@ const lastSavedTranscriptionRef = useRef("");
                         title={`Revenir sur « ${field.label} »`}
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer hover:opacity-80 ${
                           i === organIndex
-                            ? "bg-blue-600 text-white"
+                            ? "bg-[#006A8C] text-white"
                             : i < organIndex
                               ? "bg-emerald-100 text-emerald-700"
-                              : "bg-slate-100 text-slate-500"
+                              : "bg-slate-100 text-[#64748B]"
                         }`}
                       >
                         {i < organIndex && <span className="material-symbols-outlined text-[14px]">check</span>}
@@ -447,7 +447,7 @@ const lastSavedTranscriptionRef = useRef("");
                       type="button"
                       onClick={advanceToNextOrgan}
                       title="Passer à l'organe suivant — dictez librement, avec toutes les pauses nécessaires, puis cliquez ici quand vous avez fini de décrire cet organe"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors shrink-0"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#006A8C] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#005a76] transition-colors shrink-0"
                     >
                       Organe suivant
                       <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -475,7 +475,7 @@ const lastSavedTranscriptionRef = useRef("");
 
               <textarea
                 ref={observationTextareaRef}
-                className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                className="min-h-56 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8F9FB] px-4 py-3 text-sm text-[#334155] outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
                 placeholder=""
                 rows={8}
                 onChange={(event) => {
@@ -490,7 +490,7 @@ const lastSavedTranscriptionRef = useRef("");
                 value={transcriptText}
               />
 
-              <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
+              <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-[#F1F5F9] pt-4">
                 <button onClick={handleClearEditor} type="button" className="rounded-xl border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 transition-colors">Effacer la transcription</button>
                 <button onClick={() => handleSaveTranscription(transcriptText)} type="button" className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">Enregistrer la transcription</button>
               </div>
@@ -503,14 +503,14 @@ const lastSavedTranscriptionRef = useRef("");
             </div>
 
             <textarea
-              className="min-h-56 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              className="min-h-56 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8F9FB] px-4 py-3 text-sm text-[#334155] outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
               placeholder=""
               rows={8}
               onChange={(event) => setMedicalNotes(event.target.value)}
               value={medicalNotes}
             />
 
-            <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-slate-100 pt-4">
+            <div className="mt-4 flex flex-wrap gap-2 items-center justify-end border-t border-[#F1F5F9] pt-4">
               <button
                 type="button"
                 onClick={() => setMedicalNotes("")}
@@ -530,7 +530,7 @@ const lastSavedTranscriptionRef = useRef("");
         </div>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
+      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-[#E2E8F0] p-4 shadow-xl z-50">
         <div className="max-w-[896px] mx-auto flex items-center justify-end">
 
           <button
@@ -538,7 +538,7 @@ const lastSavedTranscriptionRef = useRef("");
               await saveOperation();
               router.push('/checklists/avant');
             }}
-            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
+            className="px-6 py-3 border border-[#E2E8F0] text-[#475569] rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             Retour Check-list Avant

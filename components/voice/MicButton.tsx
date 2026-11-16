@@ -101,7 +101,7 @@ export default function MicButton({ onFinalTranscript, lang = "fr-FR", className
       onClick={toggle}
       title={isRecording ? "Arrêter la dictée" : "Dicter"}
       aria-label="microphone"
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${isRecording ? "bg-rose-600 text-white shadow-md animate-pulse" : "bg-blue-600 text-white hover:bg-blue-700"} ${className}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${isRecording ? "bg-rose-600 text-white shadow-md animate-pulse" : "bg-[#006A8C] text-white hover:bg-[#005a76]"} ${className}`}
     >
       <span className="material-symbols-outlined text-[18px]">{isRecording ? "stop" : "mic"}</span>
     </button>

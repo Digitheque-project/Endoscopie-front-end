@@ -153,20 +153,20 @@ function PlanificationContent() {
     <div className={PAGE_CONTENT_CLASS}>
       <a
         href="/prescriptions"
-        className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
+        className="inline-flex items-center gap-2 rounded-xl border border-[#F1F5F9] px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
       >
         <span className="material-symbols-outlined text-lg">arrow_back</span>
         <span className="font-semibold">Retour au fil de prescription</span>
       </a>
 
       {!isValidPatient && (
-        <div className="mt-4 p-4 rounded-lg border border-error/20 bg-error-container/10 text-error text-sm">
+        <div className="mt-4 p-4 rounded-xl border border-error/20 bg-error-container/10 text-error text-sm">
           <strong>Attention :</strong> Aucune identité patient fiable fournie. Sélectionnez une prescription depuis le fil de prescription pour préremplir ce dossier.
         </div>
       )}
 
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 bg-white rounded-xl border border-outline-variant/30 p-6 flex gap-6 items-start shadow-sm">
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-[#F1F5F9] p-6 flex gap-6 items-start shadow-sm">
           <div className="w-20 h-20 rounded-xl overflow-hidden bg-surface-container flex-shrink-0">
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center">
               <span className="material-symbols-outlined text-3xl text-primary">person</span>
@@ -187,7 +187,7 @@ function PlanificationContent() {
           </div>
         </div>
 
-        <div className="lg:col-span-4 bg-secondary-fixed p-6 rounded-xl flex flex-col justify-between border border-outline-variant/10 shadow-sm">
+        <div className="lg:col-span-4 bg-secondary-fixed p-6 rounded-xl flex flex-col justify-between border border-[#F1F5F9] shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider mb-1">MÉDECIN PRESCRIPTEUR</p>
             <p className="font-headline font-bold text-on-secondary-fixed text-lg">{prescripteur}</p>
@@ -215,12 +215,12 @@ function PlanificationContent() {
           </div>
           <div className="flex flex-col gap-2">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant text-right">Sélection requise</p>
-            <div className="flex items-center rounded-2xl border border-outline-variant/30 bg-surface-container p-1.5 shadow-inner">
+            <div className="flex items-center rounded-2xl border border-[#F1F5F9] bg-surface-container p-1.5 shadow-inner">
               <button
                 type="button"
                 onClick={() => setAnesthesie("Locale")}
                 className={`min-w-[11rem] px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  anesthesie === "Locale" ? "bg-white text-primary shadow-sm border border-outline-variant/10 font-bold" : "text-on-surface-variant hover:text-on-surface"
+                  anesthesie === "Locale" ? "bg-white text-primary shadow-sm border border-[#F1F5F9] font-bold" : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
                 Anesthésie locale
@@ -229,7 +229,7 @@ function PlanificationContent() {
                 type="button"
                 onClick={() => setAnesthesie("Générale")}
                 className={`min-w-[11rem] px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
-                  anesthesie === "Générale" ? "bg-white text-primary shadow-sm border border-outline-variant/10 font-bold" : "text-on-surface-variant hover:text-on-surface"
+                  anesthesie === "Générale" ? "bg-white text-primary shadow-sm border border-[#F1F5F9] font-bold" : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
                 Anesthésie générale
@@ -241,13 +241,13 @@ function PlanificationContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/20 shadow-sm">
+          <div className="bg-surface-container-low p-6 rounded-xl border border-[#F1F5F9] shadow-sm">
             <h4 className="font-headline font-bold text-on-surface mb-5 flex items-center gap-2">
               <span className="material-symbols-outlined text-primary">clinical_notes</span>
               Contexte Clinique
             </h4>
             <div className="space-y-5">
-              <div className="bg-white p-4 rounded-lg border border-outline-variant/10">
+              <div className="bg-white p-4 rounded-xl border border-[#F1F5F9]">
                 <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-2">MOTIF DE L&apos;EXAMEN</p>
                 <p className="text-sm text-on-surface font-medium leading-relaxed">{motif}</p>
               </div>
@@ -260,7 +260,7 @@ function PlanificationContent() {
         </div>
 
         <div className="lg:col-span-7">
-          <div className="bg-white p-8 rounded-xl border border-outline-variant/30 shadow-md space-y-8">
+          <div className="bg-white p-8 rounded-xl border border-[#F1F5F9] shadow-md space-y-8">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-headline text-2xl font-extrabold text-on-surface tracking-tight">Planification du créneau</h4>
@@ -280,7 +280,7 @@ function PlanificationContent() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="text-sm font-bold text-on-surface border border-outline-variant/40 rounded-lg px-3 py-2"
+                className="text-sm font-bold text-on-surface border border-[#F1F5F9] rounded-xl px-3 py-2"
               />
             </div>
 
@@ -290,7 +290,7 @@ function PlanificationContent() {
                 <select
                   value={selectedMedecinId}
                   onChange={(e) => setSelectedMedecinId(e.target.value)}
-                  className="w-full appearance-none bg-surface-container-low border-b-2 border-outline-variant focus:border-primary px-4 py-3.5 rounded-t-lg text-sm font-bold text-on-surface transition-all focus:ring-0"
+                  className="w-full appearance-none bg-surface-container-low border-b-2 border-[#E2E8F0] focus:border-primary px-4 py-3.5 rounded-t-lg text-sm font-bold text-on-surface transition-all focus:ring-0"
                 >
                   <option value="">Sélectionner un médecin</option>
                   {medecins.map((m) => (
@@ -312,8 +312,8 @@ function PlanificationContent() {
                         key={s.id}
                         type="button"
                         onClick={() => setSelectedSalleId(s.id)}
-                        className={`flex-1 text-xs font-black rounded-lg border-2 transition-all ${
-                          selectedSalleId === s.id ? "border-primary text-primary bg-primary-container/10" : "border-outline-variant text-on-surface-variant hover:bg-surface-container"
+                        className={`flex-1 text-xs font-black rounded-xl border-2 transition-all ${
+                          selectedSalleId === s.id ? "border-primary text-primary bg-primary-container/10" : "border-[#E2E8F0] text-on-surface-variant hover:bg-surface-container"
                         }`}
                       >
                         {s.nom}
@@ -336,12 +336,12 @@ function PlanificationContent() {
                       type="button"
                       disabled={taken}
                       onClick={() => setSelectedSlot(slot)}
-                      className={`py-3.5 rounded-lg text-sm font-bold transition-all ${
+                      className={`py-3.5 rounded-xl text-sm font-bold transition-all ${
                         taken
                           ? "bg-surface-container text-on-surface-variant opacity-40 cursor-not-allowed"
                           : isSelected
                           ? "bg-primary text-on-primary shadow-lg shadow-primary/20 ring-2 ring-primary ring-offset-2 transform scale-105"
-                          : "bg-surface-container-low border border-outline-variant/10 text-on-surface hover:bg-primary-container/10 hover:text-primary"
+                          : "bg-surface-container-low border border-[#F1F5F9] text-on-surface hover:bg-primary-container/10 hover:text-primary"
                       }`}
                     >
                       {slot}
@@ -356,14 +356,14 @@ function PlanificationContent() {
               <textarea
                 value={observations}
                 onChange={(e) => setObservations(e.target.value)}
-                className="w-full min-h-[200px] bg-surface-container-low rounded-xl p-5 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/40 resize-none leading-relaxed border-none focus:ring-2 focus:ring-primary"
+                className="w-full min-h-[200px] bg-surface-container-low rounded-xl p-5 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/40 resize-none leading-relaxed border-none focus:ring-2 focus:ring-[#006A8C]/20"
                 placeholder="Saisissez les antécédents, l'indication chirurgicale et les observations particulières..."
               />
             </div>
 
             {submitError && <div className="rounded-2xl border border-error/20 bg-error-container/10 p-4 text-sm text-error">{submitError}</div>}
 
-            <div className="p-6 rounded-xl bg-surface border border-dashed border-outline-variant/40 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="p-6 rounded-xl bg-surface border border-dashed border-[#F1F5F9] flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-lg">
                   <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -383,7 +383,7 @@ function PlanificationContent() {
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="flex-1 md:flex-none px-6 py-3 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-all"
+                  className="flex-1 md:flex-none px-6 py-3 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container-high transition-all"
                 >
                   Annuler
                 </button>
@@ -391,7 +391,7 @@ function PlanificationContent() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={isSubmitting || isSuccess}
-                  className="flex-[2] md:flex-none px-10 py-3 rounded-lg text-sm font-bold text-on-primary bg-primary shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all text-center disabled:opacity-50"
+                  className="flex-[2] md:flex-none px-10 py-3 rounded-xl text-sm font-bold text-on-primary bg-primary shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all text-center disabled:opacity-50"
                 >
                   {isSubmitting ? "Confirmation…" : isSuccess ? "Confirmé !" : "Confirmer le RDV"}
                 </button>
@@ -407,7 +407,7 @@ function PlanificationContent() {
 export default function PlanificationPage() {
   return (
     <AppShell>
-      <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-[#64748B]">Chargement...</div>}>
         <PlanificationContent />
       </Suspense>
     </AppShell>

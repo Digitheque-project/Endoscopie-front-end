@@ -22,7 +22,7 @@ function computeAge(dateNaissance?: string | null): number | null {
 
 function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${ok ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${ok ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-[#64748B]"}`}>
       <span className="material-symbols-outlined text-[12px]">{ok ? "check_circle" : "radio_button_unchecked"}</span>
       {label}
     </span>
@@ -31,8 +31,8 @@ function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-outline-variant/15 bg-white p-6 shadow-sm space-y-4">
-      <div className="flex items-center gap-2 border-b border-outline-variant/10 pb-3">
+    <div className="rounded-2xl border border-[#F1F5F9] bg-white p-6 shadow-sm space-y-4">
+      <div className="flex items-center gap-2 border-b border-[#F1F5F9] pb-3">
         <span className="material-symbols-outlined text-primary text-xl">{icon}</span>
         <h3 className="font-bold text-on-surface text-base">{title}</h3>
       </div>
@@ -175,7 +175,7 @@ function DossierSeanceContent() {
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
           {/* En-tête patient */}
-          <div className="bg-white rounded-2xl border border-outline-variant/15 shadow-sm p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Dossier de séance</p>
               <h1 className="text-2xl font-extrabold text-on-surface tracking-tight">
@@ -240,7 +240,7 @@ function DossierSeanceContent() {
                     <div
                       key={key}
                       className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${
-                        isChecked ? "bg-emerald-50 text-emerald-700" : isNA ? "bg-slate-50 text-slate-500" : "bg-slate-50 text-slate-400"
+                        isChecked ? "bg-emerald-50 text-emerald-700" : isNA ? "bg-[#F8F9FB] text-[#64748B]" : "bg-[#F8F9FB] text-slate-400"
                       }`}
                     >
                       <span className="material-symbols-outlined text-[14px]">
@@ -253,12 +253,12 @@ function DossierSeanceContent() {
                 })}
               </div>
               {ca.observations && <Field label="Observations" value={ca.observations} />}
-              <div className="pt-2 border-t border-outline-variant/10">
+              <div className="pt-2 border-t border-[#F1F5F9]">
                 <StatusBadge ok={ca.estValide} label={ca.estValide ? "Checklist validée" : "Non validée"} />
               </div>
             </Section>
           ) : (
-            <div className="rounded-2xl border border-outline-variant/15 bg-slate-50 p-5 text-sm text-on-surface-variant">
+            <div className="rounded-2xl border border-[#F1F5F9] bg-[#F8F9FB] p-5 text-sm text-on-surface-variant">
               Checklist avant non renseignée.
             </div>
           )}
@@ -293,7 +293,7 @@ function DossierSeanceContent() {
               )}
 
               {resultatHasContent && (
-                <div className={`space-y-4 ${op ? "pt-3 border-t border-outline-variant/10" : ""}`}>
+                <div className={`space-y-4 ${op ? "pt-3 border-t border-[#F1F5F9]" : ""}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Rédigé dans le compte rendu</p>
                   {constatationsFilled.length > 0 && (
                     <div>
@@ -314,7 +314,7 @@ function DossierSeanceContent() {
               )}
             </Section>
           ) : (
-            <div className="rounded-2xl border border-outline-variant/15 bg-slate-50 p-5 text-sm text-on-surface-variant">
+            <div className="rounded-2xl border border-[#F1F5F9] bg-[#F8F9FB] p-5 text-sm text-on-surface-variant">
               Aucune note d'opération enregistrée.
             </div>
           )}
@@ -325,12 +325,12 @@ function DossierSeanceContent() {
               <Field label="Confirmation d'étiquetage" value={cap.confirmationEtiquetage} />
               <Field label="Prescriptions post-acte" value={cap.prescriptionsPostActe} />
               <Field label="Remarques" value={cap.remarques} />
-              <div className="pt-2 border-t border-outline-variant/10">
+              <div className="pt-2 border-t border-[#F1F5F9]">
                 <StatusBadge ok={cap.estValide} label={cap.estValide ? "Checklist validée" : "Non validée"} />
               </div>
             </Section>
           ) : (
-            <div className="rounded-2xl border border-outline-variant/15 bg-slate-50 p-5 text-sm text-on-surface-variant">
+            <div className="rounded-2xl border border-[#F1F5F9] bg-[#F8F9FB] p-5 text-sm text-on-surface-variant">
               Checklist après non renseignée.
             </div>
           )}
@@ -339,7 +339,7 @@ function DossierSeanceContent() {
           <div className="flex items-center justify-between">
             <a
               href={backHref}
-              className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-5 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#F1F5F9] px-5 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all"
             >
               <span className="material-symbols-outlined text-lg">arrow_back</span>
               {backLabel}
@@ -348,7 +348,7 @@ function DossierSeanceContent() {
               <button
                 type="button"
                 onClick={handleRediger}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white hover:opacity-90 transition-opacity shadow-md"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white hover:bg-[#005a76] transition-opacity shadow-md"
               >
                 <span className="material-symbols-outlined">edit_note</span>
                 Rédiger le compte rendu
@@ -378,7 +378,7 @@ function DossierSeanceContent() {
 
 export default function DossierSeancePage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[#64748B]">Chargement...</div>}>
       <DossierSeanceContent />
     </Suspense>
   );

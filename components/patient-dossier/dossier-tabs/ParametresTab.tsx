@@ -36,7 +36,7 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
   return (
     <>
       {hasError && (
-        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+        <p className="mb-3 rounded-xl border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
           Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
         </p>
       )}
@@ -47,7 +47,7 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-on-surface-variant border-b border-outline-variant/20">
+              <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-on-surface-variant border-b border-[#F1F5F9]">
                 <th className="py-2 pr-2">Date</th>
                 <th className="py-2 pr-2">Origine</th>
                 <th className="py-2 pr-2">Valeurs</th>
@@ -56,7 +56,7 @@ export function ParametresTab({ patientId }: ParametresTabProps) {
             </thead>
             <tbody>
               {sorted.map((p, i) => (
-                <tr key={p.id ?? i} className="border-b border-outline-variant/10">
+                <tr key={p.id ?? i} className="border-b border-[#F1F5F9]">
                   <td className="py-2 pr-2 whitespace-nowrap">
                     {p.mesureAt ? new Date(p.mesureAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—"}
                   </td>

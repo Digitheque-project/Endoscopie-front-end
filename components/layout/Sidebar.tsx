@@ -1,10 +1,9 @@
 "use client";
 
 import { ActionsCompte } from "@/components/ActionsCompte";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { MAIN_LINKS } from "@/components/layout/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,30 +11,6 @@ interface SidebarProps {
   /** Tiroir mobile ouvert (< lg) — n'affecte jamais le rendu desktop, toujours visible à lg+. */
   isOpen?: boolean;
   onClose?: () => void;
-}
-
-function SidebarBrand() {
-  return (
-    <div className="flex items-center gap-3 mb-8 px-2">
-      <div className="w-11 h-11 bg-white rounded-lg flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-        <Image
-          src="/assets/chu-logo.jpeg"
-          alt="Logo CHU Andrainjato"
-          width={44}
-          height={44}
-          className="object-contain w-9 h-9"
-        />
-      </div>
-      <div className="min-w-0">
-        <h1 className="font-manrope font-extrabold text-white leading-tight text-sm truncate">
-          Unite Endoscopie
-        </h1>
-        <p className="text-[10px] uppercase tracking-wider text-white/60 font-bold truncate">
-          CHU Andrainjato
-        </p>
-      </div>
-    </div>
-  );
 }
 
 /** Numéros de flotte du personnel (comme l'Anapath) — liste à compléter. */
@@ -46,13 +21,13 @@ function NumeroFlotte() {
   const [ouvert, setOuvert] = useState(false);
   return (
     <>
-      <div className="rounded-xl bg-white/5 p-3">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Numéro flotte personnel</p>
-        <p className="mt-0.5 text-[11px] leading-tight text-white/70">Liste de contact de personnel</p>
+      <div className="bg-[#F5F8FA] rounded-[20px] p-4">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#006A8C]">Numéro flotte personnel</p>
+        <p className="mt-1 text-[12px] font-bold leading-snug text-[#0F172A]">Liste de contact de personnel</p>
         <button
           type="button"
           onClick={() => setOuvert(true)}
-          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#006A8C] px-3 py-2 text-[12px] font-bold text-white transition-colors hover:bg-[#005a76]"
         >
           <span className="material-symbols-outlined text-sm">groups</span>
           voir
@@ -61,9 +36,9 @@ function NumeroFlotte() {
       {ouvert && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setOuvert(false)}>
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <h3 className="flex items-center gap-2 text-base font-bold text-slate-800">
-                <span className="material-symbols-outlined text-primary">contacts</span>
+            <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
+              <h3 className="flex items-center gap-2 text-base font-bold text-[#0F172A]">
+                <span className="material-symbols-outlined text-[#006A8C]">contacts</span>
                 Liste de contact de personnel
               </h3>
               <button type="button" onClick={() => setOuvert(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100" aria-label="Fermer">
@@ -76,7 +51,7 @@ function NumeroFlotte() {
               ) : (
                 <ul className="space-y-2">
                   {CONTACTS_PERSONNEL.map((c) => (
-                    <li key={c.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <li key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8F9FB] p-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-slate-800">{c.nom}</p>
                         <p className="truncate text-xs text-slate-500">{c.fonction}</p>
@@ -97,7 +72,7 @@ function NumeroFlotte() {
   );
 }
 
-/** Bas du menu : changer de service (si applicable) au-dessus de la déconnexion. */
+/** Bas du menu : numéro flotte, paramètres, notifications / changer de service, déconnexion. */
 function SidebarFooter({ onLinkClick }: { onLinkClick?: () => void }) {
   const router = useRouter();
   const { logout } = useAuth();
@@ -109,17 +84,29 @@ function SidebarFooter({ onLinkClick }: { onLinkClick?: () => void }) {
   };
 
   return (
-    <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
+    <div className="px-4 sm:px-5 pb-5 space-y-4">
       <NumeroFlotte />
-      <ActionsCompte className="flex w-full items-center gap-3 p-3 rounded-lg transition-all font-inter text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white" />
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="flex w-full items-center gap-3 p-3 rounded-lg transition-all font-inter text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white"
-      >
-        <span className="material-symbols-outlined">logout</span>
-        <span>Déconnexion</span>
-      </button>
+      <div className="space-y-1 pt-1">
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 px-4 py-2.5 rounded-[12px] text-[#64748B] hover:bg-gray-50 hover:text-[#0F172A] transition-colors"
+        >
+          <span className="material-symbols-outlined text-[20px]">settings</span>
+          <span className="text-[13px] font-bold">Paramètres</span>
+        </button>
+        <ActionsCompte
+          className="flex w-full items-center gap-3 px-4 py-2.5 rounded-[12px] text-[#64748B] transition-colors hover:bg-gray-50 hover:text-[#0F172A]"
+          classeLibelle="text-[13px] font-bold"
+        />
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-4 py-2.5 rounded-[12px] text-[#E11D48] hover:bg-rose-50 hover:text-red-700 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[20px]">logout</span>
+          <span className="text-[13px] font-bold">Déconnexion</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -137,62 +124,61 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   };
 
   const navLinks = (onLinkClick?: () => void) =>
-    visibleLinks.map((link) => (
-      <Link
-        key={link.href}
-        href={link.href}
-        onClick={onLinkClick}
-        className={[
-          "flex items-center gap-3 p-3 rounded-lg transition-all font-inter text-sm font-semibold",
-          isActive(link.href, link.matchPrefix)
-            ? "bg-white text-blue-700 shadow-sm"
-            : "text-slate-300 hover:bg-white/10 hover:text-white",
-        ].join(" ")}
-      >
-        <span className="material-symbols-outlined">{link.icon}</span>
-        <span>{link.label}</span>
-      </Link>
-    ));
+    visibleLinks.map((link) => {
+      const active = isActive(link.href, link.matchPrefix);
+      return (
+        <Link
+          key={link.href}
+          href={link.href}
+          onClick={onLinkClick}
+          className={[
+            "flex items-center gap-3 sm:gap-4 px-4 py-3 rounded-[12px] transition-colors duration-200",
+            active
+              ? "bg-[#F0F7FF] text-[#006A8C] font-bold"
+              : "text-[#475569] hover:bg-gray-50 font-medium",
+          ].join(" ")}
+        >
+          <span className={`material-symbols-outlined text-[20px] shrink-0 ${active ? "text-[#006A8C]" : "text-[#64748B]"}`}>
+            {link.icon}
+          </span>
+          <span className="text-[13px] sm:text-[14px]">{link.label}</span>
+        </Link>
+      );
+    });
 
   return (
     <>
-      {/* Desktop — inchangé, toujours visible à lg+ */}
-      <aside className="hidden lg:flex fixed left-0 top-0 z-50 w-64 h-screen bg-[#004A66] p-4 flex-col border-r border-white/10">
-        <SidebarBrand />
-        <nav className="flex-1 space-y-1 overflow-y-auto">{navLinks()}</nav>
+      {/* Bureau : barre blanche sous l'en-tête, toujours visible à lg+ */}
+      <aside className="hidden lg:flex sticky top-16 z-30 h-[calc(100vh-4rem)] w-[260px] shrink-0 flex-col bg-white border-r border-[#F1F5F9] rounded-tr-[24px] mt-2 shadow-[1px_0px_5px_rgba(0,0,0,0.01)] overflow-y-auto">
+        <nav className="flex-1 px-4 py-5 space-y-1.5">{navLinks()}</nav>
         <SidebarFooter />
       </aside>
 
-      {/* Mobile — tiroir hors-écran, sous lg uniquement */}
+      {/* Mobile : tiroir hors écran, sous lg uniquement */}
       <div
         className={`lg:hidden fixed inset-0 z-[60] transition-opacity duration-200 ${
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={!isOpen}
       >
-        <div
-          className="absolute inset-0 bg-black/50"
-          onClick={onClose}
-        />
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onClick={onClose} />
         <aside
-          className={`absolute left-0 top-0 h-full w-72 max-w-[80vw] bg-[#004A66] p-4 flex flex-col border-r border-white/10 shadow-2xl transition-transform duration-200 ${
+          className={`absolute left-0 top-0 h-full w-[82vw] max-w-[280px] bg-white flex flex-col border-r border-[#F1F5F9] shadow-2xl overflow-y-auto transition-transform duration-200 ${
             isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex-1 min-w-0">
-              <SidebarBrand />
-            </div>
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Navigation</span>
             <button
               type="button"
               onClick={onClose}
               aria-label="Fermer le menu"
-              className="shrink-0 w-9 h-9 -mt-8 rounded-lg text-white/70 hover:text-white hover:bg-white/10 flex items-center justify-center"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-500 hover:text-gray-900 hover:border-gray-300 transition-colors"
             >
-              <span className="material-symbols-outlined">close</span>
+              <span className="material-symbols-outlined text-[18px]">close</span>
             </button>
           </div>
-          <nav className="flex-1 space-y-1 overflow-y-auto">{navLinks(onClose)}</nav>
+          <nav className="flex-1 px-4 py-3 space-y-1.5">{navLinks(onClose)}</nav>
           <SidebarFooter onLinkClick={onClose} />
         </aside>
       </div>

@@ -227,7 +227,7 @@ function AgendaContent() {
         {backTo && (
           <a
             href={backTo}
-            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#F1F5F9] px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             <span className="font-semibold">{backLabel}</span>
@@ -236,10 +236,10 @@ function AgendaContent() {
         <PageToolbar
           actions={
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl shadow-inner border border-outline-variant/10">
+            <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl shadow-inner border border-[#F1F5F9]">
               <button
                 onClick={handlePrevious}
-                className="p-2 rounded-lg text-on-surface-variant hover:bg-white hover:text-primary transition-all active:scale-95"
+                className="p-2 rounded-xl text-on-surface-variant hover:bg-white hover:text-primary transition-all active:scale-95"
                 title="Précédent"
               >
                 <span className="material-symbols-outlined text-xl">chevron_left</span>
@@ -247,24 +247,24 @@ function AgendaContent() {
 
               <button
                 onClick={() => setCurrentDate(new Date())}
-                className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-white transition-all active:scale-95"
+                className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary hover:bg-white transition-all active:scale-95"
               >
                 Aujourd'hui
               </button>
 
               <button
                 onClick={handleNext}
-                className="p-2 rounded-lg text-on-surface-variant hover:bg-white hover:text-primary transition-all active:scale-95"
+                className="p-2 rounded-xl text-on-surface-variant hover:bg-white hover:text-primary transition-all active:scale-95"
                 title="Suivant"
               >
                 <span className="material-symbols-outlined text-xl">chevron_right</span>
               </button>
             </div>
 
-            <div className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl shadow-inner border border-outline-variant/10">
+            <div className="flex items-center gap-2 bg-surface-container-low p-1 rounded-xl shadow-inner border border-[#F1F5F9]">
               <button
                 onClick={() => setViewMode("day")}
-                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                className={`px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
                   viewMode === 'day'
                   ? "bg-white shadow-md text-primary"
                   : "text-on-surface-variant hover:bg-white/50"
@@ -274,7 +274,7 @@ function AgendaContent() {
               </button>
               <button
                 onClick={() => setViewMode("week")}
-                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                className={`px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
                   viewMode === 'week'
                   ? "bg-white shadow-md text-primary"
                   : "text-on-surface-variant hover:bg-white/50"
@@ -284,7 +284,7 @@ function AgendaContent() {
               </button>
               <button
                 onClick={() => setViewMode("month")}
-                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${
+                className={`px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
                   viewMode === 'month'
                   ? "bg-white shadow-md text-primary"
                   : "text-on-surface-variant hover:bg-white/50"
@@ -297,7 +297,7 @@ function AgendaContent() {
             <button
               onClick={() => refreshRDV()}
               disabled={syncLoading}
-              className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Actualiser"
             >
               <span className={`material-symbols-outlined text-xl ${syncLoading ? 'animate-spin' : ''}`}>refresh</span>
@@ -318,13 +318,13 @@ function AgendaContent() {
           </div>
         </PageToolbar>
 
-        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-4">
+        <div className="flex flex-wrap items-end gap-4 rounded-2xl border border-[#F1F5F9] bg-surface-container-low p-4">
           <div className="flex flex-col gap-1.5 min-w-[180px]">
             <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
               Nom du Patient
             </label>
             <input
-              className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
+              className="w-full bg-white border border-[#F1F5F9] rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-primary/20 text-on-surface"
               type="text"
               placeholder="Rechercher un patient..."
               value={filters.nom}
@@ -410,7 +410,7 @@ function AgendaContent() {
         {/* Detail panel */}
         {selected && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/40 backdrop-blur-sm p-4" onClick={() => setSelected(null)}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-outline-variant/20" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-[#F1F5F9]" onClick={(e) => e.stopPropagation()}>
               <header className="bg-primary p-5 text-white flex justify-between items-center">
                 <h2 className="text-lg font-headline font-bold">{selected.patient}</h2>
                 <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
@@ -433,7 +433,7 @@ function AgendaContent() {
                   <button
                     onClick={() => handleDelete(selected)}
                     disabled={isDeleting}
-                    className="px-4 py-2 rounded-lg border border-error/30 text-error text-xs font-bold hover:bg-error-container/20 transition-colors disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl border border-error/30 text-error text-xs font-bold hover:bg-error-container/20 transition-colors disabled:opacity-50"
                   >
                     {isDeleting ? "Suppression…" : "Supprimer"}
                   </button>
@@ -441,7 +441,7 @@ function AgendaContent() {
                 {role === "MAJOR" && selected.prescriptionId && (
                   <button
                     onClick={() => handleReplanifier(selected)}
-                    className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-colors"
+                    className="px-4 py-2 rounded-xl border border-[#F1F5F9] text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-colors"
                   >
                     Replanifier
                   </button>
@@ -449,7 +449,7 @@ function AgendaContent() {
                 {selected.prescriptionId && (
                   <button
                     onClick={() => router.push(`/patient-dossier/${encodeURIComponent(selected.prescriptionId!)}`)}
-                    className="px-4 py-2 rounded-lg border border-outline-variant/30 text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-colors"
+                    className="px-4 py-2 rounded-xl border border-[#F1F5F9] text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-colors"
                   >
                     Détails
                   </button>
@@ -474,7 +474,7 @@ function AgendaContent() {
             carte (donc plus exposé à un clic accidentel qu'avant). */}
         {appToConfirmDelete && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm p-4" onClick={() => setAppToConfirmDelete(null)}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-outline-variant/20" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-[#F1F5F9]" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error shrink-0">
                   <span className="material-symbols-outlined">warning</span>
@@ -488,7 +488,7 @@ function AgendaContent() {
                 <button
                   type="button"
                   onClick={() => setAppToConfirmDelete(null)}
-                  className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                  className="px-4 py-2 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
                 >
                   Annuler
                 </button>
@@ -496,7 +496,7 @@ function AgendaContent() {
                   type="button"
                   onClick={confirmDelete}
                   disabled={isDeleting}
-                  className="px-4 py-2 rounded-lg bg-error text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-error text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {isDeleting ? "Suppression…" : "Oui, supprimer"}
                 </button>
@@ -506,7 +506,7 @@ function AgendaContent() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#F1F5F9]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 <span className="material-symbols-outlined">query_stats</span>
@@ -523,7 +523,7 @@ function AgendaContent() {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#F1F5F9]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-full bg-success-container text-success flex items-center justify-center">
                 <span className="material-symbols-outlined">check_circle</span>
@@ -538,7 +538,7 @@ function AgendaContent() {
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-sm border border-outline-variant/10">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-[#F1F5F9]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-full bg-tertiary-fixed text-tertiary flex items-center justify-center">
                 <span className="material-symbols-outlined">groups</span>
@@ -557,7 +557,7 @@ function AgendaContent() {
 
 export default function AgendaPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[#64748B]">Chargement...</div>}>
       <AgendaContent />
     </Suspense>
   );

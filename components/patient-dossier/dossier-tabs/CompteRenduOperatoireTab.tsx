@@ -55,7 +55,7 @@ export function CompteRenduOperatoireTab({ patientId }: CompteRenduOperatoireTab
   return (
     <>
       {hasError && (
-        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+        <p className="mb-3 rounded-xl border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
           Impossible de charger les comptes rendus pour l&apos;instant — réessayez plus tard.
         </p>
       )}

@@ -34,7 +34,7 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
   return (
     <>
       {hasError && (
-        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+        <p className="mb-3 rounded-xl border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
           Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
         </p>
       )}
@@ -44,7 +44,7 @@ export function SuiviTab({ patientId }: SuiviTabProps) {
       ) : (
         <ul className="space-y-2">
           {sorted.map((s, i) => (
-            <li key={s.id ?? i} className={`rounded-lg border p-3 text-xs ${s.signesAlerte ? "border-error/40 bg-error-container/10" : "border-outline-variant/20"}`}>
+            <li key={s.id ?? i} className={`rounded-xl border p-3 text-xs ${s.signesAlerte ? "border-error/40 bg-error-container/10" : "border-[#F1F5F9]"}`}>
               <div className="flex items-center justify-between mb-1">
                 <span className="font-bold text-on-surface">{s.jourHospitalisation || `Suivi ${i + 1}`} — {s.auteur || "Auteur inconnu"}</span>
                 <span className="text-on-surface-variant">{s.createdAt ? new Date(s.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : ""}</span>

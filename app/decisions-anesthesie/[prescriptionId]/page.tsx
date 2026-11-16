@@ -207,7 +207,7 @@ function PlanificationExamenContent() {
           <button
             type="button"
             onClick={() => router.push(`/prescriptions?tab=${encodeURIComponent(medecinTab)}`)}
-            className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-5 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all self-start"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#F1F5F9] px-5 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary hover:border-primary transition-all self-start"
           >
             <span className="material-symbols-outlined text-lg">arrow_back</span>
             Retour au fil de prescription
@@ -217,17 +217,17 @@ function PlanificationExamenContent() {
           </h1>
 
           {isLoading ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 animate-pulse space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6 animate-pulse space-y-4">
               <div className="h-6 w-48 bg-surface-container rounded" />
               <div className="h-4 w-72 bg-surface-container rounded" />
             </div>
           ) : error || !prescription ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 text-center text-on-surface-variant">
+            <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6 text-center text-on-surface-variant">
               {error || "Dossier introuvable."}
             </div>
           ) : (
             <>
-              <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-4 flex items-center justify-between gap-4">
+              <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-4 flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-0.5">Patient</p>
                   <h2 className="font-headline text-lg font-extrabold tracking-tight">
@@ -265,39 +265,39 @@ function PlanificationExamenContent() {
                   }
                   title="Voir le dossier patient complet"
                   aria-label="Voir le dossier patient complet"
-                  className="flex items-center justify-center w-11 h-11 rounded-xl border border-outline-variant/20 text-primary hover:bg-primary/10 transition-colors shrink-0"
+                  className="flex items-center justify-center w-11 h-11 rounded-xl border border-[#F1F5F9] text-primary hover:bg-primary/10 transition-colors shrink-0"
                 >
                   <span className="material-symbols-outlined text-2xl">description</span>
                 </button>
               </section>
 
               <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 space-y-5">
+                <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-5 space-y-5">
                   <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Détails de la prescription</p>
                   <div>
-                    <h4 className="font-bold text-on-surface mb-2 border-b border-outline-variant/10 pb-1">Motif de la demande</h4>
+                    <h4 className="font-bold text-on-surface mb-2 border-b border-[#F1F5F9] pb-1">Motif de la demande</h4>
                     <p className="text-sm text-on-surface-variant">{prescription.motif || "Aucun motif renseigné."}</p>
                   </div>
                   <div>
-                    <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Examen demandé</h4>
+                    <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Examen demandé</h4>
                     <p className="text-sm text-on-surface-variant">
                       {session?.sameSlot ? session.exams.map((e) => e.typeExamen).join(" + ") : prescription.typeExamen}
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-5 space-y-5">
+                <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-5 space-y-5">
                   <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Rendez-vous planifié par le major</p>
                   {prescription.rendezVous ? (
                     <div className="space-y-3">
                       <div>
-                        <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Date et heure</h4>
+                        <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Date et heure</h4>
                         <p className="text-sm text-on-surface-variant">
                           {new Date(prescription.rendezVous.dateHeureDebut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short", ...FUSEAU_NAIF })}
                         </p>
                       </div>
                       <div>
-                        <h4 className="font-bold text-on-surface mb-1 border-b border-outline-variant/10 pb-1">Salle</h4>
+                        <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Salle</h4>
                         <p className="text-sm text-on-surface-variant">
                           {prescription.rendezVous.salle
                             ? `${prescription.rendezVous.salle.nom}${prescription.rendezVous.salle.numero ? ` (${prescription.rendezVous.salle.numero})` : ""}`
@@ -393,7 +393,7 @@ function PlanificationExamenContent() {
                         </button>
                       </div>
                       {(selectedAnesthesie === "Locale" || selectedAnesthesie === "Générale") && (
-                        <div className="w-full space-y-2 rounded-xl border border-outline-variant/30 bg-surface-container-low/50 px-3 py-2.5">
+                        <div className="w-full space-y-2 rounded-xl border border-[#F1F5F9] bg-surface-container-low/50 px-3 py-2.5">
                           <label className="flex items-center gap-2 text-sm font-semibold text-on-surface cursor-pointer">
                             <input
                               type="checkbox"
@@ -417,14 +417,14 @@ function PlanificationExamenContent() {
                                 value={nouvelleDate}
                                 disabled={isDeciding}
                                 onChange={(e) => setNouvelleDate(e.target.value)}
-                                className="rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm"
+                                className="rounded-2xl border border-[#F1F5F9] bg-white px-3 py-2 text-sm"
                               />
                               <input
                                 type="time"
                                 value={nouvelleHeure}
                                 disabled={isDeciding}
                                 onChange={(e) => setNouvelleHeure(e.target.value)}
-                                className="rounded-lg border border-outline-variant/40 bg-white px-3 py-2 text-sm"
+                                className="rounded-2xl border border-[#F1F5F9] bg-white px-3 py-2 text-sm"
                               />
                               <p className="w-full text-xs text-on-surface-variant">
                                 Le service demandeur sera prévenu du nouveau créneau.
@@ -480,7 +480,7 @@ function PlanificationExamenContent() {
 
       {showRefusConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/50 backdrop-blur-sm p-4" onClick={() => setShowRefusConfirm(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-outline-variant/20" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-[#F1F5F9]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error shrink-0">
                 <span className="material-symbols-outlined">warning</span>
@@ -494,7 +494,7 @@ function PlanificationExamenContent() {
               <button
                 type="button"
                 onClick={() => setShowRefusConfirm(false)}
-                className="px-4 py-2 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                className="px-4 py-2 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors"
               >
                 Annuler
               </button>
@@ -505,7 +505,7 @@ function PlanificationExamenContent() {
                   setShowRefusConfirm(false);
                   handleConfirmAnesthesie();
                 }}
-                className="px-4 py-2 rounded-lg bg-error text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-error text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 Oui, refuser
               </button>

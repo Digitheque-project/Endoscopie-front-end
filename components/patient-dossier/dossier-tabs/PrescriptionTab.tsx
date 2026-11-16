@@ -49,7 +49,7 @@ export function PrescriptionTab({ patientId }: PrescriptionTabProps) {
   return (
     <>
       {hasError && (
-        <p className="mb-3 rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+        <p className="mb-3 rounded-xl border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
           Impossible de charger les prescriptions pour l&apos;instant — réessayez plus tard.
         </p>
       )}
@@ -61,7 +61,7 @@ export function PrescriptionTab({ patientId }: PrescriptionTabProps) {
         ) : (
           <ul className="space-y-2">
             {prescriptions.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant/20 p-3 text-xs">
+              <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#F1F5F9] p-3 text-xs">
                 <div className="min-w-0">
                   <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getExamTypeBadgeClass(p.typeExamen)}`}>
                     {capitalizeFirst(p.typeExamen)}

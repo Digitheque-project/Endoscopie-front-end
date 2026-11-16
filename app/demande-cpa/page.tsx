@@ -145,20 +145,20 @@ function DemandeCPAContent() {
       <div className={PAGE_CONTENT_CLASS}>
         <RequireRole role="MAJOR">
         {/* Back Button */}
-        <a href="/prescriptions" className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
+        <a href="/prescriptions" className="inline-flex items-center gap-2 rounded-xl border border-[#F1F5F9] px-6 py-3 text-on-surface-variant hover:text-primary hover:border-primary transition-all">
           <span className="material-symbols-outlined text-lg">arrow_back</span>
           <span className="font-semibold">Retour au fil de prescription</span>
         </a>
 
         {/* Patient Profile Summary */}
         {(!patientId) && (
-          <div className="mt-4 p-4 rounded-lg border border-error/20 bg-error-container/10 text-error text-sm">
+          <div className="mt-4 p-4 rounded-xl border border-error/20 bg-error-container/10 text-error text-sm">
             <strong>Attention :</strong> Aucune identité patient fiable fournie. Veuillez sélectionner une prescription depuis la file de prescription pour préremplir les informations, ou renseigner manuellement le patient.
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-white p-4 rounded-2xl border border-outline-variant/20 shadow-sm flex items-center gap-5 relative overflow-hidden">
+          <div className="lg:col-span-2 bg-white p-4 rounded-2xl border border-[#F1F5F9] shadow-sm flex items-center gap-5 relative overflow-hidden">
             <div className="relative">
               <div className="w-14 h-14 rounded-2xl object-cover bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center flex-shrink-0">
                 <span className="material-symbols-outlined text-2xl text-primary">person</span>
@@ -203,7 +203,7 @@ function DemandeCPAContent() {
         </div>
 
         {rendezVous && (
-          <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6">
+          <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6">
             <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">
               Rendez-vous d&apos;endoscopie planifié
             </p>
@@ -218,7 +218,7 @@ function DemandeCPAContent() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           {/* Left Column: Clinical Context */}
           <div className="lg:col-span-2 space-y-5">
-            <div className="bg-surface-container p-6 rounded-2xl border border-outline-variant/10">
+            <div className="bg-surface-container p-6 rounded-2xl border border-[#F1F5F9]">
               <h4 className="font-bold text-on-surface mb-6 flex items-center gap-3">
                 <span className="material-symbols-outlined text-primary">clinical_notes</span>
                 Détails de la prescription
@@ -226,7 +226,7 @@ function DemandeCPAContent() {
               <div className="space-y-6">
                 <div>
                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-3">Motif de l'examen</p>
-                  <div className="bg-white p-4 rounded-xl border border-outline-variant/10">
+                  <div className="bg-white p-4 rounded-xl border border-[#F1F5F9]">
                     <p className="text-sm font-medium text-on-surface leading-relaxed">{motif}</p>
                   </div>
                 </div>
@@ -242,7 +242,7 @@ function DemandeCPAContent() {
 
           {/* Right Column: CPA Form */}
           <div className="lg:col-span-3">
-            <section className="bg-white p-6 rounded-2xl border border-outline-variant/20 shadow-sm space-y-6">
+            <section className="bg-white p-6 rounded-2xl border border-[#F1F5F9] shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-black text-on-surface">Demande de CPA</h3>
@@ -257,7 +257,7 @@ function DemandeCPAContent() {
                 <textarea
                   value={observations}
                   onChange={(e) => setObservations(e.target.value)}
-                  className="w-full min-h-[300px] bg-surface-container-low rounded-xl p-5 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/40 resize-none leading-relaxed border-none focus:ring-2 focus:ring-primary"
+                  className="w-full min-h-[300px] bg-surface-container-low rounded-xl p-5 text-sm font-medium text-on-surface placeholder:text-on-surface-variant/40 resize-none leading-relaxed border-none focus:ring-2 focus:ring-[#006A8C]/20"
                   placeholder="Saisissez les antécédents, l'indication chirurgicale et les observations particulières..."
                 />
                 {submitError && (
@@ -274,12 +274,12 @@ function DemandeCPAContent() {
 
 
 
-              <footer className="flex items-center justify-end pt-8 border-t border-outline-variant/10">
+              <footer className="flex items-center justify-end pt-8 border-t border-[#F1F5F9]">
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
                     onClick={() => router.back()}
-                    className="px-8 py-3 rounded-xl text-sm font-bold border border-outline-variant/20 text-on-surface hover:bg-surface-container transition-all"
+                    className="px-8 py-3 rounded-xl text-sm font-bold border border-[#F1F5F9] text-on-surface hover:bg-surface-container transition-all"
                   >
                     Retour
                   </button>
@@ -308,7 +308,7 @@ function DemandeCPAContent() {
 
 export default function DemandeCPAPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-center text-slate-500">Chargement...</div>}>
+    <Suspense fallback={<div className="p-6 text-center text-[#64748B]">Chargement...</div>}>
       <DemandeCPAContent />
     </Suspense>
   );

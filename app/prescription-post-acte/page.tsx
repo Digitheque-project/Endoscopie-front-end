@@ -138,8 +138,8 @@ function PrescriptionPostActeContent() {
 
           <section className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] lg:p-6 space-y-4">
             <div>
-              <h3 className="font-headline text-base text-slate-900">Phase de réveil</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Saisie et vérification des prescriptions médicales pour la phase de réveil.</p>
+              <h3 className="font-headline text-base text-[#0F172A]">Phase de réveil</h3>
+              <p className="text-xs text-[#64748B] mt-0.5">Saisie et vérification des prescriptions médicales pour la phase de réveil.</p>
             </div>
             {isLoading ? (
               <p className="text-sm text-slate-400">Chargement…</p>
@@ -150,21 +150,21 @@ function PrescriptionPostActeContent() {
                 onChange={(event) => setPrescriptionPostActe(event.target.value)}
                 rows={10}
                 placeholder="Ex : Paracétamol 1g si douleur, surveillance constantes 2h, reprise alimentation à 4h..."
-                className="min-h-64 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                className="min-h-64 w-full rounded-2xl border border-[#E2E8F0] bg-[#F8F9FB] px-4 py-3 text-sm text-[#334155] outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
               />
             )}
           </section>
         </div>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
+      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-[#E2E8F0] p-4 shadow-xl z-50">
         <div className="max-w-[896px] mx-auto flex items-center justify-end">
           <button
             onClick={async () => {
               await save();
               router.push("/prescription-workflow");
             }}
-            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
+            className="px-6 py-3 border border-[#E2E8F0] text-[#475569] rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             Retour à l&apos;opération
@@ -189,7 +189,7 @@ function PrescriptionPostActeContent() {
 export default function PrescriptionPostActePage() {
   return (
     <AppShell>
-      <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-[#64748B]">Chargement...</div>}>
         <PrescriptionPostActeContent />
       </Suspense>
     </AppShell>

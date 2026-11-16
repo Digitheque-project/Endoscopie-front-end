@@ -20,7 +20,7 @@ export default function ProcedureCountsCard({
   const totalProceduresToday = procedureCounts.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="col-span-12 md:col-span-8 bg-white p-3.5 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col gap-2">
+    <div className="col-span-12 md:col-span-8 bg-white p-3.5 rounded-xl border border-[#F1F5F9] shadow-sm flex flex-col gap-2">
       <div className="flex items-start justify-between">
         <p className="text-on-surface-variant text-xs font-semibold">
           Total des procédures aujourd&apos;hui

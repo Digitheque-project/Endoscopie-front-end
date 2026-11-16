@@ -40,7 +40,7 @@ export function DiagnosticTab({ patientId }: DiagnosticTabProps) {
   return (
     <div className="space-y-3">
       {hasError && (
-        <p className="rounded-lg border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
+        <p className="rounded-xl border border-error/20 bg-error-container/10 px-3 py-2 text-xs text-error">
           Impossible de contacter le service Dossier Patient CHU pour l&apos;instant — réessayez plus tard.
         </p>
       )}
@@ -64,7 +64,7 @@ export function DiagnosticTab({ patientId }: DiagnosticTabProps) {
         {diagnostics && diagnostics.length > 0 ? (
           <ul className="space-y-2">
             {diagnostics.map((d, i) => (
-              <li key={d.id ?? i} className="rounded-lg border border-outline-variant/20 p-3 text-xs text-on-surface-variant">
+              <li key={d.id ?? i} className="rounded-xl border border-[#F1F5F9] p-3 text-xs text-on-surface-variant">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-on-surface">{d.icdLabel || d.diagnosticPrincipal || "Diagnostic"}</span>
                   <span>{d.createdAt ? new Date(d.createdAt).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : ""}</span>

@@ -35,11 +35,11 @@ export default function TranscriptionEditor({ text, onChange, onSave, onCancel, 
   return (
     <div>
       <div className="mb-3 flex items-center gap-3">
-        <h3 className="font-manrope text-base font-bold text-slate-900">Transcription vocale</h3>
+        <h3 className="font-manrope text-base font-bold text-[#0F172A]">Transcription vocale</h3>
       </div>
 
       <textarea
-        className="w-full min-h-[160px] rounded-2xl border border-slate-200 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+        className="w-full min-h-[160px] rounded-2xl border border-[#E2E8F0] p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         value={text}
         onChange={(e) => onChange(e.target.value)}
         placeholder="La transcription apparaîtra ici..."

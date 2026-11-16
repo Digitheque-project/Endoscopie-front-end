@@ -166,7 +166,7 @@ Cordialement,
       <h1 className="text-3xl font-bold mb-8">📧 Envoyer les Instructions API</h1>
 
       {/* Sélection du service */}
-      <div className="bg-white border rounded-lg p-6 mb-8">
+      <div className="bg-white border rounded-xl p-6 mb-8">
         <label className="block text-sm font-semibold mb-2">Sélectionner un service:</label>
         <select
           value={selectedService?.id || ''}
@@ -188,22 +188,22 @@ Cordialement,
       {selectedService && (
         <>
           {/* Aperçu des instructions */}
-          <div className="bg-gray-50 border rounded-lg p-6 mb-8">
+          <div className="bg-[#F8F9FB] border rounded-xl p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">📋 Aperçu des Instructions</h2>
-            <div className="bg-white border rounded p-4 h-96 overflow-y-auto whitespace-pre-wrap text-sm font-mono text-gray-700">
+            <div className="bg-white border rounded p-4 h-96 overflow-y-auto whitespace-pre-wrap text-sm font-mono text-[#334155]">
               {generateEmailText()}
             </div>
           </div>
 
           {/* Actions */}
-          <div className="bg-white border rounded-lg p-6 mb-8">
+          <div className="bg-white border rounded-xl p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4">🚀 Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Bouton Email */}
               <button
                 onClick={openEmailClient}
                 disabled={!selectedService.contact}
-                className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+                className="flex items-center justify-center gap-2 bg-[#006A8C] text-white px-6 py-3 rounded-xl hover:bg-[#005a76] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
               >
                 <Mail className="w-5 h-5" />
                 Ouvrir Email
@@ -212,7 +212,7 @@ Cordialement,
               {/* Bouton Copier */}
               <button
                 onClick={copyToClipboard}
-                className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
+                className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition"
               >
                 {copied ? (
                   <>
@@ -230,7 +230,7 @@ Cordialement,
               {/* Bouton Télécharger */}
               <button
                 onClick={downloadAsText}
-                className="flex items-center justify-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"
+                className="flex items-center justify-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition"
               >
                 <Download className="w-5 h-5" />
                 Télécharger
@@ -239,8 +239,8 @@ Cordialement,
           </div>
 
           {/* Infos du service */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">ℹ️ Infos du Service</h3>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-[#004A66] mb-3">ℹ️ Infos du Service</h3>
             <div className="space-y-2 text-blue-800">
               <p><strong>Nom:</strong> {selectedService.nom}</p>
               {selectedService.hopital && <p><strong>Établissement:</strong> {selectedService.hopital}</p>}

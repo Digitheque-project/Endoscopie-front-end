@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f9f9fd;
-  --foreground: #191c1e;
+  --background: #F8F9FB;
+  --foreground: #0F172A;
 }
 
 @theme inline {
@@ -22,12 +22,12 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-
-  --font-inter: var(--font-inter);
-  --font-manrope: var(--font-manrope);
-  --font-body: var(--font-inter);
-  --font-headline: var(--font-manrope);
+  /* Police commune de la plateforme : Manrope (next/font, variable --font-sans). */
+  --font-sans: var(--font-sans);
+  --font-inter: var(--font-sans);
+  --font-manrope: var(--font-sans);
+  --font-body: var(--font-sans);
+  --font-headline: var(--font-sans);
 
   --color-primary: #006A8C;
   --color-primary-container: #CFE9EF;
@@ -36,36 +36,36 @@
   --color-secondary: #4a5f83;
   --color-secondary-container: #c0d5ff;
   --color-on-secondary-container: #475c80;
-  --color-success: #2e7d32;
-  --color-success-container: #e8f5e9;
+  --color-success: #059669;
+  --color-success-container: #ECFDF5;
   --color-tertiary: #793100;
   --color-tertiary-fixed: #ffdbcb;
   --color-on-tertiary-container: #ffcfb9;
-  --color-surface: #f9f9fd;
-  --color-surface-container: #edeef1;
-  --color-surface-container-low: #f3f3f7;
+  --color-surface: #F8F9FB;
+  --color-surface-container: #F1F5F9;
+  --color-surface-container-low: #F8F9FB;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-highest: #e2e2e6;
-  --color-on-surface: #191c1e;
-  --color-on-surface-variant: #424752;
-  --color-outline-variant: #c2c6d4;
-  --color-error: #b3261e;
-  --color-error-container: #f9dedc;
+  --color-surface-container-highest: #E2E8F0;
+  --color-on-surface: #0F172A;
+  --color-on-surface-variant: #475569;
+  --color-outline-variant: #E2E8F0;
+  --color-error: #E11D48;
+  --color-error-container: #FFE4E6;
   --color-on-error: #ffffff;
   --color-on-error-container: #410e0b;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #f9f9fd;
-    --foreground: #191c1e;
+    --background: #F8F9FB;
+    --foreground: #0F172A;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-sans), sans-serif;
 }
 
 .material-symbols-outlined {
@@ -73,11 +73,11 @@ body {
 }
 
 .font-manrope {
-  font-family: var(--font-manrope), sans-serif;
+  font-family: var(--font-sans), sans-serif;
 }
 
 .font-inter {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-sans), sans-serif;
 }
 
 .no-scrollbar::-webkit-scrollbar {

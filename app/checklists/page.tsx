@@ -41,12 +41,12 @@ export default function ChecklistsPage() {
         <PageToolbar
           actions={
             <>
-              <Link href="/checklists/avant" className="px-4 py-2 rounded-lg bg-primary text-white font-semibold shadow-sm">
+              <Link href="/checklists/avant" className="px-4 py-2 rounded-xl bg-primary text-white font-semibold shadow-sm">
                 Ouvrir la phase 1
               </Link>
               <Link
                 href="/checklists/apres"
-                className="px-4 py-2 rounded-lg border border-outline-variant/20 font-semibold text-on-surface-variant hover:bg-surface-container-low"
+                className="px-4 py-2 rounded-xl border border-[#F1F5F9] font-semibold text-on-surface-variant hover:bg-surface-container-low"
               >
                 Ouvrir la phase 2
               </Link>
@@ -58,7 +58,7 @@ export default function ChecklistsPage() {
         <div className="grid md:grid-cols-2 gap-4">
           <Link
             href="/checklists/avant"
-            className="bg-white rounded-xl p-5 shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+            className="bg-white rounded-xl p-5 shadow-sm border border-[#F1F5F9] hover:bg-surface-container-low transition-colors"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
@@ -77,7 +77,7 @@ export default function ChecklistsPage() {
 
           <Link
             href="/checklists/apres"
-            className="bg-white rounded-xl p-5 shadow-sm border border-outline-variant/10 hover:bg-surface-container-low transition-colors"
+            className="bg-white rounded-xl p-5 shadow-sm border border-[#F1F5F9] hover:bg-surface-container-low transition-colors"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-secondary-container/30 text-on-secondary-container flex items-center justify-center">

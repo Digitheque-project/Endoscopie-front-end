@@ -145,17 +145,17 @@ function ChecklistApresContent() {
     <div className="bg-surface text-on-surface pb-24">
       <div className="flex justify-center pt-8 px-4">
         <div className="max-w-[56rem] w-full space-y-5">
-          <section className="bg-white rounded-xl p-5 border border-slate-200 border-l-4 border-l-blue-300 shadow-sm flex items-center justify-between">
+          <section className="bg-white rounded-xl p-5 border border-[#E2E8F0] border-l-4 border-l-blue-300 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <div className="w-16 h-16 bg-primary-fixed rounded-xl flex items-center justify-center text-blue-900">
+              <div className="w-16 h-16 bg-primary-fixed rounded-xl flex items-center justify-center text-[#004A66]">
                 <span className="material-symbols-outlined text-3xl">person</span>
               </div>
               <div>
-                <h3 className="font-headline text-xl text-blue-900">{patientName}</h3>
+                <h3 className="font-headline text-xl text-[#004A66]">{patientName}</h3>
               </div>
             </div>
-            <div className="text-right px-4 py-2 bg-surface-container-low rounded-lg border-l-4 border-blue-700">
-              <p className="text-[10px] font-bold text-blue-900 uppercase tracking-widest">
+            <div className="text-right px-4 py-2 bg-surface-container-low rounded-xl border-l-4 border-blue-700">
+              <p className="text-[10px] font-bold text-[#004A66] uppercase tracking-widest">
                 {session?.sameSlot && session.exams.length > 1 ? "Types d'examen" : "Type d'examen"}
               </p>
               {session?.sameSlot && session.exams.length > 1 ? (
@@ -179,8 +179,8 @@ function ChecklistApresContent() {
 
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-slate-200" />
-            <h2 className="font-headline text-blue-900 text-xl text-center px-4">2. APRÈS L'ENDOSCOPIE</h2>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold whitespace-nowrap">
+            <h2 className="font-headline text-[#004A66] text-xl text-center px-4">2. APRÈS L'ENDOSCOPIE</h2>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-[#475569] text-xs font-bold whitespace-nowrap">
               <span className="material-symbols-outlined text-sm">checklist</span>
               {Object.keys(answers).filter((k) => answers[k]).length} / {checklistItems.length} complétés
             </span>
@@ -192,19 +192,19 @@ function ChecklistApresContent() {
               const isAnswered = !!answers[item.title];
               const borderAccent = index === 0 ? "border-l-amber-300" : "border-l-indigo-300";
               return (
-              <div key={item.title} className={`relative bg-white rounded-xl p-5 border border-slate-200 border-l-4 ${borderAccent} shadow-sm space-y-5`}>
+              <div key={item.title} className={`relative bg-white rounded-xl p-5 border border-[#E2E8F0] border-l-4 ${borderAccent} shadow-sm space-y-5`}>
                 {isAnswered && (
                   <span className="absolute top-3 right-3 flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600" title="Renseigné">
                     <span className="material-symbols-outlined text-[14px]">check</span>
                   </span>
                 )}
                 <div className="flex items-start gap-4 pr-6">
-                  <div className="p-2 bg-secondary-container rounded-lg">
+                  <div className="p-2 bg-secondary-container rounded-xl">
                     <span className="material-symbols-outlined text-on-secondary-fixed-variant">{item.icon}</span>
                   </div>
                   <div>
                     <h4 className="font-headline text-on-surface">{item.title}</h4>
-                    <p className="text-xs text-slate-500 mt-1">{item.description}</p>
+                    <p className="text-xs text-[#64748B] mt-1">{item.description}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -214,10 +214,10 @@ function ChecklistApresContent() {
                       <button
                         key={button}
                         onClick={() => updateAnswer(item.title, button)}
-                        className={`flex-1 py-2.5 text-center rounded-lg border transition-all font-medium ${
+                        className={`flex-1 py-2.5 text-center rounded-xl border transition-all font-medium ${
                           isSelected
                             ? "bg-primary text-white border-primary shadow-sm"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                            : "bg-[#F8F9FB] text-[#475569] border-[#E2E8F0] hover:bg-slate-100"
                         }`}
                       >
                         {button}
@@ -229,10 +229,10 @@ function ChecklistApresContent() {
               );
             })}
 
-            <div className="md:col-span-2 bg-white rounded-xl p-5 border border-slate-200 border-l-4 border-l-slate-300 shadow-sm space-y-4">
+            <div className="md:col-span-2 bg-white rounded-xl p-5 border border-[#E2E8F0] border-l-4 border-l-slate-300 shadow-sm space-y-4">
               <div className="flex items-center gap-4">
-                <div className="p-2 bg-surface-container-low rounded-lg">
-                  <span className="material-symbols-outlined text-slate-600">rate_review</span>
+                <div className="p-2 bg-surface-container-low rounded-xl">
+                  <span className="material-symbols-outlined text-[#475569]">rate_review</span>
                 </div>
                 <h4 className="font-headline text-on-surface">Remarques ou écarts constatés</h4>
               </div>
@@ -240,7 +240,7 @@ function ChecklistApresContent() {
                 value={remarques}
                 onChange={handleRemarquesChange}
                 onBlur={handleRemarquesBlur}
-                className="w-full bg-surface-container-low border-0 border-b-2 border-slate-200 focus:border-blue-900 focus:ring-0 rounded-t-lg text-sm transition-all"
+                className="w-full bg-surface-container-low border-0 border-b-2 border-[#E2E8F0] focus:border-blue-900 focus:ring-0 rounded-t-lg text-sm transition-all"
                 placeholder="Décrivez d'éventuelles complications, anomalies ou notes cliniques importantes..."
                 rows={4}
               />
@@ -249,7 +249,7 @@ function ChecklistApresContent() {
         </div>
       </div>
 
-      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-slate-200 p-4 shadow-xl z-50">
+      <footer className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-16rem)] bg-white border-t border-[#E2E8F0] p-4 shadow-xl z-50">
         <div className="max-w-[896px] mx-auto flex items-center justify-end">
 
           <button
@@ -259,7 +259,7 @@ function ChecklistApresContent() {
               // cette check-list — voir prescription-workflow/page.tsx.
               router.push('/prescription-post-acte');
             }}
-            className="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
+            className="px-6 py-3 border border-[#E2E8F0] text-[#475569] rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 hover:bg-slate-50 mr-4"
           >
             <span className="material-symbols-outlined">arrow_back</span>
             Retour à la Prescription Post-Acte
@@ -279,7 +279,7 @@ export default function ChecklistApresPage() {
   return (
     <AppShell>
       <div className={PAGE_CONTENT_CLASS}>
-        <Suspense fallback={<div className="py-8 text-center text-slate-500 font-bold uppercase tracking-widest">Chargement de la check-list...</div>}>
+        <Suspense fallback={<div className="py-8 text-center text-[#64748B] font-bold uppercase tracking-widest">Chargement de la check-list...</div>}>
           <ChecklistApresContent />
         </Suspense>
       </div>

@@ -19,7 +19,7 @@ interface AccordionSectionProps {
 export function AccordionSection({ number, title, subtitle, isComplete, defaultOpen = false, children }: AccordionSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-xl border border-outline-variant/20 overflow-hidden bg-white">
+    <div className="rounded-xl border border-[#F1F5F9] overflow-hidden bg-white">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -40,12 +40,12 @@ export function AccordionSection({ number, title, subtitle, isComplete, defaultO
               <span className="material-symbols-outlined text-[16px]">check</span>
             </span>
           ) : (
-            <span className="w-5 h-5 rounded-full border-2 border-outline-variant/40" />
+            <span className="w-5 h-5 rounded-full border-2 border-[#F1F5F9]" />
           )}
           <span className="material-symbols-outlined text-on-surface-variant">{open ? "expand_less" : "expand_more"}</span>
         </div>
       </button>
-      {open && <div className="px-4 pb-4 pt-1 border-t border-outline-variant/10 space-y-3">{children}</div>}
+      {open && <div className="px-4 pb-4 pt-1 border-t border-[#F1F5F9] space-y-3">{children}</div>}
     </div>
   );
 }

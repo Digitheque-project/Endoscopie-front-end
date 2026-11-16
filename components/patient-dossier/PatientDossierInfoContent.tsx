@@ -101,7 +101,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
 
   if (isLoading) {
     return (
-      <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-8 animate-pulse space-y-4">
+      <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-8 animate-pulse space-y-4">
         <div className="h-6 w-48 bg-surface-container rounded" />
         <div className="h-4 w-72 bg-surface-container rounded" />
       </section>
@@ -110,7 +110,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
 
   if (error || !prescription) {
     return (
-      <section className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-8 text-center text-on-surface-variant">
+      <section className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-8 text-center text-on-surface-variant">
         {error || "Dossier introuvable."}
       </section>
     );
@@ -122,7 +122,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
   const initiale = patient?.nom?.trim()?.[0]?.toUpperCase() || "?";
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-outline-variant/20 p-6 space-y-6 max-w-5xl">
+    <div className="bg-white rounded-2xl shadow-sm border border-[#F1F5F9] p-6 space-y-6 max-w-5xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center text-lg font-extrabold shrink-0">
@@ -160,7 +160,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
             key={tab.key}
             type="button"
             onClick={() => setActiveDossierTab(tab.key)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
               activeDossierTab === tab.key
                 ? "bg-primary text-white shadow-sm"
                 : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
@@ -187,7 +187,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
         </>
       )}
 
-      <section className="pt-2 border-t border-outline-variant/10">
+      <section className="pt-2 border-t border-[#F1F5F9]">
         <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">
           Demande d&apos;examens complémentaires
         </p>
@@ -199,7 +199,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
           onChange={(e) => setExamensComplementaires(e.target.value)}
           placeholder="Ex. Bilan de coagulation, ECG, consultation cardiologique..."
           rows={3}
-          className="w-full rounded-xl border border-outline-variant/30 bg-surface-container-lowest px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
+          className="w-full rounded-2xl border border-[#F1F5F9] bg-white px-3 py-2.5 text-sm text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none resize-none"
         />
         <div className="flex items-center justify-end gap-3 mt-2">
           {saveExamensStatus === "success" && (
@@ -212,7 +212,7 @@ export function PatientDossierInfoContent({ prescriptionId }: PatientDossierInfo
             type="button"
             onClick={handleSaveExamensComplementaires}
             disabled={isSavingExamens}
-            className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-[#005a76] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSavingExamens ? "Enregistrement…" : "Enregistrer"}
           </button>

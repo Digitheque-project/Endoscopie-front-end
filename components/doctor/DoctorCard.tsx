@@ -43,7 +43,7 @@ export default function DoctorCard({ id, nom, prenom, specialite, service, statu
   const initials = getInitials(nom, prenom);
 
   return (
-    <article className="group rounded-2xl border border-outline-variant/10 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-900/10">
+    <article className="group rounded-2xl border border-[#F1F5F9] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-900/10">
       <div className="flex items-start gap-4">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-surface-container to-secondary/10 ring-1 ring-outline-variant/10">
           {avatarUrl ? (

@@ -16,17 +16,17 @@ export default function WorkflowProgressIndicator() {
   if (currentStepIndex === -1) return null;
 
   return (
-    <div className="hidden md:flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
+    <div className="hidden md:flex items-center gap-4 px-6 py-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
       {steps.map((step, index) => (
         <div key={step.path} className="flex items-center">
           {/* Step Circle */}
           <div
             className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm transition-all ${
               index === currentStepIndex
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-110"
+                ? "bg-[#006A8C] text-white shadow-lg shadow-blue-600/30 scale-110"
                 : index < currentStepIndex
                   ? "bg-green-500 text-white"
-                  : "bg-gray-200 text-gray-600"
+                  : "bg-gray-200 text-[#475569]"
             }`}
           >
             {index < currentStepIndex ? (
@@ -49,8 +49,8 @@ export default function WorkflowProgressIndicator() {
 
       {/* Current Step Label */}
       <div className="ml-4 flex flex-col gap-1">
-        <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Étape {currentStepIndex + 1}/3</span>
-        <span className="text-sm font-bold text-slate-900">{steps[currentStepIndex].name}</span>
+        <span className="text-xs font-bold text-[#475569] uppercase tracking-wider">Étape {currentStepIndex + 1}/3</span>
+        <span className="text-sm font-bold text-[#0F172A]">{steps[currentStepIndex].name}</span>
       </div>
     </div>
   );
