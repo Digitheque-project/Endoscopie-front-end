@@ -8,6 +8,7 @@ import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiJson } from "@/lib/api";
 import { decodeJwt, type AuthServiceClaim } from "@/lib/auth";
+import { useLogoAuthentifie } from "@/lib/use-logo-authentifie";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import PointServeur from "@/components/PointServeur";
 
@@ -109,6 +110,7 @@ export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
   ) as ClaimAvecLogo | undefined;
   const chuLogoUrl =
     (jeton as { chuLogoUrl?: string } | null)?.chuLogoUrl || claimEndoscopie?.chu?.logoUrl || "";
+  const logoChu = useLogoAuthentifie(chuLogoUrl, accessToken);
   const chuNom = claimEndoscopie?.chu?.name ?? "";
   const prenom = jeton?.firstname?.trim() || "";
   const nomAffiche = medecinName
@@ -129,10 +131,10 @@ export function TopHeader({ onMenuClick }: { onMenuClick?: () => void } = {}) {
         >
           <span className="material-symbols-outlined text-[20px]">menu</span>
         </button>
-        {chuLogoUrl ? (
+        {logoChu ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={chuLogoUrl}
+            src={logoChu}
             alt={chuNom ? `Logo ${chuNom}` : "Logo CHU"}
             className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover border border-[#CFE9EF] flex-shrink-0"
           />
