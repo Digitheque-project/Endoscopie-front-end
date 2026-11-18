@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import localFont from "next/font/local";
+// Police hébergée dans le projet : la construction ne dépend plus de Google Fonts
+// (téléchargement qui échoue parfois, et impossible sur un réseau fermé).
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { PatientProvider } from "@/contexts/PatientContext";
@@ -7,9 +9,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGate } from "@/components/layout/AuthGate";
 
 import Script from "next/script";
-const manrope = Manrope({
+const manrope = localFont({
+  src: "./fonts/manrope-latin.woff2",
   variable: "--font-sans",
-  subsets: ["latin"],
+  weight: "200 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
