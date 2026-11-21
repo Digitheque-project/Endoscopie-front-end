@@ -49,7 +49,7 @@ function exportCsv(rows: ArchiveRow[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `archives-${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `archives-${new Date().toLocaleDateString('sv-SE')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

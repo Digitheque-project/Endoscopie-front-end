@@ -13,6 +13,7 @@ import SelectFilter from "@/components/ui/SelectFilter";
 import ComboboxFilter from "@/components/ui/ComboboxFilter";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import { FUSEAU_NAIF, cleJour } from "@/lib/date-naive";
+import { libelleStatut } from '@/lib/libelle-statut';
 
 interface Appointment {
   id: string; // rendezVousId
@@ -423,7 +424,7 @@ function AgendaContent() {
                 <div className="flex justify-between"><span className="text-on-surface-variant">Médecin</span><span className="font-semibold">{selected.medecin}</span></div>
                 <div className="flex justify-between"><span className="text-on-surface-variant">Salle</span><span className="font-semibold">{selected.salle}</span></div>
                 <div className="flex justify-between"><span className="text-on-surface-variant">Horaire</span><span className="font-semibold">{selected.heureDebut} – {selected.heureFin}</span></div>
-                <div className="flex justify-between"><span className="text-on-surface-variant">Statut</span><span className="font-semibold">{selected.statut}{selected.typeAnesthesie ? ` — ${selected.typeAnesthesie}` : ""}</span></div>
+                <div className="flex justify-between"><span className="text-on-surface-variant">Statut</span><span className="font-semibold">{libelleStatut(selected.statut)}{selected.typeAnesthesie ? ` — ${selected.typeAnesthesie}` : ""}</span></div>
               </div>
               {deleteError && (
                 <p className="px-5 pb-2 text-xs font-semibold text-error">{deleteError}</p>

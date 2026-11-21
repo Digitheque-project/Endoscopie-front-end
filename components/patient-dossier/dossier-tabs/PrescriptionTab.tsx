@@ -5,6 +5,7 @@ import { apiJson } from "@/lib/api";
 import { AccordionSection } from "./AccordionSection";
 import { capitalizeFirst } from "@/components/voice/formatTranscript";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { libelleStatut } from '@/lib/libelle-statut';
 
 interface PrescriptionTabProps {
   patientId: string;
@@ -69,7 +70,7 @@ export function PrescriptionTab({ patientId }: PrescriptionTabProps) {
                   {p.motif && <p className="mt-1 text-on-surface-variant truncate">{p.motif}</p>}
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-on-surface">{p.statut}</p>
+                  <p className="font-bold text-on-surface">{libelleStatut(p.statut)}</p>
                   {p.dateDemande && (
                     <p className="text-on-surface-variant">{new Date(p.dateDemande).toLocaleDateString("fr-FR")}</p>
                   )}

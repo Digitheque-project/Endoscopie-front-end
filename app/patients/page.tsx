@@ -8,6 +8,7 @@ import { useRendezVousSync } from "@/lib/hooks/useRendezVousSync";
 import { usePatient } from "@/contexts/PatientContext";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import { FUSEAU_NAIF } from "@/lib/date-naive";
+import { libelleStatut } from '@/lib/libelle-statut';
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -225,7 +226,7 @@ export default function PatientsPage() {
                         <td className="px-6 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${style.dot} ${style.pulse ? "animate-pulse" : ""}`}></div>
-                            <span className={`text-xs font-semibold ${style.color}`}>{rdv.statut}</span>
+                            <span className={`text-xs font-semibold ${style.color}`}>{libelleStatut(rdv.statut)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-2.5 text-right">

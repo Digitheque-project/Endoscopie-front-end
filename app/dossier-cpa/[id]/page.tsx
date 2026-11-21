@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 import { PriseEnChargeBadge } from "@/components/patient/PriseEnChargeBadge";
 import { getExamTypeBadgeClass } from "@/lib/exam-type-colors";
+import { libelleStatut } from '@/lib/libelle-statut';
 
 function computeAge(dateNaissance?: string | null): number | null {
   if (!dateNaissance) return null;
@@ -200,7 +201,7 @@ function DossierCpaContent() {
                   </div>
                   <div>
                     <h4 className="font-bold text-on-surface mb-1 border-b border-[#F1F5F9] pb-1">Statut du dossier</h4>
-                    <p className="text-sm text-on-surface-variant">{dossier.statut}</p>
+                    <p className="text-sm text-on-surface-variant">{libelleStatut(dossier.statut)}</p>
                   </div>
                 </div>
 
