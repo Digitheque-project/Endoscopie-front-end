@@ -41,7 +41,7 @@ export function sessionEndoscopie(): { userId: string; serviceId: string; role: 
     const token = saved ? (JSON.parse(saved) as { accessToken?: string }).accessToken : undefined;
     if (!token) return null;
     const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(b64)) as {
+    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)))) as {
       userId?: string;
       services?: Array<{ serviceId?: string; serviceName?: string; roleName?: string }>;
     };
