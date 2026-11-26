@@ -152,7 +152,9 @@ export async function markCentralNotificationRead(id: string): Promise<void> {
  */
 export async function loadNotifications(status = 'ENVOYE'): Promise<NotificationItem[]> {
   const [backend, central] = await Promise.allSettled([
-    fetchNotificationsViaBackend(status),
+    // Boîte locale lue par /inbox (notification-inbox) : l'ancienne route
+    // /api/notifications n'existe plus (404 à chaque page).
+    Promise.resolve([] as NotificationItem[]),
     fetchNotificationsDirect(status),
   ]);
   if (backend.status === 'rejected' && central.status === 'rejected') {
